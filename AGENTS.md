@@ -1,27 +1,40 @@
 # folkways: framework development
 
-Instructions for working on the framework itself. Not vendored; team repos get `vendor/instructions.md`.
+Instructions for working on the framework itself. Not shipped; team repos get `assets/instructions.md`.
 
 ## Layout
 
 | Path | Holds |
 |---|---|
-| `bin/folkways` | The CLI. Vendored to `.folkways/bin/folkways` in team repos |
-| `vendor/` | Everything copied into team repos (spec §2.1) |
+| `src/` | TypeScript source of the `folkways` CLI. `tsc` compiles it to `dist/` on publish |
+| `assets/` | Text files `sync` copies into team repos (spec §2.1) |
 | `templates/` | One-time scaffold for `init`. `dot-x` becomes `.x`; `name.tmpl` becomes `name` |
-| `tests/run.sh` | Test suite. Run it before every commit |
+| `test/` | vitest suites |
 | `docs/design/` | Design record. `00-STATUS.md` is the entry point; `06-v1-spec.md` is the spec |
+
+Published to npm as `@folkways/cli` (spec §3). Team repos pin an exact version.
+
+## Commands
+
+| Command | Does |
+|---|---|
+| `npm test` | vitest |
+| `npm run check` | `tsc --noEmit` |
+| `npm run build` | compile `src/` to `dist/` (runs on `npm pack` / `npm publish`) |
+| `node src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
 
 ## Rules
 
 - **No company-specific content.** Names, portals, project keys, internal URLs and paths belong in team
   repos. Examples use synthetic values (`Example Team`, `EX`, `example.com`).
-- **Scripts:** bash 3.2 (macOS default) plus `git` and `jq`. No associative arrays, `mapfile`, or GNU-only
-  flags. Hash with the `sha256` helper.
-- **TDD:** add a failing case to `tests/run.sh` first, then fix.
+- **TypeScript:** Node 24+, ESM. Only erasable syntax (no `enum`, `namespace`, parameter properties); import
+  relative files with `.ts` extensions; `import type` for types. `tsconfig.json` enforces these.
+- **Dependencies:** runtime deps are fine when they earn their place; they install into team repos.
+- **TDD:** write a failing test first, then fix. Run `npm run check && npm test` before every commit.
+- **Expected failures** throw `FolkwaysError`; the CLI prints `folkways: <message>` with no stack trace.
 - **Skills:** frontmatter is `name` and `description` only. Overridable sections carry an ID:
   `## Commit format {#commit-format}`. Step 0 reads `team.yaml`, `.local/me.yaml` and both overlays.
-- **Commits:** Angular conventional commits, module scope (`cli`, `vendor`, `templates`, `skills`, `hooks`,
-  `docs`, `tests`). Squash PRs.
-- **Releases:** bump `VERSION`, add a `CHANGELOG.md` entry, tag `v<VERSION>`. `folkways upgrade` fetches by tag.
+- **Commits:** Angular conventional commits, module scope (`cli`, `assets`, `templates`, `skills`, `hooks`,
+  `docs`, `test`, `build`). Squash PRs.
+- **Releases:** bump `version` in `package.json`, add a `CHANGELOG.md` entry, tag `v<version>`, publish.
 - Keep `docs/design/00-STATUS.md` current at milestones.

@@ -1,0 +1,50 @@
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { git, isClean } from '../src/git.ts';
+import { init, templateTarget } from '../src/init.ts';
+import { json, makePackage, makeTeam, put, read, tmp } from './helpers.ts';
+
+describe('templateTarget', () => {
+  it.each([
+    ['dot-gitignore', '.gitignore'],
+    ['dot-claude/settings.json', '.claude/settings.json'],
+    ['AGENTS.md.tmpl', 'AGENTS.md'],
+    ['knowledge/README.md', 'knowledge/README.md'],
+    ['docs/dot-x/y.md.tmpl', 'docs/.x/y.md'],
+  ])('%s -> %s', (from, to) => expect(templateTarget(from)).toBe(to));
+});
+
+describe('init', () => {
+  it('scaffolds, pins, syncs and commits', () => {
+    const team = makeTeam(makePackage('1.2.3'));
+    for (const f of ['team.yaml', '.gitignore', 'CLAUDE.md', 'knowledge/README.md', '.folkways/instructions.md']) {
+      expect(existsSync(join(team, f)), f).toBe(true);
+    }
+    expect(read(join(team, 'CLAUDE.md'))).toContain('@AGENTS.md');
+    expect(read(join(team, 'AGENTS.md'))).toMatch(/^@\.folkways\/instructions\.md$/m);
+    expect(json(join(team, 'package.json'))).toMatchObject({ private: true, devDependencies: { '@folkways/cli': '1.2.3' } });
+    expect(json(join(team, '.folkways/manifest.json'))).toMatchObject({ version: '1.2.3', skills: [] });
+    expect(json(join(team, '.claude/settings.json')).permissions.ask).toContain('Bash(git push:*)');
+    expect(read(join(team, '.gitignore'))).toContain('node_modules/');
+    expect(git(team, 'log', '--format=%s')).toBe('chore(folkways): init at 1.2.3');
+    expect(git(team, 'branch', '--show-current')).toBe('main');
+    expect(isClean(team)).toBe(true);
+  });
+
+  it('names the package after the folder', () => {
+    const dest = init(join(tmp(), 'My Team'), { install: false, pkg: makePackage('1.0.0') });
+    expect(json(join(dest, 'package.json')).name).toBe('my-team');
+  });
+
+  it('creates missing parent folders', () => {
+    const dest = init(join(tmp(), 'a/b/team'), { install: false, pkg: makePackage('1.0.0') });
+    expect(statSync(dest).isDirectory()).toBe(true);
+  });
+
+  it('refuses a non-empty folder', () => {
+    const dest = join(tmp(), 'team');
+    put(join(dest, 'x'), '');
+    expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(/not empty/);
+  });
+});

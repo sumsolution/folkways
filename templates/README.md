@@ -1,7 +1,7 @@
 # Example Team
 
 The team's shared agent workspace, built on [folkways](https://github.com/sumsolution/folkways).
-Open Claude Code or Copilot CLI here. New to the repo? Run the `onboard` skill.
+New to the repo? Run `npm ci`, open Claude Code or Copilot CLI here, and run the `onboard` skill.
 
 | Path | Holds | Changes by |
 |---|---|---|
@@ -11,9 +11,9 @@ Open Claude Code or Copilot CLI here. New to the repo? Run the `onboard` skill.
 | `efforts/<KEY>-<slug>/` | Shared efforts, each with `00-STATUS.md` | direct push |
 | `overlays/<skill>/` | Team changes to framework skills | PR |
 | `people/<handle>/` | Personal overlays, inbox, work | direct push |
-| `.claude/skills/` | Framework skills (vendored) and team skills | PR |
-| `.folkways/` | Vendored framework. Don't edit; `folkways upgrade` replaces it | PR |
+| `.claude/skills/` | Framework skills (synced) and team skills | PR |
+| `.folkways/` | Framework files. Don't edit; `folkways sync` replaces them | PR |
 | `.local/` | Machine-local config (`me.yaml`). Not committed | — |
 
-Direct pushes are rebased and linear. Upgrade the framework with
-`.folkways/bin/folkways upgrade <version>`.
+Direct pushes are rebased and linear. Upgrade the framework with `npx folkways upgrade <version>`, then
+open a PR. Run `npm ci` after pulling an upgrade.

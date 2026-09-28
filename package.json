@@ -1,0 +1,33 @@
+{
+  "name": "@folkways/cli",
+  "version": "0.1.0",
+  "description": "A team framework for AI coding agents on Claude Code and Copilot CLI",
+  "license": "UNLICENSED",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumsolution/folkways.git"
+  },
+  "bin": {
+    "folkways": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  }
+}

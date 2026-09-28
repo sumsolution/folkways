@@ -91,7 +91,7 @@ actions, `main`, external systems. Flag every judgement call in the output with 
 
 ## Customizing
 
-- Never edit `.folkways/` or framework skills in `.claude/skills/`. `folkways upgrade` stops if you do.
+- Never edit `.folkways/` or framework skills in `.claude/skills/`. `folkways sync` and `upgrade` stop if you do.
 - Team changes go in `overlays/<skill>/OVERLAY.md` (add or override). Personal ones go in
   `people/<handle>/overlays/<skill>/OVERLAY.md` (add only).
 - Every framework skill reads `team.yaml`, `.local/me.yaml` and both overlay files first.

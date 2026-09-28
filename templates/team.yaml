@@ -1,5 +1,5 @@
 # Team config for folkways. The setup skill fills this in; edit by PR.
-# The vendored framework version lives in .folkways/manifest.json, not here.
+# The framework version is pinned in package.json, not here.
 
 team: { name: Example Team, slug: example }
 
