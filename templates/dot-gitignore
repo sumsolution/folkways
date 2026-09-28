@@ -1,0 +1,3 @@
+# Machine-local and private: me.yaml, session markers, scratch
+.local/
+.DS_Store

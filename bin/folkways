@@ -1,0 +1,317 @@
+#!/usr/bin/env bash
+# folkways: scaffold a team repo and vendor the framework into it.
+# Spec: docs/design/06-v1-spec.md (§3 vendoring, §7.2 commands).
+# Runs on macOS bash 3.2. Needs git and jq.
+set -euo pipefail
+
+BEGIN_MARK='<!-- folkways:begin -->'
+END_MARK='<!-- folkways:end -->'
+HOOK_MARK='.folkways/hooks/'
+MANIFEST='.folkways/manifest.json'
+TAB=$'\t'
+
+die() { printf 'folkways: %s\n' "$*" >&2; exit 1; }
+note() { printf '%s\n' "$*"; }
+
+need() {
+  local c
+  for c in "$@"; do command -v "$c" >/dev/null 2>&1 || die "needs '$c' on PATH"; done
+}
+
+# sha256 [file]: hex digest of a file, or of stdin.
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$@"; else shasum -a 256 "$@"; fi | cut -d' ' -f1
+}
+
+usage() {
+  cat <<'EOF'
+usage: folkways <command> [args]
+
+  init <path>                  scaffold a team repo at <path> and vendor this framework
+                               (run from the framework repo)
+  upgrade <version> [--from <repo>] [--force]
+                               vendor framework <version> on branch chore/folkways-<version>
+                               --from   git URL or path of the framework (default: manifest source)
+                               --force  discard edits to framework-owned files
+  version                      print the framework version
+  review | run | doctor        not built yet
+EOF
+}
+
+self_dir=$(cd "$(dirname "$0")" && pwd -P)
+FW_ROOT=''
+if [ -d "$self_dir/../vendor" ] && [ -f "$self_dir/../VERSION" ]; then
+  FW_ROOT=$(cd "$self_dir/.." && pwd -P)
+fi
+
+# --- vendoring ---------------------------------------------------------------
+
+# vendor_map <fw>: "<source file><TAB><team-relative dest>" for every vendored file.
+vendor_map() {
+  local fw=$1 kind f
+  printf '%s\t%s\n' "$fw/bin/folkways" ".folkways/bin/folkways"
+  for kind in hooks prompts; do
+    [ -d "$fw/vendor/$kind" ] || continue
+    find "$fw/vendor/$kind" -type f ! -name .gitkeep ! -name .DS_Store | LC_ALL=C sort |
+      while IFS= read -r f; do printf '%s\t%s\n' "$f" ".folkways/$kind/${f#"$fw/vendor/$kind/"}"; done
+  done
+  if [ -d "$fw/vendor/skills" ]; then
+    find "$fw/vendor/skills" -mindepth 2 -type f ! -name .DS_Store | LC_ALL=C sort |
+      while IFS= read -r f; do printf '%s\t%s\n' "$f" ".claude/skills/${f#"$fw/vendor/skills/"}"; done
+  fi
+  if [ -d "$fw/vendor/workflows" ]; then
+    find "$fw/vendor/workflows" -maxdepth 1 -type f -name '*.yml' | LC_ALL=C sort |
+      while IFS= read -r f; do printf '%s\t%s\n' "$f" ".github/workflows/folkways-$(basename "$f")"; done
+  fi
+}
+
+# skill_names <fw>: one framework skill name per line.
+skill_names() {
+  [ -d "$1/vendor/skills" ] || return 0
+  find "$1/vendor/skills" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort |
+    while IFS= read -r d; do basename "$d"; done
+}
+
+# render_block <fw>: the AGENTS.md managed block, markers included.
+render_block() {
+  printf '%s\n' "$BEGIN_MARK" \
+    "<!-- Managed by folkways $(cat "$1/VERSION"). Upgrades replace this block. Put team text outside it. -->" ''
+  cat "$1/vendor/instructions.md"
+  printf '\n%s\n' "$END_MARK"
+}
+
+# extract_block <file>: the managed block as it stands in <file>.
+extract_block() {
+  awk -v b="$BEGIN_MARK" -v e="$END_MARK" '$0==b{on=1} on{print} $0==e{on=0}' "$1"
+}
+
+# write_block <agents.md> <block file>: replace the managed block, or append it.
+write_block() {
+  local agents=$1 block=$2 begins ends tmp
+  if [ ! -f "$agents" ]; then cp "$block" "$agents"; return; fi
+  begins=$(grep -cxF "$BEGIN_MARK" "$agents" || true)
+  ends=$(grep -cxF "$END_MARK" "$agents" || true)
+  if [ "$begins" = 0 ] && [ "$ends" = 0 ]; then
+    { [ -s "$agents" ] && printf '\n'; cat "$block"; } >>"$agents"
+    return
+  fi
+  [ "$begins" = 1 ] && [ "$ends" = 1 ] || die "$agents: expected one '$BEGIN_MARK' and one '$END_MARK' line"
+  tmp=$(mktemp)
+  awk -v b="$BEGIN_MARK" -v e="$END_MARK" -v f="$block" '
+    $0==b { while ((getline l < f) > 0) print l; skip=1; next }
+    $0==e { skip=0; next }
+    !skip { print }' "$agents" >"$tmp"
+  mv "$tmp" "$agents"
+}
+
+# merge_settings <team> <fw>: replace framework hook entries in .claude/settings.json,
+# add framework permission rules, leave everything else alone.
+merge_settings() {
+  local team=$1 fw=$2 settings="$1/.claude/settings.json" tmp
+  mkdir -p "$team/.claude"
+  [ -f "$settings" ] || printf '{}\n' >"$settings"
+  tmp=$(mktemp)
+  jq --slurpfile v "$fw/vendor/settings.hooks.json" --arg m "$HOOK_MARK" '
+    ($v[0]) as $v
+    | def ours: (.command // "") | contains($m);
+    .hooks = (
+      (.hooks // {})
+      | with_entries(.value |= (map(.hooks |= map(select(ours | not))) | map(select(.hooks | length > 0))))
+      | with_entries(select(.value | length > 0))
+      | reduce (($v.hooks // {}) | to_entries[]) as $e (.; .[$e.key] = ((.[$e.key] // []) + $e.value))
+    )
+    | if (.hooks | length) == 0 then del(.hooks) else . end
+    | reduce (($v.permissions.ask // [])[]) as $r (.;
+        if ((.permissions.ask // []) | index([$r])) then . else .permissions.ask = ((.permissions.ask // []) + [$r]) end)
+  ' "$settings" >"$tmp" || { rm -f "$tmp"; die "can't merge $settings (invalid JSON?)"; }
+  mv "$tmp" "$settings"
+}
+
+# apply_vendor <fw> <team> <source>: copy framework files, write block, settings, manifest.
+apply_vendor() {
+  local fw=$1 team=$2 source=$3 work src dest
+  work=$(mktemp -d)
+  vendor_map "$fw" >"$work/map"
+  : >"$work/files"
+  while IFS="$TAB" read -r src dest; do
+    mkdir -p "$team/$(dirname "$dest")"
+    cp "$src" "$team/$dest"
+    printf '%s\t%s\n' "$dest" "$(sha256 "$team/$dest")" >>"$work/files"
+  done <"$work/map"
+  chmod +x "$team/.folkways/bin/folkways"
+
+  render_block "$fw" >"$work/block"
+  write_block "$team/AGENTS.md" "$work/block"
+  merge_settings "$team" "$fw"
+  skill_names "$fw" >"$work/skills"
+
+  mkdir -p "$team/.folkways"
+  jq -n --arg v "$(cat "$fw/VERSION")" --arg s "$source" \
+    --arg b "$(extract_block "$team/AGENTS.md" | sha256)" \
+    --rawfile files "$work/files" --rawfile skills "$work/skills" '
+    { version: $v,
+      source: $s,
+      skills: ($skills | split("\n") | map(select(length > 0))),
+      files: ($files | split("\n") | map(select(length > 0) | split("\t") | {key: .[0], value: .[1]}) | from_entries),
+      blocks: { "AGENTS.md": $b } }' >"$team/$MANIFEST"
+  rm -rf "$work"
+}
+
+# check_edits <team>: list framework-owned files changed since the last vendor.
+check_edits() {
+  local team=$1 p h skill f rel
+  jq -r '.files | to_entries[] | "\(.key)\t\(.value)"' "$team/$MANIFEST" |
+    while IFS="$TAB" read -r p h; do
+      if [ ! -f "$team/$p" ]; then
+        note "  deleted   $p"
+      elif [ "$(sha256 "$team/$p")" != "$h" ]; then
+        note "  modified  $p"
+      fi
+    done
+  jq -r '.skills[]' "$team/$MANIFEST" | while IFS= read -r skill; do
+    [ -d "$team/.claude/skills/$skill" ] || continue
+    find "$team/.claude/skills/$skill" -type f | LC_ALL=C sort | while IFS= read -r f; do
+      rel=${f#"$team/"}
+      jq -e --arg p "$rel" '.files | has($p)' "$team/$MANIFEST" >/dev/null || note "  added     $rel"
+    done
+  done
+  h=$(jq -r '.blocks["AGENTS.md"] // ""' "$team/$MANIFEST")
+  if [ -n "$h" ] && [ "$(extract_block "$team/AGENTS.md" 2>/dev/null | sha256)" != "$h" ]; then
+    note "  modified  AGENTS.md (managed block)"
+  fi
+}
+
+# remove_vendored <team>: delete everything the current manifest owns.
+remove_vendored() {
+  local team=$1 p skill
+  jq -r '.skills[]' "$team/$MANIFEST" | while IFS= read -r skill; do
+    [ -n "$skill" ] && rm -rf "${team:?}/.claude/skills/$skill"
+  done
+  jq -r '.files | keys[]' "$team/$MANIFEST" | while IFS= read -r p; do rm -f "$team/$p"; done
+  find "$team/.folkways" "$team/.github" -depth -type d -empty -delete 2>/dev/null || true
+}
+
+# --- commands ----------------------------------------------------------------
+
+cmd_init() {
+  [ $# -eq 1 ] || die "usage: folkways init <path>"
+  [ -n "$FW_ROOT" ] || die "init runs from the framework repo: <framework>/bin/folkways init <path>"
+  need git jq
+  local dest=$1 rel out source version
+  if [ -e "$dest" ] && [ -n "$(ls -A "$dest" 2>/dev/null)" ]; then die "$dest exists and is not empty"; fi
+  mkdir -p "$dest"
+  dest=$(cd "$dest" && pwd -P)
+  case "$dest/" in "$FW_ROOT/"*) die "$dest is inside the framework repo; pick a path outside it" ;; esac
+  if [ -n "$(git -C "$FW_ROOT" status --porcelain 2>/dev/null)" ]; then
+    note "warning: the framework repo has uncommitted changes; vendoring them anyway"
+  fi
+
+  # templates/: dot-x -> .x, name.tmpl -> name
+  (cd "$FW_ROOT/templates" && find . -type f ! -name .DS_Store) | LC_ALL=C sort | while IFS= read -r rel; do
+    rel=${rel#./}
+    out=$(printf '%s\n' "$rel" | sed -E 's#(^|/)dot-#\1.#g; s#\.tmpl$##')
+    mkdir -p "$dest/$(dirname "$out")"
+    cp "$FW_ROOT/templates/$rel" "$dest/$out"
+  done
+
+  source=$(git -C "$FW_ROOT" remote get-url origin 2>/dev/null || printf '%s' "$FW_ROOT")
+  version=$(cat "$FW_ROOT/VERSION")
+  git -C "$dest" init -q -b main
+  apply_vendor "$FW_ROOT" "$dest" "$source"
+  git -C "$dest" add -A
+  git -C "$dest" commit -q -m "chore(folkways): init at $version"
+  note "Created $dest with folkways $version."
+  note "Next: open Claude Code or Copilot CLI in $dest and run the setup skill."
+}
+
+cmd_upgrade() {
+  local version='' from='' force=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --from) [ $# -ge 2 ] || die "--from needs a value"; from=$2; shift 2 ;;
+      --force) force=1; shift ;;
+      -*) die "unknown option $1" ;;
+      *) [ -z "$version" ] || die "one version only"; version=$1; shift ;;
+    esac
+  done
+  [ -n "$version" ] || die "usage: folkways upgrade <version> [--from <repo>] [--force]"
+  version=${version#v}
+  need git jq
+  if [ -n "$from" ] && [ -d "$from" ]; then from=$(cd "$from" && pwd -P); fi
+
+  local team current source branch edits err skill clashes=''
+  team=$(git rev-parse --show-toplevel 2>/dev/null) || die "run this inside the team repo"
+  cd "$team"
+  [ -f "$MANIFEST" ] || die "no $MANIFEST here; is this a folkways team repo?"
+  [ -z "$(git status --porcelain)" ] || die "working tree is dirty; commit or stash first"
+  current=$(jq -r .version "$MANIFEST")
+  source=${from:-$(jq -r .source "$MANIFEST")}
+  branch="chore/folkways-$version"
+  if git rev-parse -q --verify "refs/heads/$branch" >/dev/null; then die "branch $branch already exists"; fi
+
+  edits=$(check_edits "$team")
+  if [ -n "$edits" ]; then
+    if [ "$force" = 1 ]; then
+      note "Discarding edits to framework files:"
+      note "$edits"
+    else
+      die "framework files were edited:
+$edits
+Move team changes into overlays/ (team) or people/<handle>/overlays/ (personal), then rerun.
+Or rerun with --force to discard the edits."
+    fi
+  fi
+
+  UPGRADE_TMP=$(mktemp -d)
+  trap 'rm -rf "$UPGRADE_TMP"' EXIT
+  local tmp=$UPGRADE_TMP
+  err=$(git clone -q --depth 1 --branch "v$version" "$source" "$tmp/fw" 2>&1) ||
+    die "can't fetch v$version from $source: $err"
+  [ "$(cat "$tmp/fw/VERSION")" = "$version" ] ||
+    die "tag v$version has VERSION $(cat "$tmp/fw/VERSION"); refusing"
+
+  for skill in $(skill_names "$tmp/fw"); do
+    if [ -e ".claude/skills/$skill" ] && ! jq -e --arg s "$skill" '.skills | index($s)' "$MANIFEST" >/dev/null; then
+      clashes="$clashes .claude/skills/$skill"
+    fi
+  done
+  [ -z "$clashes" ] || die "team skills clash with new framework skills:$clashes
+Rename the team skills, then rerun."
+
+  git checkout -q -b "$branch"
+  remove_vendored "$team"
+  apply_vendor "$tmp/fw" "$team" "$source"
+  git add -A
+  if git diff --cached --quiet; then
+    git checkout -q -
+    git branch -q -D "$branch"
+    note "Already at $version; nothing to change."
+    return
+  fi
+  git commit -q -m "chore(folkways): upgrade to $version" -m "From $current. Source: $source"
+  note "Committed the upgrade $current -> $version on $branch."
+  note "Review it with: git diff HEAD~1 --stat. Then push and open a PR."
+}
+
+cmd_version() {
+  if [ -n "$FW_ROOT" ]; then cat "$FW_ROOT/VERSION"; return; fi
+  local team
+  team=$(cd "$self_dir/../.." && pwd -P)
+  jq -r .version "$team/$MANIFEST"
+}
+
+main() {
+  [ $# -gt 0 ] || { usage; exit 1; }
+  local cmd=$1
+  shift
+  case "$cmd" in
+    init) cmd_init "$@" ;;
+    upgrade) cmd_upgrade "$@" ;;
+    version | --version) cmd_version ;;
+    review | run | doctor) die "'$cmd' is not built yet (spec §7.2)" ;;
+    -h | --help | help) usage ;;
+    *) usage >&2; exit 1 ;;
+  esac
+}
+
+main "$@"

@@ -35,6 +35,7 @@ folkways/
 │   ├── settings.hooks.json  # hook entries merged into .claude/settings.json
 │   └── workflows/*.yml      # GitHub Actions (knowledge-audit)
 └── templates/               # one-time scaffold for `init`: team.yaml, READMEs, .gitignore
+                             #   (`dot-x` → `.x`, `name.tmpl` → `name`, so they stay inert here)
 ```
 
 ### 2.2 Team repo
@@ -111,7 +112,7 @@ A skill's behaviour = framework skill + team overlay + personal overlay, applied
 ### 4.1 `team.yaml` (committed)
 
 ```yaml
-folkways: { version: 1.0.0 }
+# The vendored version lives in .folkways/manifest.json, not here (team.yaml is team-owned, §3.1).
 team: { name: Example Team, slug: example }
 members:                       # handle = people/<handle>/
   - { handle: alex, github: alex-gh, name: Alex Doe }
@@ -240,7 +241,7 @@ Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]`
 | Command | Does |
 |---|---|
 | `init <path>` | (framework repo only) scaffold a team repo from `templates/`, then vendor |
-| `upgrade <version>` | §3.1 |
+| `upgrade <version> [--from <repo>] [--force]` | §3.1. Fetches tag `v<version>` from the manifest `source` (or `--from`) |
 | `review [--repo <worktree>] [--effort <path>]` | §7.3 |
 | `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
 | `doctor` | checks config, tool access, hook install, version drift; prints fixes |

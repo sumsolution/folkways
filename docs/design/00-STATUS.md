@@ -1,10 +1,10 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-09-28 (session 2: round 11, v1 spec, moved to own repo)
+**Last updated:** 2026-09-28 (session 3: skeleton, `init`, `upgrade`)
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: v1 spec drafted; moved to its own repo.** No code yet.
+**Stage: building v1.** Skeleton, `init` and `upgrade` done (0.1.0, untagged). Hooks and skills next.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -64,7 +64,23 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 - [ ] Dedicated session: architecture knowledge for the `adr` skill.
 - [ ] Trademark check for `folkways` (USPTO/EUIPO); register folkways.dev and a GitHub handle (Summer).
 
+## Built (session 3)
+
+| Part | Where | Notes |
+|---|---|---|
+| CLI `init`, `upgrade`, `version` | [bin/folkways](../../bin/folkways) | bash 3.2 + git + jq. `review`, `run`, `doctor` are stubs |
+| Way-of-working block | [vendor/instructions.md](../../vendor/instructions.md) | Rendered into team `AGENTS.md`. Names skills not built yet |
+| Settings fragment | [vendor/settings.hooks.json](../../vendor/settings.hooks.json) | Push ask rule only; no hooks yet |
+| Team scaffold | [templates/](../../templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md` |
+| Tests | [tests/run.sh](../../tests/run.sh) | 55 checks: init, upgrade, edit detection, clashes, removals, no-op |
+
+Spec changes: `folkways.version` dropped from `team.yaml` (manifest holds it); `upgrade --from`;
+template renaming rule. Manifest also checksums the `AGENTS.md` managed block, so edits there stop an upgrade.
+
 ## Next step
 
-**Build the framework skeleton** per [06](06-v1-spec.md): `vendor/`, `templates/`, `bin/folkways`
-(`init`, `upgrade`) → hooks → ported skills → new skills → set up the beta team repo.
+1. **Verify before building hooks** (spec §9.3): `PostToolBatch`, transcript `usage` vs statusline,
+   Copilot CLI `sessionEnd` / `PreToolUse` from `.claude/settings.json`.
+2. **Hooks** (spec §7.1): `git-guard.sh`, `session-start.sh`, `session-end.sh`, `precompact.sh`,
+   `context-band.sh`, with tests.
+3. Ported skills → new skills → `review` / `run` / `doctor` → tag 0.1.0 → set up the beta team repo.
