@@ -81,6 +81,8 @@ repo; `@` import instead of a managed block. Spec §2, §3, §5, §7, §8 update
 
 ## Next step
 
+**Branch:** `feat/cli-init-upgrade` (3 commits, not pushed, no PR yet). Push and open a PR, or keep building on it.
+
 1. **Verify before building hooks** (spec §9.3): `PostToolBatch`, transcript `usage` vs statusline,
    Copilot CLI `sessionEnd` / `PreToolUse` from `.claude/settings.json`, hook `cwd` in both tools (hook
    commands are relative: `node_modules/.bin/folkways hook <name>`), and whether Copilot CLI loads the
