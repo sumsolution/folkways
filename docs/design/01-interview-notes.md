@@ -412,3 +412,24 @@ generic ticket skill; its team templates move into team config.
   **Overlays must never touch framework files,** so an upgrade can never clobber team or personal
   customizations.
 - **Handoff bands: tokens only** (125K / 150K / 200K). The window-% caps are dropped.
+
+## Round 12 — 2026-09-28: language, distribution, instructions import
+
+- **Instructions import:** drop the `<!-- folkways:begin/end -->` managed block. The team `AGENTS.md` gets
+  one line, `@.folkways/instructions.md`, and is otherwise fully team-owned. Verified: Copilot CLI expands `@`
+  imports in `AGENTS.md` (not in `*.instructions.md` or `GEMINI.md`).
+- **Language: TypeScript, not bash.** Reason: maintainability. The team and most of the industry know
+  TypeScript or Python better than shell, and bash can't read `team.yaml` without `yq`. Python lost because
+  YAML isn't in its standard library and macOS ships 3.9.
+- **Native TS considered, then dropped:** Node 24 (current LTS) runs `.ts` directly, but it refuses to strip
+  types in `node_modules`, and the user wants `yaml` as a normal installed dependency, not a copied one.
+- **Distribution: npm package `@folkways/cli`** (scope claimed by Summer). Reasons: the company's enterprise
+  GitHub accounts can't clone repos outside the org, but npm is reachable through the company Artifactory
+  mirror; `npx` sets up a repo; upgrades are dependency bumps.
+- **Pinned per team repo:** the team repo has a `package.json` with an exact version and a committed lockfile,
+  so the whole team runs one version. Hooks run `node_modules/.bin/folkways hook <name>`.
+- **Text is still copied into the repo** by `folkways sync` (skills must live in `.claude/skills/`), so
+  upgrade PRs show framework changes. Edit detection and overlays are unchanged.
+- **Later:** publish a GitHub Action that runs on dependency-update PRs, detects a `@folkways/cli` bump, and
+  runs the sync automatically.
+- **GitHub org:** `sumsolution` for now; a dedicated `folkways` org may come later.

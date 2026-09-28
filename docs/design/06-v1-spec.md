@@ -1,6 +1,6 @@
 # folkways v1 spec
 
-**Status:** draft, 2026-09-28. Proposal items settled. Sources: [01](01-interview-notes.md) rounds 1–11,
+**Status:** draft, 2026-09-28. Proposal items settled. Round 12: npm distribution. Sources: [01](01-interview-notes.md) rounds 1–12,
 [03](03-research-handoff-trigger.md), [04](04-research-copilot-capabilities.md), [05](05-research-repo-split.md).
 
 ## 1. Scope
@@ -17,33 +17,42 @@ team repo (`team.yaml`, `overlays/`, team `skills/`). Examples in the framework 
 
 ## 2. Repos
 
-Two repos: the **framework** (versioned, public) and one **team repo** per team. Sessions run from the
-team repo. Code changes happen in project repos, in worktrees.
+Two repos: the **framework** (versioned, public, published to npm as `@folkways/cli`) and one **team
+repo** per team. Sessions run from the team repo. Code changes happen in project repos, in worktrees.
 
-### 2.1 Framework repo
+### 2.1 Framework repo (npm package `@folkways/cli`)
 
 ```
 folkways/
-├── AGENTS.md                # framework's own dev instructions (not vendored)
-├── VERSION  CHANGELOG.md
-├── bin/folkways             # CLI: init, upgrade, review, run, doctor
-├── vendor/                  # everything below is copied into team repos
-│   ├── instructions.md      # rendered into the team AGENTS.md managed block
-│   ├── skills/<name>/       # SKILL.md + references/
-│   ├── hooks/*.sh           # hook scripts
-│   ├── prompts/*.md         # fixed prompts for headless runs (review, knowledge-audit)
-│   ├── settings.hooks.json  # hook entries merged into .claude/settings.json
-│   └── workflows/*.yml      # GitHub Actions (knowledge-audit)
-└── templates/               # one-time scaffold for `init`: team.yaml, READMEs, .gitignore
-                             #   (`dot-x` → `.x`, `name.tmpl` → `name`, so they stay inert here)
+├── AGENTS.md                # framework's own dev instructions (not shipped)
+├── package.json             # bin: folkways; deps: yaml; engines: node >=24
+├── CHANGELOG.md
+├── src/                     # TypeScript. Compiled to dist/ by tsc on publish
+│   ├── cli.ts               #   init, sync, upgrade, hook, review, run, doctor
+│   └── hooks/*.ts           #   run as `folkways hook <name>` (§7.1)
+├── assets/                  # text files copied into team repos by `sync`
+│   ├── instructions.md      #   imported by the team AGENTS.md (§5)
+│   ├── skills/<name>/       #   SKILL.md + references/
+│   ├── prompts/*.md         #   fixed prompts for headless runs (review, knowledge-audit)
+│   ├── settings.json        #   hook entries + permission rules merged into .claude/settings.json
+│   └── workflows/*.yml      #   GitHub Actions (knowledge-audit)
+├── templates/               # one-time scaffold for `init`: team.yaml, READMEs, .gitignore
+│                            #   (`dot-x` → `.x`, `name.tmpl` → `name`, so they stay inert here)
+└── test/                    # vitest
 ```
+
+TypeScript is compiled because Node won't strip types in `node_modules` (verified 2026-09-28:
+`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`). Source imports use `.ts` extensions, so `src/` also runs
+directly under Node 24 during development.
 
 ### 2.2 Team repo
 
 ```
 team-repo/
-├── AGENTS.md                # team text + one managed block (see §3)
+├── AGENTS.md                # team text + `@.folkways/instructions.md` (§5)
 ├── CLAUDE.md                # @AGENTS.md (+ Claude-only extras)
+├── package.json             # private; devDependencies: "@folkways/cli": "<exact version>"
+├── package-lock.json        # committed; `npm ci` after clone and after upgrades
 ├── team.yaml                # team config (§4.1)
 ├── knowledge/               # durable facts, `Last verified:` + method          [PR]
 ├── state/                   # live trackers, one file per track                 [direct push]
@@ -54,42 +63,59 @@ team-repo/
 │   ├── inbox/               #   side quests, ticket drafts with no effort
 │   └── work/<KEY>-<slug>/   #   personal efforts; promote with git mv to efforts/
 ├── .local/                  # gitignored: me.yaml, session markers, private scratch
-├── .folkways/               # VENDORED, script-owned (§3)
-│   ├── manifest.json        #   version + checksum of every vendored file
-│   ├── bin/ hooks/ prompts/
+├── node_modules/            # gitignored; holds the pinned @folkways/cli
+├── .folkways/               # SYNCED, framework-owned (§3)
+│   ├── manifest.json        #   version + checksum of every synced file
+│   ├── instructions.md  prompts/
 ├── .claude/
 │   ├── settings.json        # team settings + framework hook entries (§3.1)
-│   └── skills/<name>/       # vendored framework skills + team skills
-└── .github/workflows/       # vendored knowledge-audit workflow + team workflows
+│   └── skills/<name>/       # synced framework skills + team skills
+└── .github/workflows/       # synced knowledge-audit workflow + team workflows
 ```
 
 **Push rules:** `knowledge/`, `overlays/`, team `skills/`, `team.yaml` and framework upgrades go by PR.
 `state/`, `efforts/`, `people/` are pushed directly, rebased, linear. Every push still needs the user's
 approval.
 
-## 3. Vendoring and overlay isolation
+## 3. Distribution, sync and overlay isolation
 
 Requirement (round 11): **overlays never touch framework files, and an upgrade never clobbers a customization.**
 
+Code and text are delivered differently (round 12):
+
+- **Code** (CLI, hooks) runs from the pinned package in `node_modules/`. Its version is set by the team
+  repo's `package.json` and lockfile, so the whole team runs the same version.
+- **Text** (instructions, skills, prompts, workflows) must be files in the repo, because both tools read
+  skills from `.claude/skills/`. `folkways sync` copies them from the installed package. Upgrade PRs
+  therefore show every framework change.
+
 ### 3.1 Ownership
 
-| Path | Owner | `upgrade` behavior |
+| Path | Owner | `sync` behavior |
 |---|---|---|
 | `.folkways/**` | framework | replaced |
 | `.claude/skills/<name>/` listed in manifest | framework | replaced |
 | `.github/workflows/folkways-*.yml` | framework | replaced |
-| `AGENTS.md` between `<!-- folkways:begin -->` / `<!-- folkways:end -->` | framework | block replaced; text outside untouched |
-| `.claude/settings.json` hook entries whose command starts with `.folkways/hooks/` | framework | those entries replaced; all other keys and entries untouched |
-| Everything else (`overlays/`, `people/`, team skills, `team.yaml`, …) | team / person | never read or written |
+| `.claude/settings.json` hook entries whose command contains `folkways hook ` | framework | those entries replaced; all other keys and entries untouched |
+| `.claude/settings.json` `permissions.ask` rules from the framework | framework | added if missing; never removed |
+| `AGENTS.md` | team | never written after `init`; `sync` warns if the `@.folkways/instructions.md` line is missing |
+| Everything else (`overlays/`, `people/`, team skills, `team.yaml`, `package.json`, …) | team / person | never written |
 
-`folkways upgrade <version>`:
+`folkways sync` (run from the team repo; copies the **installed** package version):
 
-1. Refuses on a dirty tree.
-2. Checks every manifest file against its checksum. **If a framework file was edited, it stops**, lists
-   the files, and says to move the change into `overlays/`. `--force` discards the edits.
-3. Refuses if a team skill in `.claude/skills/` has the same name as a new framework skill.
-4. Writes the new files and manifest on a branch `chore/folkways-<version>`, and commits
-   `chore(folkways): upgrade to <version>`. The user reviews and opens the PR.
+1. Checks every manifest file against its checksum, and looks for files added inside framework skill
+   folders. **If a framework file was edited, it stops**, lists the files, and says to move the change into
+   `overlays/`. `--force` discards the edits.
+2. Refuses if a team skill in `.claude/skills/` has the same name as a new framework skill.
+3. Replaces the framework files, merges settings, writes the manifest. It does not commit.
+
+`folkways upgrade <version>`: refuses on a dirty tree → branch `chore/folkways-<version>` →
+`npm install --save-exact @folkways/cli@<version>` → runs the **new** version's `sync` → commits
+`chore(folkways): upgrade to <version>`. The user reviews and opens the PR.
+
+Dependabot or Renovate may bump the package instead; then someone runs `npm ci && npx folkways sync` on
+that branch. `doctor` and the `SessionStart` hook warn when the installed version differs from the manifest.
+**Later:** a published GitHub Action does this in CI (§9.7).
 
 ### 3.2 Overlays
 
@@ -112,7 +138,7 @@ A skill's behaviour = framework skill + team overlay + personal overlay, applied
 ### 4.1 `team.yaml` (committed)
 
 ```yaml
-# The vendored version lives in .folkways/manifest.json, not here (team.yaml is team-owned, §3.1).
+# The framework version lives in package.json (pinned) and .folkways/manifest.json, not here.
 team: { name: Example Team, slug: example }
 members:                       # handle = people/<handle>/
   - { handle: alex, github: alex-gh, name: Alex Doe }
@@ -180,11 +206,14 @@ notifications: { slack_user: "@alex" }
 ## 5. Instructions
 
 - `AGENTS.md` is the source. `CLAUDE.md` holds `@AGENTS.md` so a `CLAUDE.local.md` can't turn it off ([04 §1](04-research-copilot-capabilities.md)).
-- The **managed block** (from `vendor/instructions.md`) holds the way of working: session start and resume
+- The team `AGENTS.md` imports the framework instructions with one line, `@.folkways/instructions.md`.
+  Claude Code and Copilot CLI both expand `@` imports in `AGENTS.md` ([Copilot CLI docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions);
+  not expanded in `*.instructions.md` or `GEMINI.md`). `AGENTS.md` stays fully team-owned (round 12).
+- The **framework instructions** (`assets/instructions.md`, synced to `.folkways/instructions.md`) hold the way of working: session start and resume
   (round 4), status doc rules, subagents and escalation, side quests, approval list, headless rules,
   handoff bands, clone rules (round 7), writing style, evidence rule. It stays short and points to skills
   for detail.
-- The team writes its own text outside the block.
+- The team writes everything else in `AGENTS.md`.
 
 ## 6. Skills
 
@@ -222,26 +251,30 @@ and overlays (§3.2); writes only after approval; succinct output; claims link t
 ## 7. Hooks and scripts
 
 All hooks live in `.claude/settings.json`, which both Claude Code and Copilot CLI read ([04 §3](04-research-copilot-capabilities.md)).
+Each hook entry runs the pinned package: `node_modules/.bin/folkways hook <name>`. If the package isn't
+installed, the command fails; `doctor` and `onboard` make sure `npm ci` has run.
 Matchers work in both, so scripts still self-filter on command text only as a safety net.
 
 ### 7.1 Hooks
 
 | Hook | Event | Does | Copilot CLI |
 |---|---|---|---|
-| `context-band.sh` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
-| `precompact.sh` | `PreCompact` | Logs a missed band to `.local/`. | yes |
-| `session-start.sh` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". If an unclosed-session marker exists: inject "offer session-close". Reminds the `start` procedure. | yes |
-| `session-end.sh` | `SessionEnd` | Writes `.local/sessions/<id>.unclosed`. | `sessionEnd` |
-| `git-guard.sh` | `PreToolUse` on Bash | `git commit`: checks the message format (Angular, allowed scope). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
+| `context-band` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
+| `precompact` | `PreCompact` | Logs a missed band to `.local/`. | yes |
+| `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". If an unclosed-session marker exists: inject "offer session-close". Reminds the `start` procedure. | yes |
+| `session-end` | `SessionEnd` | Writes `.local/sessions/<id>.unclosed`. | `sessionEnd` |
+| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message format (Angular, allowed scope). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
 
 Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.
 
-### 7.2 `folkways` CLI (`.folkways/bin/folkways`)
+### 7.2 `folkways` CLI (`@folkways/cli`, run with `npx folkways` in a team repo)
 
 | Command | Does |
 |---|---|
-| `init <path>` | (framework repo only) scaffold a team repo from `templates/`, then vendor |
-| `upgrade <version> [--from <repo>] [--force]` | §3.1. Fetches tag `v<version>` from the manifest `source` (or `--from`) |
+| `init <path>` | `npx @folkways/cli init <path>`: scaffold a team repo from `templates/`, pin this version in `package.json`, `npm install`, sync, first commit |
+| `sync [--force]` | §3.1 |
+| `upgrade <version>` | §3.1 |
+| `hook <name>` | run a hook (§7.1); reads the hook payload on stdin |
 | `review [--repo <worktree>] [--effort <path>]` | §7.3 |
 | `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
 | `doctor` | checks config, tool access, hook install, version drift; prints fixes |
@@ -251,7 +284,7 @@ Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]`
 - `folkways review` starts a **separate headless process** with the fixed prompt `.folkways/prompts/review.md`,
   filled with: repo, branch, base, HEAD SHA, ticket, effort path. The working agent can't frame it.
 - Output: `<effort>/NN-review-<sha7>.md` with frontmatter `sha: <full SHA>`.
-- `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard.sh` blocks the push
+- `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard` blocks the push
   until a review for HEAD exists. `on-demand`: never automatic.
 
 ### 7.4 Knowledge audit (GitHub Action)
@@ -270,14 +303,15 @@ destructive actions, `main`, external systems. Judgement calls are flagged in th
 
 ### 8.1 Team setup (once, by a lead)
 
-1. Clone the framework; `bin/folkways init ../example-team` → scaffold + vendor + first commit.
+1. `npx @folkways/cli init example-team` → scaffold + install + sync + first commit. No framework clone
+   needed (works behind a company npm mirror).
 2. Open Claude Code or Copilot CLI in the new repo; run `setup`. It interviews for `team.yaml` fields,
    moves any existing team material into `overlays/` or team `skills/`, writes READMEs.
 3. Push to a new GitHub repo; add the audit secret; protect `main` (linear history).
 
 ### 8.2 Onboarding (per person, per machine)
 
-1. Clone the team repo; open the tool there; run `onboard`.
+1. Clone the team repo; `npm ci`; open the tool there; run `onboard`.
 2. It writes `.local/me.yaml` (handle, projects dir, tool) and creates `people/<handle>/`.
 3. Grants access to the projects dir, with approval:
    - Claude Code: add `projects_dir` to `permissions.additionalDirectories` in `~/.claude/settings.json` (absolute path).
@@ -293,7 +327,8 @@ feature branch; the main agent merges. The main clone's checkout is never change
 
 ### 8.4 Upgrade
 
-`folkways upgrade 1.1.0` → review the branch diff (framework files only) → PR → merge.
+`npx folkways upgrade 1.1.0` → review the branch diff (framework files only) → PR → merge. Or merge a
+Dependabot/Renovate bump after running `npx folkways sync` on its branch. Teammates run `npm ci` after pulling.
 
 ## 9. Open and deferred
 
@@ -304,4 +339,8 @@ feature branch; the main agent merges. The main clone's checkout is never change
    and `PreToolUse` from `.claude/settings.json` as documented; Copilot CLI subagent `model:`.
 4. **Personal skills:** out of v1 (install to `~/.claude/skills/` and `~/.agents/skills/` by hand).
 5. **Real git hooks** (`commit-msg`, `pre-push`) as a tool-independent backstop: deferred; round 7 chose agent-side only.
-6. **Trademark and domain** for `folkways` (Summer).
+6. **Trademark and domain** for `folkways` (Summer). npm scope `@folkways` claimed by Summer (2026-09-28).
+   A dedicated `folkways` GitHub org may replace `sumsolution` later.
+7. **Published GitHub Action for sync (later):** runs on dependency-update PRs (Dependabot/Renovate),
+   detects a `@folkways/cli` version change, runs `npm ci && npx folkways sync`, and pushes the synced
+   files to the PR branch. Removes the manual sync step.
