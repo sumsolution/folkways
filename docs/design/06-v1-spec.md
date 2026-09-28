@@ -1,0 +1,306 @@
+# folkways v1 spec
+
+**Status:** draft, 2026-09-28. Proposal items settled. Sources: [01](01-interview-notes.md) rounds 1–11,
+[03](03-research-handoff-trigger.md), [04](04-research-copilot-capabilities.md), [05](05-research-repo-split.md).
+
+## 1. Scope
+
+| In v1 | Out of v1 |
+|---|---|
+| Claude Code (desktop + CLI), Copilot CLI | VS Code, JetBrains, any IDE integration; Copilot cloud agent; Cursor |
+| One team per person | A person on several teams |
+| Agent-side enforcement (skills + hooks) | CI checks in project repos |
+| Manual QA (local, dev) | E2E test writing |
+
+**Hard rule:** the framework repo holds no company-specific content. Company and team values live in the
+team repo (`team.yaml`, `overlays/`, team `skills/`). Examples in the framework are synthetic.
+
+## 2. Repos
+
+Two repos: the **framework** (versioned, public) and one **team repo** per team. Sessions run from the
+team repo. Code changes happen in project repos, in worktrees.
+
+### 2.1 Framework repo
+
+```
+folkways/
+├── AGENTS.md                # framework's own dev instructions (not vendored)
+├── VERSION  CHANGELOG.md
+├── bin/folkways             # CLI: init, upgrade, review, run, doctor
+├── vendor/                  # everything below is copied into team repos
+│   ├── instructions.md      # rendered into the team AGENTS.md managed block
+│   ├── skills/<name>/       # SKILL.md + references/
+│   ├── hooks/*.sh           # hook scripts
+│   ├── prompts/*.md         # fixed prompts for headless runs (review, knowledge-audit)
+│   ├── settings.hooks.json  # hook entries merged into .claude/settings.json
+│   └── workflows/*.yml      # GitHub Actions (knowledge-audit)
+└── templates/               # one-time scaffold for `init`: team.yaml, READMEs, .gitignore
+```
+
+### 2.2 Team repo
+
+```
+team-repo/
+├── AGENTS.md                # team text + one managed block (see §3)
+├── CLAUDE.md                # @AGENTS.md (+ Claude-only extras)
+├── team.yaml                # team config (§4.1)
+├── knowledge/               # durable facts, `Last verified:` + method          [PR]
+├── state/                   # live trackers, one file per track                 [direct push]
+├── efforts/<KEY>-<slug>/    # shared efforts, each with 00-STATUS.md            [direct push]
+├── overlays/<skill>/        # team overlays: add + override (§3.2)              [PR]
+├── people/<handle>/         # per person, committed                             [direct push]
+│   ├── overlays/<skill>/    #   personal overlays: add only
+│   ├── inbox/               #   side quests, ticket drafts with no effort
+│   └── work/<KEY>-<slug>/   #   personal efforts; promote with git mv to efforts/
+├── .local/                  # gitignored: me.yaml, session markers, private scratch
+├── .folkways/               # VENDORED, script-owned (§3)
+│   ├── manifest.json        #   version + checksum of every vendored file
+│   ├── bin/ hooks/ prompts/
+├── .claude/
+│   ├── settings.json        # team settings + framework hook entries (§3.1)
+│   └── skills/<name>/       # vendored framework skills + team skills
+└── .github/workflows/       # vendored knowledge-audit workflow + team workflows
+```
+
+**Push rules:** `knowledge/`, `overlays/`, team `skills/`, `team.yaml` and framework upgrades go by PR.
+`state/`, `efforts/`, `people/` are pushed directly, rebased, linear. Every push still needs the user's
+approval.
+
+## 3. Vendoring and overlay isolation
+
+Requirement (round 11): **overlays never touch framework files, and an upgrade never clobbers a customization.**
+
+### 3.1 Ownership
+
+| Path | Owner | `upgrade` behavior |
+|---|---|---|
+| `.folkways/**` | framework | replaced |
+| `.claude/skills/<name>/` listed in manifest | framework | replaced |
+| `.github/workflows/folkways-*.yml` | framework | replaced |
+| `AGENTS.md` between `<!-- folkways:begin -->` / `<!-- folkways:end -->` | framework | block replaced; text outside untouched |
+| `.claude/settings.json` hook entries whose command starts with `.folkways/hooks/` | framework | those entries replaced; all other keys and entries untouched |
+| Everything else (`overlays/`, `people/`, team skills, `team.yaml`, …) | team / person | never read or written |
+
+`folkways upgrade <version>`:
+
+1. Refuses on a dirty tree.
+2. Checks every manifest file against its checksum. **If a framework file was edited, it stops**, lists
+   the files, and says to move the change into `overlays/`. `--force` discards the edits.
+3. Refuses if a team skill in `.claude/skills/` has the same name as a new framework skill.
+4. Writes the new files and manifest on a branch `chore/folkways-<version>`, and commits
+   `chore(folkways): upgrade to <version>`. The user reviews and opens the PR.
+
+### 3.2 Overlays
+
+A skill's behaviour = framework skill + team overlay + personal overlay, applied in that order.
+
+| Level | Path | May add | May override |
+|---|---|---|---|
+| Team | `overlays/<skill>/OVERLAY.md` (+ any reference files) | yes | yes, by section ID |
+| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no |
+
+- Framework skills mark overridable sections with a stable ID: `## Commit format {#commit-format}`.
+- `OVERLAY.md` has two parts: `## Add` (extra rules, always applied) and `## Override {#id}` (team only;
+  replaces that section). A personal `## Override` is ignored, and the skill says so.
+- Team data files (ticket templates, ADR examples) sit next to `OVERLAY.md` and are referenced from it.
+- **Every framework skill's step 0:** read `team.yaml`, `.local/me.yaml` (for `handle`), then both overlay
+  files by explicit path. A missing file is normal. This is instruction-following, not enforcement ([04 §8](04-research-copilot-capabilities.md)).
+
+## 4. Config
+
+### 4.1 `team.yaml` (committed)
+
+```yaml
+folkways: { version: 1.0.0 }
+team: { name: Example Team, slug: example }
+members:                       # handle = people/<handle>/
+  - { handle: alex, github: alex-gh, name: Alex Doe }
+tracker:                       # ticket skill
+  type: jira                   # jira | github | linear
+  base_url: https://example.atlassian.net
+  project_key: EX
+docs:                          # research, adr
+  type: confluence             # confluence | none
+  base_url: https://example.atlassian.net/wiki
+  spaces: [EX, ARCH]
+repos:                         # research, review, worktrees
+  - { name: web-app, url: git@github.com:example/web-app.git, default_branch: main, owner: team }
+  - { name: auth-service, url: git@github.com:example/auth-service.git, default_branch: main, owner: other }
+research:
+  sources:                     # searched in this order; skip what doesn't apply
+    - { name: knowledge, kind: local }
+    - { name: team repos, kind: repos }
+    - { name: other teams' repos, kind: repos }
+    - { name: API docs portal, kind: url, url: https://docs.example.com, notes: "needs VPN" }
+    - { name: confluence, kind: mcp, server: atlassian }
+    - { name: jira, kind: mcp, server: atlassian }
+    - { name: datadog, kind: mcp, server: datadog }
+    - { name: slack, kind: mcp, server: slack }
+    - { name: web, kind: web }
+git:
+  commit_convention: angular   # type(scope): subject
+  scopes: [web-app, auth, ci]  # allowed module scopes; empty = any
+  branch_pattern: "{type}/{ticket}-{slug}"
+  merge: squash
+review:
+  trigger: pre-push            # on-demand | after-commit | pre-push
+adr:
+  targets: [confluence, repo]  # either or both
+  confluence: { space: ARCH, parent_page: "Team ADRs", group_label: "Web" }
+  repo_path: docs/adr
+  reviewers: { min: 2, outside_team: 1 }
+qa:
+  allowed_envs: [local, dev]   # agents may drive a browser here without asking
+notifications:
+  primary: github              # @mention on the draft PR
+  fallback: { slack_channel: "#example-team" }
+models:                        # per tool; cheap first, escalate
+  claude: { cheap: sonnet, strong: opus }
+  copilot: { cheap: <model-id>, strong: <model-id> }
+handoff:
+  bands: [125000, 150000, 200000]
+knowledge_audit:
+  cadence: monthly
+  tool: claude                 # claude | copilot (which CLI the Action runs)
+```
+
+### 4.2 `.local/me.yaml` (gitignored, per machine)
+
+```yaml
+handle: alex
+projects_dir: /Users/alex/projects     # absolute; `~` is not reliably expanded
+tool: claude                           # claude | copilot (default for `folkways run`)
+review:
+  trigger: pre-push                    # may differ from team (round 7)
+models: {}                             # optional override of team.yaml models
+notifications: { slack_user: "@alex" }
+```
+
+## 5. Instructions
+
+- `AGENTS.md` is the source. `CLAUDE.md` holds `@AGENTS.md` so a `CLAUDE.local.md` can't turn it off ([04 §1](04-research-copilot-capabilities.md)).
+- The **managed block** (from `vendor/instructions.md`) holds the way of working: session start and resume
+  (round 4), status doc rules, subagents and escalation, side quests, approval list, headless rules,
+  handoff bands, clone rules (round 7), writing style, evidence rule. It stays short and points to skills
+  for detail.
+- The team writes its own text outside the block.
+
+## 6. Skills
+
+Frontmatter: `name` and `description` only (portable across both tools). Every skill: step 0 reads config
+and overlays (§3.2); writes only after approval; succinct output; claims link to evidence.
+
+### 6.1 Ported (each one improved, not copied)
+
+| Skill | From | Changes |
+|---|---|---|
+| `ticket` | beta team's ticket skill | Tracker from `team.yaml`. Team templates and examples → `overlays/ticket/`. Framework ships generic templates + synthetic examples. Drafts go to the effort folder, else `people/<h>/inbox/` (drop `.agents/tickets`). Adds: tables where useful, call out gotchas. |
+| `adr` | `adr` | Method + default template (Issue → Context → Decision → Options → Consequences) + synthetic examples. Targets, group label, reviewers from `team.yaml`; gold-standard examples → `overlays/adr/`. Confluence and `docs/adr/NNNN-*.md`. Architecture knowledge section: **later** (dedicated session). |
+| `session-close` | `session-close` | Homes: `knowledge/` (by PR), `state/`, effort `00-STATUS.md`, overlays, `people/<h>/inbox/`. Lists all side quests found. Clears the `.local/` unclosed-session marker. Claude auto-memory stays optional. |
+| `knowledge-audit` | `knowledge-audit` | Tracker `state/knowledge-audit.md`. Headless mode = open a PR of proposals (§7.4), not a log block. |
+
+`epic-retro` and `doc-eval` are not ported (agreed 2026-09-28).
+
+### 6.2 New
+
+| Skill | Purpose | Output |
+|---|---|---|
+| `setup` | Interview a team lead and write `team.yaml`, first `state/` and README files | `team.yaml`, PR |
+| `onboard` | Set up one person on one machine (§8.2) | `.local/me.yaml`, `people/<h>/`, tool access |
+| `start` | Session start: resume (read `00-STATUS.md` → git state → confirm next steps) or new (ticket/docs → research → create `00-STATUS.md`) | `00-STATUS.md` |
+| `status` | Update an effort's `00-STATUS.md` at milestones; team roll-up and standup from `efforts/*/00-STATUS.md` and `state/`; promote an effort (`git mv` to `efforts/`) | status docs |
+| `research` | Source order from `team.yaml`; clone rules; tool fallback = ask; subagents cheap-first; Opus re-check triggers | `NN-<topic>.md` with confidence and SHAs read |
+| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort |
+| `commit` | Angular commit with module scope; branch naming | commit |
+| `pr` | Requires a review covering HEAD; squash-title rules; draft vs ready; asks before push | PR (draft if headless) |
+| `side-quest` | Write a finding or ticket draft to the effort or `people/<h>/inbox/`, and say so | file |
+| `handoff` | Write `00-STATUS.md` for a fresh session; used at band 3 and by `PreCompact` recovery | `00-STATUS.md` |
+| `tests` | TDD: failing test first for bugs, AC tests first for features; house style, call out bad tests | tests |
+| `qa` | Manual verification in `qa.allowed_envs`; evidence (screenshots, traces, links) | QA notes in the effort |
+
+## 7. Hooks and scripts
+
+All hooks live in `.claude/settings.json`, which both Claude Code and Copilot CLI read ([04 §3](04-research-copilot-capabilities.md)).
+Matchers work in both, so scripts still self-filter on command text only as a safety net.
+
+### 7.1 Hooks
+
+| Hook | Event | Does | Copilot CLI |
+|---|---|---|---|
+| `context-band.sh` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
+| `precompact.sh` | `PreCompact` | Logs a missed band to `.local/`. | yes |
+| `session-start.sh` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". If an unclosed-session marker exists: inject "offer session-close". Reminds the `start` procedure. | yes |
+| `session-end.sh` | `SessionEnd` | Writes `.local/sessions/<id>.unclosed`. | `sessionEnd` |
+| `git-guard.sh` | `PreToolUse` on Bash | `git commit`: checks the message format (Angular, allowed scope). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
+
+Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.
+
+### 7.2 `folkways` CLI (`.folkways/bin/folkways`)
+
+| Command | Does |
+|---|---|
+| `init <path>` | (framework repo only) scaffold a team repo from `templates/`, then vendor |
+| `upgrade <version>` | §3.1 |
+| `review [--repo <worktree>] [--effort <path>]` | §7.3 |
+| `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
+| `doctor` | checks config, tool access, hook install, version drift; prints fixes |
+
+### 7.3 Review gate
+
+- `folkways review` starts a **separate headless process** with the fixed prompt `.folkways/prompts/review.md`,
+  filled with: repo, branch, base, HEAD SHA, ticket, effort path. The working agent can't frame it.
+- Output: `<effort>/NN-review-<sha7>.md` with frontmatter `sha: <full SHA>`.
+- `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard.sh` blocks the push
+  until a review for HEAD exists. `on-demand`: never automatic.
+
+### 7.4 Knowledge audit (GitHub Action)
+
+`.github/workflows/folkways-knowledge-audit.yml`: monthly cron + manual dispatch. Runs the
+`knowledge-audit` skill headless with `knowledge_audit.tool`, writes proposals, opens a **PR** on
+`chore/knowledge-audit-<YYYY-MM>`, @mentions the knowledge owners. Needs one repo secret (API key or
+Copilot token). Never merges.
+
+### 7.5 Headless runs
+
+Headless = `folkways run` or CI. Allowed: local files, draft PRs, @mention / Slack notify. Never:
+destructive actions, `main`, external systems. Judgement calls are flagged in the output for review.
+
+## 8. Flows
+
+### 8.1 Team setup (once, by a lead)
+
+1. Clone the framework; `bin/folkways init ../example-team` → scaffold + vendor + first commit.
+2. Open Claude Code or Copilot CLI in the new repo; run `setup`. It interviews for `team.yaml` fields,
+   moves any existing team material into `overlays/` or team `skills/`, writes READMEs.
+3. Push to a new GitHub repo; add the audit secret; protect `main` (linear history).
+
+### 8.2 Onboarding (per person, per machine)
+
+1. Clone the team repo; open the tool there; run `onboard`.
+2. It writes `.local/me.yaml` (handle, projects dir, tool) and creates `people/<handle>/`.
+3. Grants access to the projects dir, with approval:
+   - Claude Code: add `projects_dir` to `permissions.additionalDirectories` in `~/.claude/settings.json` (absolute path).
+   - Copilot CLI: prints an alias, e.g. `alias fw='copilot --add-dir /Users/alex/projects'` (`/add-dir` persistence is unreliable, [05](05-research-repo-split.md) fact 4).
+4. Checks MCP servers and CLIs from `research.sources` and `gh`; lists what's missing.
+5. Runs `folkways doctor`; commits `people/<handle>/` on approval.
+
+### 8.3 Code change in a project repo
+
+`git fetch` in the main clone → `git worktree add <projects_dir>/.worktrees/<repo>/<branch> -b <branch> origin/<default>`
+→ work, `tests`, `commit` → `review` per trigger → `pr`. Parallel subagents each get a worktree off the
+feature branch; the main agent merges. The main clone's checkout is never changed.
+
+### 8.4 Upgrade
+
+`folkways upgrade 1.1.0` → review the branch diff (framework files only) → PR → merge.
+
+## 9. Open and deferred
+
+1. **When to lift findings to `knowledge/`:** session close vs immediately. Decide from beta evidence.
+2. **Architecture knowledge for `adr`:** dedicated session.
+3. **Verify before building:** `PostToolBatch` exists in the installed Claude Code; the last-assistant
+   `usage` matches the statusline within a few percent; Copilot CLI honors `SessionEnd`/`sessionEnd`
+   and `PreToolUse` from `.claude/settings.json` as documented; Copilot CLI subagent `model:`.
+4. **Personal skills:** out of v1 (install to `~/.claude/skills/` and `~/.agents/skills/` by hand).
+5. **Real git hooks** (`commit-msg`, `pre-push`) as a tool-independent backstop: deferred; round 7 chose agent-side only.
+6. **Trademark and domain** for `folkways` (Summer).
