@@ -1,9 +1,10 @@
-import { chmodSync, existsSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
+import { fsOps } from '../src/files.ts';
 import { sync } from '../src/sync.ts';
-import { addFrameworkContent, commitAll, json, makePackage, makeTeam, put, read } from './helpers.ts';
+import { addFrameworkContent, commitAll, json, makePackage, makeTeam, put, read, snapshot } from './helpers.ts';
 
 let team: string;
 let next: string;
@@ -134,5 +135,156 @@ describe('sync refusals and warnings', () => {
   it('rejects a manifest that is not JSON', () => {
     put(join(team, '.folkways/manifest.json'), '{ nope');
     expect(() => sync(team, next)).toThrow(/manifest\.json: not a JSON object/);
+  });
+});
+
+describe('sync without a manifest (adopting a repo)', () => {
+  beforeEach(() => {
+    rmSync(join(team, '.folkways/manifest.json'));
+    commitAll(team, 'drop manifest');
+  });
+
+  it('keeps files that already match', () => {
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.2.0');
+  });
+
+  it('refuses to overwrite files that differ, and lists them', () => {
+    put(join(team, '.folkways/instructions.md'), 'ours\n');
+    put(join(team, '.github/workflows/folkways-knowledge-audit.yml'), 'name: ours\n');
+    const before = snapshot(team);
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next)).toThrow(
+      /replaced  \.folkways\/instructions\.md\n.*replaced  \.github\/workflows\/folkways-knowledge-audit\.yml[\s\S]*--force/,
+    );
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('refuses a folder where a file goes, without crashing', () => {
+    mkdirSync(join(team, '.folkways/prompts/review.md'), { recursive: true });
+    put(join(team, '.folkways/prompts/review.md/x'), 'x');
+    expect(() => sync(team, next)).toThrow(/replaced  \.folkways\/prompts\/review\.md/);
+  });
+
+  it.each(['.folkways', '.claude'])('refuses a file where the %s folder goes', (dir) => {
+    rmSync(join(team, dir), { recursive: true });
+    put(join(team, dir), 'x\n');
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next)).toThrow(`replaced  ${dir}\n`);
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toContain(`replaced  ${dir}`);
+    expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.2.0');
+  });
+
+  it('--force overwrites them and reports them', () => {
+    put(join(team, '.folkways/instructions.md'), 'ours\n');
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toEqual(['replaced  .folkways/instructions.md']);
+    expect(read(join(team, '.folkways/instructions.md'))).toBe(read(join(next, 'assets/instructions.md')));
+  });
+});
+
+describe('sync without a manifest, with framework skills in place', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  beforeEach(() => {
+    sync(team, next);
+    rmSync(join(team, '.folkways/manifest.json'));
+    commitAll(team, 'drop manifest');
+  });
+
+  it('keeps the adopted files when the swap fails', () => {
+    const before = snapshot(team);
+    let calls = 0;
+    const real = fsOps.rename;
+    vi.spyOn(fsOps, 'rename').mockImplementation((from, to) => {
+      if (++calls === 5) throw new Error('injected rename failure');
+      real(from, to);
+    });
+    expect(() => sync(team, next)).toThrow(/injected/);
+    vi.restoreAllMocks();
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('adopts identical skills', () => {
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(json(join(team, '.folkways/manifest.json')).skills).toEqual(['start']);
+  });
+
+  it('refuses differing or extra skill files, and --force replaces them', () => {
+    put(join(team, '.claude/skills/start/SKILL.md'), 'ours\n');
+    put(join(team, '.claude/skills/start/extra.md'), 'extra\n');
+    expect(() => sync(team, next)).toThrow(/replaced  \.claude\/skills\/start\/SKILL\.md\n.*replaced  \.claude\/skills\/start\/extra\.md/);
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toEqual(['replaced  .claude/skills/start/SKILL.md', 'replaced  .claude/skills/start/extra.md']);
+    expect(existsSync(join(team, '.claude/skills/start/extra.md'))).toBe(false);
+    expect(sync(team, next).discarded).toEqual([]);
+  });
+});
+
+describe('sync after an interrupted sync', () => {
+  it('refuses and says how to recover', () => {
+    put(join(team, '.folkways-sync-abc123/old/.folkways/manifest.json'), '{}');
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next, { force: true })).toThrow(/interrupted[\s\S]*\.folkways-sync-abc123/);
+  });
+});
+
+describe('sync with a manifest', () => {
+  it('refuses to overwrite a team file at a new framework path', () => {
+    put(join(team, '.folkways/prompts/review.md'), 'team prompt\n');
+    expect(() => sync(team, next)).toThrow(/replaced  \.folkways\/prompts\/review\.md/);
+    expect(read(join(team, '.folkways/prompts/review.md'))).toBe('team prompt\n');
+  });
+});
+
+describe('sync is atomic', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  beforeEach(() => {
+    sync(team, next);
+    commitAll(team);
+    // The next version drops the skill's reference file and changes a prompt.
+    next = makePackage('0.3.0');
+    addFrameworkContent(next);
+    rmSync(join(next, 'assets/skills/start/references'), { recursive: true });
+    put(join(next, 'assets/prompts/review.md'), 'review prompt v3\n');
+    put(join(next, 'assets/prompts/new.md'), 'new prompt\n');
+  });
+
+  const failOnCall = (op: 'copy' | 'rename', n: number) => {
+    let calls = 0;
+    const real = fsOps[op];
+    vi.spyOn(fsOps, op).mockImplementation(((...args: [string, string]) => {
+      if (++calls === n) throw new Error(`injected ${op} failure`);
+      return real(...args);
+    }) as any);
+  };
+
+  const expectUntouched = (before: Record<string, string>) => {
+    expect(snapshot(team)).toEqual(before);
+    expect(readdirSync(team).filter((f) => f.startsWith('.folkways-'))).toEqual([]);
+    vi.restoreAllMocks();
+    expect(sync(team, next)).toMatchObject({ version: '0.3.0', previous: '0.2.0', discarded: [] });
+    expect(read(join(team, '.folkways/prompts/review.md'))).toBe('review prompt v3\n');
+    expect(existsSync(join(team, '.claude/skills/start/references'))).toBe(false);
+  };
+
+  it.each([1, 3, 5])('leaves the old files when copy %i fails', (n) => {
+    const before = snapshot(team);
+    failOnCall('copy', n);
+    expect(() => sync(team, next)).toThrow(/injected copy failure/);
+    expectUntouched(before);
+  });
+
+  it.each([1, 4, 8, 12])('leaves the old files when rename %i fails', (n) => {
+    const before = snapshot(team);
+    failOnCall('rename', n);
+    expect(() => sync(team, next)).toThrow(/injected rename failure/);
+    expectUntouched(before);
   });
 });

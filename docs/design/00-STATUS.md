@@ -84,12 +84,12 @@ repo; `@` import instead of a managed block. Spec §2, §3, §5, §7, §8 update
 From the fresh-process review of [sumsolution/folkways#1](https://github.com/sumsolution/folkways/pull/1). Findings 1–4 are fixed there;
 5–6 (Windows) are out of scope.
 
-- [ ] `sync` with no manifest (adopting an existing repo) overwrites existing `.folkways/` files; check `assetMap` destinations for clashes.
-- [ ] `sync` isn't atomic: a failure after copying leaves new files with the old manifest. Write the manifest last or stage in a temp dir.
-- [ ] Hook ownership matches `folkways hook ` anywhere in the command; match the `node_modules/.bin/folkways hook ` prefix. A hook group without a `hooks` array crashes with a TypeError.
-- [ ] `init .hidden` produces an invalid npm package name.
+- [x] `sync` with no manifest (adopting an existing repo) overwrites existing `.folkways/` files; check `assetMap` destinations for clashes.
+- [x] `sync` isn't atomic: a failure after copying leaves new files with the old manifest. Write the manifest last or stage in a temp dir.
+- [x] Hook ownership matches `folkways hook ` anywhere in the command; match the `node_modules/.bin/folkways hook ` prefix. A hook group without a `hooks` array crashes with a TypeError.
+- [x] `init .hidden` produces an invalid npm package name.
 - [ ] `npx @folkways/cli sync` outside the pinned install syncs whatever version npx resolves; `doctor` should catch the drift.
-- [ ] CI: smoke test the packed tarball (`pnpm pack` → install → `init --no-install` → `sync`); add `timeout-minutes` and a macOS runner.
+- [x] CI: smoke test the packed tarball (`pnpm pack` → install → `init --no-install` → `sync`); add `timeout-minutes` and a macOS runner.
 
 ## Next step
 
