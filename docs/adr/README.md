@@ -10,5 +10,5 @@ Team repos keep their own ADRs (spec §6.1 `adr` skill); this folder is for the 
 
 | # | Title | Status |
 |---|---|---|
-| [0001](0001-overlay-enforcement.md) | Which team rules must be enforced by mechanism, and how are the rest layered? | proposed |
+| [0001](0001-overlay-enforcement.md) | Mores are enforced by mechanism; folkways are layered by overlays | accepted |
 | 0002 | Hook runtime (reserved; another session) | reserved |

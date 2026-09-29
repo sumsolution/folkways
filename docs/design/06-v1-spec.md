@@ -124,7 +124,7 @@ that branch.
 install. `init` takes `--package-manager`, defaulting to whichever ran it (`npx` → npm, `pnpm dlx` → pnpm). `doctor` and the `SessionStart` hook warn when the installed version differs from the manifest.
 **Later:** a published GitHub Action does this in CI (§9.7).
 
-### 3.2 Overlays (proposed, ADR 0001)
+### 3.2 Overlays (ADR 0001)
 
 Rules come in two kinds ([ADR 0001](../adr/0001-overlay-enforcement.md), research in [07](07-research-overlay-enforcement.md)):
 

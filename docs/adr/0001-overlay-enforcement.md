@@ -1,8 +1,8 @@
-# 0001. Which team rules must be enforced by mechanism, and how are the rest layered?
+# 0001. Mores are enforced by mechanism; folkways are layered by overlays
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | accepted |
 | Date | 2026-09-29 |
 | Owner | Summer Jordan |
 
@@ -123,7 +123,7 @@ where side quests go.
 
 ## Consequences
 
-- **Spec §3.2** rewritten to match (this PR, marked `(proposed, ADR 0001)`).
+- **Spec §3.2** rewritten to match (this PR, headed `(ADR 0001)`).
 - **Spec follow-ups** (other sections, not in this PR): §3.1 `sync` compiles team overlays and records
   both checksums; §4.1 adds `git.commit_pattern`; §6 step 0 becomes the shared block; §7.1 `git-guard`
   gains M5 and M6 and reads every more from `team.yaml`; §7.2 `doctor` gains M8, M10, M11; §7.5 headless
