@@ -15,7 +15,8 @@ const USAGE = `usage: folkways <command> [options]
                                (npx @folkways/cli init <path>, or pnpm dlx @folkways/cli init <path>)
                                --package-manager  default: the one that ran this, else npm
   sync [--force]               copy the installed version's files into this team repo
-                               --force  discard edits to framework-owned files
+                               --force  discard edits to framework-owned files and overwrite
+                                        differing team files at framework paths
   upgrade <version>            install <version> on branch chore/folkways-<version>, sync, commit
                                (uses the team repo's package manager)
   version                      print the installed version

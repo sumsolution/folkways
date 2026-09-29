@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readdirSync, readFileSync, rmdirSync, statSync } from 'node:fs';
+import { copyFileSync, existsSync, readdirSync, readFileSync, renameSync, rmdirSync, statSync } from 'node:fs';
 import { join, sep } from 'node:path';
+
+/** File operations sync stages with. A seam, so tests can inject failures. */
+export const fsOps = {
+  copy: (src: string, dest: string): void => copyFileSync(src, dest),
+  rename: (from: string, to: string): void => renameSync(from, to),
+};
 
 const IGNORED = new Set(['.gitkeep', '.DS_Store']);
 
