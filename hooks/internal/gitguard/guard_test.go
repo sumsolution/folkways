@@ -240,6 +240,21 @@ func TestCommitMessages(t *testing.T) {
 		{"git commit -m \"$(cat <<'EOF'\nfeat: ok\nEOF\n)\" && git commit -m bad", nil, "not Angular"},
 		{`git commit -F msg.txt`, nil, ""},
 		{`git commit --no-edit`, nil, ""},
+		{`git commit -Skeyname -m "feat: ok"`, nil, ""},
+		{`git commit -S -m "feat: ok"`, nil, ""},
+		{`git commit -Smain -m "bad"`, nil, "not Angular"},
+		{`git commit -Cmain`, nil, ""},
+		{`git commit -C main`, nil, ""},
+		{`git commit -c HEAD -m "bad"`, nil, "not Angular"},
+		{`git commit -Fmsg.txt`, nil, ""},
+		{`git commit -F msg.txt -m "bad"`, nil, "not Angular"},
+		{`git commit -tmsg -m "feat: ok"`, nil, ""},
+		{`git commit -umno -m "feat: ok"`, nil, ""},
+		{`git commit -sam"bad"`, nil, "not Angular"},
+		{`git commit --author "A <a@example.com>" -m "feat: ok"`, nil, ""},
+		{`git commit --file msg.txt`, nil, ""},
+		{`git commit -m "bad" -Skey`, nil, "not Angular"},
+		{`git commit -- -m`, nil, ""},
 	}
 	for _, c := range cases {
 		cfg := scoped(c.scopes...)
@@ -247,5 +262,69 @@ func TestCommitMessages(t *testing.T) {
 		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
 			t.Errorf("%s: reason %q, want substring %q", c.cmd, got, c.denied)
 		}
+	}
+}
+
+func TestGitTargets(t *testing.T) {
+	e := newEnv(t)
+	t.Setenv("HOME", filepath.Dir(filepath.Dir(e.main)))
+	wt, main := e.worktree, e.main
+	team := e.cfg.Dir
+	cases := []struct {
+		name   string
+		cmd    string
+		cwd    string
+		denied string
+	}{
+		{"pushd like cd", "pushd " + wt + " && git push", "/", "Push blocked"},
+		{"pushd main clone", "pushd " + main + " && git reset --hard", wt, "main clone"},
+		{"pushd tilde", "pushd ~/projects/app-wt >/dev/null && git push", "/", "Push blocked"},
+		{"pushd with rotation is unknown", "pushd +1 && git push", wt, ""},
+		{"pushd option is unknown", "pushd -n " + main + " && git push", wt, ""},
+		{"pushd without args is unknown", "pushd && git push", wt, ""},
+		{"pushd unknown then semicolon", "pushd +1; git push", wt, "Push blocked"},
+		{"popd is unknown", "popd && git push", wt, ""},
+		{"popd then semicolon keeps the original", "popd; git push", wt, "Push blocked"},
+		{"env GIT_DIR and GIT_WORK_TREE", "GIT_DIR=" + main + "/.git GIT_WORK_TREE=" + main + " git reset --hard", team, "main clone"},
+		{"env GIT_DIR only", "GIT_DIR=" + main + "/.git git reset --hard", wt, "main clone"},
+		{"env GIT_DIR push", "GIT_DIR=" + wt + "/.git git push", "/", "Push blocked"},
+		{"option wins over env", "GIT_DIR=" + main + "/.git git --git-dir=" + wt + "/.git reset --hard", "/", ""},
+		{"env unresolvable is unknown", "GIT_DIR=$X git push", wt, ""},
+		{"env relative to dir", "cd " + wt + " && GIT_DIR=.git git push", "/", "Push blocked"},
+		{"work-tree alone is ignored", "cd " + main + " && git --work-tree=" + team + " reset --hard", wt, "main clone"},
+		{"work-tree alone: repo is the current dir", "cd " + wt + " && git --work-tree=" + main + " reset --hard", team, ""},
+		{"work-tree env alone is ignored", "cd " + main + " && GIT_WORK_TREE=" + team + " git reset --hard", wt, "main clone"},
+		{"unresolvable work-tree with git-dir is unknown", "git --git-dir=" + main + "/.git --work-tree=$X reset --hard", wt, ""},
+		{"unresolvable work-tree alone does not matter", "cd " + main + " && git --work-tree=$X reset --hard", wt, "main clone"},
+		{"absolute -C after unknown cd is known", "cd $X && git -C " + wt + " push", "/", "Push blocked"},
+		{"relative -C after unknown cd is unknown", "cd $X && git -C sub push", wt, ""},
+	}
+	for _, c := range cases {
+		got := checkCommand(c.cmd, c.cwd, e.cfg)
+		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
+			t.Errorf("%s: %q: reason %q, want substring %q", c.name, c.cmd, got, c.denied)
+		}
+	}
+}
+
+func TestCommitCheckIgnoresDirectory(t *testing.T) {
+	e := newEnv(t)
+	for _, cmd := range []string{
+		`cd "$SOMEWHERE" && git commit -m "bad subject"`,
+		`git -C "$SOMEWHERE" commit -m "bad subject"`,
+		`git --git-dir="$D" commit -m "bad subject"`,
+		`GIT_DIR=$D git commit -m "bad subject"`,
+		`cd $X && cd $Y && git commit -am"bad subject"`,
+	} {
+		if got := checkCommand(cmd, e.worktree, e.cfg); !strings.Contains(got, "not Angular") {
+			t.Errorf("%s: reason %q, want the commit message deny", cmd, got)
+		}
+	}
+	if got := checkCommand(`cd "$X" && git commit -m "feat: fine"`, e.worktree, e.cfg); got != "" {
+		t.Errorf("valid message denied: %q", got)
+	}
+	// git commit --no-edit and a $(...) message still pass
+	if got := checkCommand(`cd "$X" && git commit -m "$(date)"`, e.worktree, e.cfg); got != "" {
+		t.Errorf("unresolvable message denied: %q", got)
 	}
 }

@@ -85,48 +85,65 @@ func (r resolver) messageArg(w *syntax.Word) (string, bool) {
 	return "", false
 }
 
+// Commit options that take an operand. A short one in a cluster (`-Skey`, `-Fmsg.txt`) takes the rest of the
+// cluster, or the next word when nothing is attached. -S and -u take only an attached operand.
+const (
+	shortWithOperand   = "FcCt"
+	shortOptionalAfter = "Su"
+)
+
+// Long commit options whose operand is the next word (`--opt value`).
+var longWithOperand = map[string]bool{"--file": true, "--reuse-message": true, "--reedit-message": true, "--template": true,
+	"--author": true, "--date": true, "--cleanup": true, "--fixup": true, "--squash": true, "--trailer": true,
+	"--pathspec-from-file": true, "--gpg-sign": false}
+
 // commitMessage returns the first message given by -m, -am, -m<msg>, --message <msg> or --message=<msg>.
-// ok is false when there is none or it is not statically known.
+// A short-option cluster is read left to right: an m ends it with the message, an option with an operand
+// ends it without one. ok is false when there is none or it is not statically known.
 func commitMessage(r resolver, args []arg) (string, bool) {
-	for i, a := range args {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
 		if !a.ok {
 			continue
 		}
 		v := a.val
-		var attached string
-		var hasAttached, isMsg bool
 		switch {
+		case v == "--":
+			return "", false
 		case v == "--message":
-			isMsg = true
+			if i+1 >= len(args) {
+				return "", false
+			}
+			return r.messageArg(args[i+1].w)
 		case strings.HasPrefix(v, "--message="):
-			isMsg, attached, hasAttached = true, strings.TrimPrefix(v, "--message="), true
+			return strings.TrimPrefix(v, "--message="), true
+		case longWithOperand[v]:
+			i++
 		case strings.HasPrefix(v, "-") && !strings.HasPrefix(v, "--"):
-			// a cluster of short flags: everything after the first m is the message
-			if k := strings.IndexByte(v, 'm'); k > 0 && letters(v[1:k]) {
-				isMsg, attached, hasAttached = true, v[k+1:], k+1 < len(v)
+		cluster:
+			for k := 1; k < len(v); k++ {
+				c := v[k]
+				switch {
+				case c == 'm':
+					if k+1 < len(v) {
+						return v[k+1:], true
+					}
+					if i+1 >= len(args) {
+						return "", false
+					}
+					return r.messageArg(args[i+1].w)
+				case strings.IndexByte(shortWithOperand, c) >= 0:
+					if k+1 == len(v) {
+						i++ // the operand is the next word
+					}
+					break cluster
+				case strings.IndexByte(shortOptionalAfter, c) >= 0:
+					break cluster
+				}
 			}
 		}
-		if !isMsg {
-			continue
-		}
-		if hasAttached {
-			return attached, true
-		}
-		if i+1 >= len(args) {
-			return "", false
-		}
-		return r.messageArg(args[i+1].w)
 	}
 	return "", false
-}
-
-func letters(s string) bool {
-	for _, c := range s {
-		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
-			return false
-		}
-	}
-	return true
 }
 
 // subjectOf returns the first non-empty line of a message.

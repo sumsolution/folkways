@@ -1,6 +1,7 @@
 package gitguard
 
 import (
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -106,9 +107,6 @@ func (w *walker) stmt(s *syntax.Stmt, in dirset) (succ, fail dirset) {
 			succ, fail = rs, union(lf, rf)
 		case syntax.OrStmt:
 			ls, lf := w.stmt(c.X, in)
-			if lf.empty() {
-				lf = union(ls, lf)
-			}
 			rs, rf := w.stmt(c.Y, lf)
 			succ, fail = union(ls, rs), rf
 		default: // | and |&: both sides run in the current directory and cd does not persist
@@ -200,14 +198,36 @@ func (w *walker) call(c *syntax.CallExpr, in dirset) (succ, fail dirset) {
 	switch name {
 	case "cd":
 		return in.moved(w.cdTarget(c.Args[1:])), in
+	case "pushd":
+		return in.moved(w.pushdTarget(c.Args[1:])), in
+	case "popd":
+		return dirset{unknown: true}, in
 	case "git":
-		for _, d := range in.dirs {
-			if w.reason = w.res.git(c.Args[1:], d, w.cfg); w.reason != "" {
+		// The commit message check does not depend on the directory, so it runs even when the
+		// directories are unknown; the checks that need the repo are skipped for an unknown one.
+		starts := in.dirs
+		if len(starts) == 0 || in.unknown {
+			starts = append(slices.Clone(starts), "")
+		}
+		for _, d := range starts {
+			if w.reason = w.res.git(c.Args[1:], c.Assigns, d, d != "", w.cfg); w.reason != "" {
 				break
 			}
 		}
 	}
 	return
+}
+
+// pushdTarget returns the directory `pushd dir` goes to. Options and stack rotations (+N, -N) are unknown.
+func (w *walker) pushdTarget(args []*syntax.Word) (string, bool) {
+	if len(args) == 0 {
+		return "", false // swaps the top two entries of the stack
+	}
+	v, ok := w.res.word(args[0])
+	if !ok || v == "" || v == "--" || v[0] == '-' || v[0] == '+' {
+		return "", false
+	}
+	return v, true
 }
 
 // cdTarget returns the directory `cd args...` goes to, and whether it is known.
@@ -232,6 +252,14 @@ func (w *walker) cdTarget(args []*syntax.Word) (string, bool) {
 	return v, true
 }
 
+// literalPrefix returns the text of the leading literal part of w ("" if it starts with anything else).
+func literalPrefix(w *syntax.Word) string {
+	if lit, ok := w.Parts[0].(*syntax.Lit); ok {
+		return lit.Value
+	}
+	return ""
+}
+
 // arg is one resolved word of a git command line.
 type arg struct {
 	w   *syntax.Word
@@ -239,34 +267,57 @@ type arg struct {
 	ok  bool
 }
 
-// Git global options that take an operand: `--opt value` or `--opt=value`.
-var gitOptWithArg = map[string]bool{"--git-dir": true, "--work-tree": true, "--namespace": true, "--config-env": true}
-
 // Git global options without an operand (`--exec-path` takes one only as `--exec-path=<path>`).
 var gitFlag = map[string]bool{"-p": true, "-P": true, "--paginate": true, "--no-pager": true, "--no-replace-objects": true,
 	"--no-optional-locks": true, "--bare": true, "--literal-pathspecs": true, "--glob-pathspecs": true,
 	"--noglob-pathspecs": true, "--icase-pathspecs": true, "--no-lazy-fetch": true, "--exec-path": true}
 
-// git checks one `git [global options] <sub> args...` run in dir. A word that cannot be resolved where
-// it matters (the subcommand, a directory option) means the target repo is unknown: fail open.
-func (r resolver) git(words []*syntax.Word, dir string, cfg team.Config) string {
+// Git global options that take an operand: `--opt value` or `--opt=value`.
+var gitOptWithArg = map[string]bool{"--git-dir": true, "--work-tree": true, "--namespace": true, "--config-env": true}
+
+// gitPath is a directory operand of git: the raw text, and whether it could be resolved statically.
+type gitPath struct {
+	raw string
+	set bool
+	ok  bool
+}
+
+// git checks one `git [global options] <sub> args...` (assigns are the `NAME=value` prefixes of the command)
+// run in dir; dirKnown is false when dir cannot be determined. The commit message check needs no
+// directory. The push and main-clone checks need the repo: they run only when it is known, so anything
+// unresolvable (a directory option, GIT_DIR) fails open. Only an unresolvable subcommand skips everything.
+func (r resolver) git(words []*syntax.Word, assigns []*syntax.Assign, dir string, dirKnown bool, cfg team.Config) string {
 	args := make([]arg, len(words))
 	for i, word := range words {
 		args[i].w = word
 		args[i].val, args[i].ok = r.word(word)
 	}
-	var gitDir, workTree string
+	var gitDir, workTree gitPath
+	for _, a := range assigns { // GIT_DIR and GIT_WORK_TREE from the environment; options win
+		if a.Name == nil || a.Value == nil || (a.Name.Value != "GIT_DIR" && a.Name.Value != "GIT_WORK_TREE") {
+			continue
+		}
+		v, ok := r.word(a.Value)
+		p := gitPath{raw: v, set: v != "" || !ok, ok: ok}
+		if a.Name.Value == "GIT_DIR" {
+			gitDir = p
+		} else {
+			workTree = p
+		}
+	}
 	i := 0
 options:
 	for i < len(args) {
-		if !args[i].ok {
-			return ""
+		v, unresolved := args[i].val, !args[i].ok
+		if unresolved { // an option with an unresolvable operand (`--git-dir="$D"`, `-C$D`) is still an option
+			if v = literalPrefix(args[i].w); !strings.HasPrefix(v, "-") {
+				return ""
+			}
 		}
-		v := args[i].val
-		// operand returns the option's operand and the number of words used, or ok=false when it is unknown.
+		// operand returns the option's operand (attached or the next word), the words used, and whether it is known.
 		operand := func(attached string, hasAttached bool) (val string, n int, ok bool) {
 			if hasAttached {
-				return attached, 1, true
+				return attached, 1, !unresolved
 			}
 			if i+1 >= len(args) {
 				return "", 1, false
@@ -274,65 +325,84 @@ options:
 			return args[i+1].val, 2, args[i+1].ok
 		}
 		name, eqVal, hasEq := strings.Cut(v, "=")
-		var (
-			val    string
-			n      int
-			ok     bool
-			target *string
-			dirOpt bool
-		)
 		switch {
 		case v == "-C" || (strings.HasPrefix(v, "-C") && len(v) > 2):
-			val, n, ok = operand(v[2:], len(v) > 2)
-			dirOpt = true
+			val, n, ok := operand(v[2:], len(v) > 2 || unresolved)
+			switch {
+			case !ok:
+				dirKnown = false
+			case filepath.IsAbs(val):
+				dir, dirKnown = filepath.Clean(val), true
+			case dirKnown:
+				dir = resolve(dir, val)
+			}
+			i += n
 		case v == "-c" || (strings.HasPrefix(v, "-c") && len(v) > 2):
-			_, n, _ = operand("", len(v) > 2)
+			_, n, _ := operand("", len(v) > 2 || unresolved)
+			i += n
 		case gitOptWithArg[name]:
-			val, n, ok = operand(eqVal, hasEq)
+			val, n, ok := operand(eqVal, hasEq)
 			switch name {
 			case "--git-dir":
-				target, dirOpt = &gitDir, true
+				gitDir = gitPath{raw: val, set: true, ok: ok}
 			case "--work-tree":
-				target, dirOpt = &workTree, true
+				workTree = gitPath{raw: val, set: true, ok: ok}
 			}
+			i += n
 		case gitFlag[name]:
-			n = 1
+			i++
 		default:
 			break options
 		}
-		if dirOpt {
-			if !ok {
-				return ""
-			}
-			switch {
-			case target != nil:
-				*target = resolve(dir, val)
-			default:
-				dir = resolve(dir, val)
-			}
-		}
-		i += n
-	}
-	repo := dir
-	switch {
-	case workTree != "":
-		repo = workTree
-	case gitDir != "" && strings.HasSuffix(gitDir, "/.git"):
-		repo = strings.TrimSuffix(gitDir, "/.git")
-	case gitDir != "":
-		repo = gitDir
 	}
 	if i >= len(args) || !args[i].ok {
 		return ""
 	}
 	sub, rest := args[i].val, args[i+1:]
-	switch {
-	case sub == "commit":
+	if sub == "commit" {
 		return checkCommit(r, rest, cfg)
+	}
+	if sub != "push" && !mainGuard[sub] {
+		return ""
+	}
+	repo, ok := gitRepo(dir, dirKnown, gitDir, workTree)
+	switch {
+	case !ok:
+		return ""
 	case sub == "push":
 		return checkPush(repo, cfg)
-	case mainGuard[sub]:
+	default:
 		return checkMainClone(sub, repo, cfg)
 	}
-	return ""
+}
+
+// gitRepo is the repo git would act on: with a git dir given, the work tree if given, else the parent of a
+// git dir named `.git`, else the git dir itself; with no git dir, the repo of the current directory
+// (a work tree alone does not select a repo). ok is false when it cannot be determined.
+func gitRepo(dir string, dirKnown bool, gitDir, workTree gitPath) (string, bool) {
+	resolvePath := func(p gitPath) (string, bool) {
+		switch {
+		case !p.ok:
+			return "", false
+		case filepath.IsAbs(p.raw):
+			return filepath.Clean(p.raw), true
+		case dirKnown:
+			return resolve(dir, p.raw), true
+		}
+		return "", false
+	}
+	if !gitDir.set {
+		return dir, dirKnown
+	}
+	if workTree.set {
+		return resolvePath(workTree)
+	}
+	gd, ok := resolvePath(gitDir)
+	if !ok {
+		return "", false
+	}
+	if filepath.Base(gd) == ".git" {
+		return filepath.Dir(gd), true
+	}
+	return gd, true
 }

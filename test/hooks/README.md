@@ -84,16 +84,26 @@ change them here and in the fixtures together.
   continuations work. A line that does not parse is allowed.
 - Words are resolved as the shell would: quotes, escapes, `~`, `~/x`, `$HOME`, `${HOME}` (from the process's
   `HOME`; the harness sets it to the temp root above the projects directory). A directory that cannot be
-  resolved (`cd "$OTHER"`, `git -C "$X"`, an unknown subcommand) makes the target repo unknown: that command
-  is not checked (fail open). After `cd <unknown> ||` or `;` the original directory still counts.
+  resolved (`cd "$OTHER"`, `git -C "$X"`, `GIT_DIR=$X`) makes the target repo unknown: the push and
+  main-clone checks are skipped for that command (fail open). After `cd <unknown> ||` or `;` the original
+  directory still counts. An unresolvable subcommand skips everything.
+- **The commit message check does not depend on the directory.** It runs for every `git commit`, also after
+  an unknown `cd` or with an unresolvable `-C`/`--git-dir`.
 - Git global options before the subcommand are skipped: `-C <dir>`/`-C<dir>`, `-c <k=v>`/`-c<k=v>`,
-  `--no-pager`, `--namespace`, ... `--git-dir` and `--work-tree` pick the target repo (the work tree, else the
-  parent of a git dir named `.git`, else the git dir), relative to the directory after any `-C`. Both guards
-  use it. A commit message is read from `-m`, `-am`, `-m<msg>`, `--message <msg>`, `--message=<msg>` or
-  `-m "$(cat <<'EOF' ... EOF)"`; any other expansion in it is not evaluated (pass).
+  `--no-pager`, `--namespace`, ... The target repo of the push and main-clone checks: with a git dir given
+  (`--git-dir` or a `GIT_DIR=` assignment on the command; options win over assignments) the work tree if
+  given (`--work-tree`, `GIT_WORK_TREE=`), else the parent of a git dir named `.git`, else the git dir. With
+  no git dir, the repo of the current directory: `--work-tree` alone does not select a repo. Relative paths
+  are relative to the directory after any `-C`.
+- A commit message is read from `-m`, `-am`, `-m<msg>`, `--message <msg>`, `--message=<msg>` or
+  `-m "$(cat <<'EOF' ... EOF)"`. A short-option cluster is read left to right: an `m` ends it with the
+  message; an option with an operand (`-F`, `-c`, `-C`, `-t`, and `-S`/`-u` with an attached one) ends it
+  without one, so `-Skeyname -m "..."` and `-Cmain` are not misread. Any other expansion in a message is not
+  evaluated (pass).
 - Directories are tracked conservatively. After `cd X &&` a command runs in X; after `cd X ||` in the original
   directory; after `cd X ;` (or a newline) in X or the original. A command is denied when it is denied in
-  any directory it could run in. A `cd` inside `( )`, a pipeline or the background does not affect what follows.
+  any directory it could run in. `pushd <dir>` acts like `cd <dir>`; `pushd` with options, `+N`/`-N` or no argument, and `popd`, leave
+  the directory unknown. A `cd` inside `( )`, a pipeline or the background does not affect what follows.
 - git-guard catches agent mistakes, not a determined bypass: `bash -c`, `eval`, aliases and scripts are out of scope.
 
 **`session-start`** (`SessionStart`): always remind the `start` procedure. `source: compact`: say to update

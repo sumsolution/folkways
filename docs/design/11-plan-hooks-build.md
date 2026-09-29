@@ -6,14 +6,14 @@
 
 Ship the five hooks of [spec §7.1](06-v1-spec.md) as one Go binary, `folkways-hook`, delivered as the
 per-platform optional dependencies `@folkways/hooks-<os>-<cpu>` of `@folkways/cli`, and wired into team
-repos by `sync`. Done when the [contract suite](../../test/hooks) passes all 112 cases against the binary
+repos by `sync`. Done when the [contract suite](../../test/hooks) passes all 121 cases against the binary
 installed from packed tarballs, with npm and pnpm, on all four platforms.
 
 ## Starting point
 
 | Have | Where |
 |---|---|
-| Contract: 112 fixtures (git-guard 78, context-band 17, session-start 8, session-end 5, precompact 4), skipped until `FOLKWAYS_HOOK_CMD` is set | [test/hooks/](../../test/hooks) (`contract.test.ts:7-11`, `harness.ts`) |
+| Contract: 121 fixtures (git-guard 87, context-band 17, session-start 8, session-end 5, precompact 4), skipped until `FOLKWAYS_HOOK_CMD` is set | [test/hooks/](../../test/hooks) (`contract.test.ts:7-11`, `harness.ts`) |
 | Go `git-guard` prototype that passes the 51 original git-guard cases: payload parsing (Claude, Pascal, camel; string `tool_input`), shell lexer, deny shape, panic recovery | [bench/hooks/go-git-guard/](../../bench/hooks/go-git-guard) |
 | Distribution design: package names, hoisting, command string, release order, failure handling | [ADR 0002](../adr/0002-hook-runtime.md) Decision and Consequences; [08 §2](08-research-hook-runtime.md) |
 | Settings merge that owns hook entries by prefix | `src/settings.ts:7-11` (`FRAMEWORK_HOOK_PREFIX`, `isFrameworkHook`), `mergeSettings` |
@@ -70,7 +70,7 @@ diff, squash with a `(#N)` title, Summer approves push and merge.
 - One PR or one per hook; all four are small. Behaviour per spec §7.1 and the contract README.
 - `context-band`: last main-chain assistant line with non-zero usage; bands from `team.yaml`
   `handoff.bands`; per-session state; re-announce after compaction; silent on Copilot (no transcript).
-- CI job drops `FOLKWAYS_HOOKS`: all 112 run.
+- CI job drops `FOLKWAYS_HOOKS`: all 121 run.
 
 ### 4. `feat(cli)`: wire hooks into team repos
 
