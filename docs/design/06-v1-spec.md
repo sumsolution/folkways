@@ -299,12 +299,12 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 
 Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.
 
-**Hook command (proposed, ADR 0002):** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`. It runs a Go
+**Hook command ([ADR 0002](../adr/0002-hook-runtime.md)):** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`. It runs a Go
 binary from a `@folkways/hooks-<os>-<cpu>` optional dependency of `@folkways/cli`; pnpm teams set
 `publicHoistPattern: ["@folkways/hooks-*"]`. The relative form breaks in Claude Code, whose hook cwd follows the Bash
 tool's `cd` ([08 §1](08-research-hook-runtime.md)). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd, and
 always exit 0: Copilot CLI denies the tool call when a `preToolUse` hook exits nonzero. Behavior details and output shapes:
-the contract suite, [test/hooks/README.md](../../test/hooks/README.md) (proposed, ADR 0002).
+the contract suite, [test/hooks/README.md](../../test/hooks/README.md) ([ADR 0002](../adr/0002-hook-runtime.md)).
 
 ### 7.2 `folkways` CLI (`@folkways/cli`, run with `npx folkways` in a team repo)
 

@@ -11,4 +11,4 @@ Team repos keep their own ADRs (spec §6.1 `adr` skill); this folder is for the 
 | # | Title | Status |
 |---|---|---|
 | [0001](0001-overlay-enforcement.md) | Mores are enforced by mechanism; folkways are layered by overlays | accepted |
-| 0002 | Hook runtime (reserved; another session) | reserved |
+| [0002](0002-hook-runtime.md) | Hooks are a Go binary, shipped as per-platform optional dependencies | accepted |

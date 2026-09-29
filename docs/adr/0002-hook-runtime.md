@@ -1,8 +1,8 @@
-# 0002. What should hooks run on, and how does the committed hook command reach it on every machine?
+# 0002. Hooks are a Go binary, shipped as per-platform optional dependencies
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | accepted |
 | Date | 2026-09-29 |
 | Owner | Summer Jordan |
 
@@ -34,7 +34,22 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
   | Rust | 3.7 / 4.5 | 3.7 / 5.0 | 7.7 / 9.8 | 2.0 MB |
 
   The proposed command, run through `sh -c` as both tools run it: Go 4.3 (npm) and 8.3 (pnpm) ms. A full Go
-  `git-guard` prototype passes all 51 git-guard contract cases at 3.2 ms per commit check. **macOS is not measured yet.**
+  `git-guard` prototype passes all 51 git-guard contract cases at 3.2 ms per commit check.
+- **Speed (macOS arm64, Apple M5 Max, 50 runs, p50/p95 ms).** Node is about twice as fast as on the Linux
+  box, and Go is still about 10× faster:
+
+  | Candidate | direct | npm `.bin` | pnpm `.bin` | Size per platform |
+  |---|--:|--:|--:|--:|
+  | Node, plain | 33.6 / 34.9 | 34.5 / 36.1 | 41.3 / 43.7 | 0.1 MB + `yaml` |
+  | Node, bundle | 28.4 / 29.4 | 29.3 / 31.9 | 35.8 / 37.4 | 0.3 MB |
+  | Node, bundle + compile cache | 27.0 / 28.2 | 27.9 / 29.2 | 34.8 / 36.0 | 0.3 MB |
+  | Node, snapshot / SEA | 25.3 / 27.1; 26.1 / 28.0 | SEA 25.9 / 27.2 | SEA 33.7 / 37.4 | 6.9 MB / 121.5 MB |
+  | **Go** | **2.6 / 2.6** | **2.2 / 2.4** | **9.3 / 9.7** | **3.0 MB** |
+  | Go behind a JS launcher (Biome pattern) | — | 23.7 / 24.8 | 29.6 / 31.0 | 3.0 MB |
+
+  The proposed command through `sh -c`: Go 4.5 (npm) and 11.3 (pnpm) ms. The spawn floor is 1.2 ms. Even the
+  best Node path is 27.9 ms, over the 20 ms bar, so Go stays the choice. Rust, Bun and Deno were not measured on
+  macOS (not installed). Full table: [bench/hooks/results/](../../bench/hooks/results).
 - **Every JS runtime lands at 48–82 ms**, compiled or not; start-up dominates. Node optimizations save 13–19 ms
   of 67. Compiled Bun, Deno and Node SEA also cost 100–127 MB per platform.
 - **A JS launcher in front of a native binary gives back ~31 ms** (esbuild, Biome, Turborepo). esbuild avoids
@@ -69,14 +84,15 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
   after a `cd`. In Copilot CLI the variable is unset for repo hooks, so `.` applies, and that is the project root.
   This needs a shell, so the entry uses shell form, not the exec form (`args`) that the Claude Code docs prefer:
   exec form can't fall back when the variable is unset.
-- Accept only after Summer's macOS run of `node bench/hooks/run.ts`. If Node's gap there is small enough to
-  ignore, option 1 (Node, lean entry + compile cache) is the fallback: one language, no release matrix.
+- Accepted after the macOS run: Node's best path is 27.9 ms p50 against Go's 2.2 ms. The rule was Go unless Node
+  came in under about 20 ms. Option 1 (Node, lean entry + compile cache) stays the fallback if the release
+  matrix proves too costly.
 
 ## Options considered
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
-| 1 | Node: today's `folkways hook <name>`, with a bundled lean entry and compile cache | One language and one package; nothing new to release | 50–55 ms per call on Linux, likely more on macOS; snapshots and SEA buy only 3–5 ms more | The simplest to own, paying ~50 ms on every hook call forever |
+| 1 | Node: today's `folkways hook <name>`, with a bundled lean entry and compile cache | One language and one package; nothing new to release | 50–55 ms per call on Linux, 28–35 ms on macOS arm64; snapshots and SEA buy only 3–5 ms more | The simplest to own, paying 28–55 ms on every hook call forever |
 | 2 | Bun (`bun run`) | Fast to write; TypeScript as is | 82 ms here; every member must install and update Bun; no npm pinning | Adds a runtime to every machine and is slower than Node for this job |
 | 3 | Bun `--compile` / Deno `compile` / Node SEA | No runtime to install; TypeScript source | 48–65 ms; 100–127 MB per platform; SEA needs `postject` and re-signing on macOS | Pays compiled-binary costs without compiled-binary speed |
 | **4** | **Go binary, per-platform optional deps with their own `bin`, `publicHoistPattern` for pnpm** | ≈4 ms; 2.5 MB; no postinstall or runtime; one committed command; one dependency line | A second language; a 4-package release; pnpm teams need one setting; relies on npm hoisting | Buys a ~13× faster hook with a Go toolchain and a release matrix |
@@ -111,5 +127,5 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
   gains a Go module (e.g. `hooks/`) and `AGENTS.md` gains its commands.
 - **Company mirrors:** members need the mirror to proxy the `@folkways/hooks-*` packages. No known mirror strips
   `os`/`cpu`, but this is untested. The beta team smoke-tests `npm ci` through its mirror before rollout.
-- **Before accepting:** Summer's macOS benchmark; a Copilot CLI run confirming it ignores the nested
-  `hookSpecificOutput` in the combined output and runs repo hooks from the project root.
+- **Still open:** a Copilot CLI run confirming it ignores the nested `hookSpecificOutput` in the combined output
+  and runs repo hooks from the project root.

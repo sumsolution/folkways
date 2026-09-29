@@ -1,7 +1,7 @@
 # Hook contract suite
 
 Black-box tests for the five hooks in spec §7.1. They run **any** implementation as a subprocess, so the
-same suite checks a Node, Go or Rust build. Proposed with [ADR 0002](../../docs/adr/0002-hook-runtime.md);
+same suite checks a Node, Go or Rust build. Defined by [ADR 0002](../../docs/adr/0002-hook-runtime.md);
 tool behavior behind each rule: [08-research-hook-runtime.md](../../docs/design/08-research-hook-runtime.md).
 
 ## Run
@@ -39,7 +39,7 @@ of it on `feat/EX-1-orders`), `${HEAD}` / `${HEAD7}` (the worktree's HEAD), `${O
 
 ## The contract
 
-Rules every implementation must follow. Items marked **(proposed)** pin down details spec §7.1 leaves open;
+Rules every implementation must follow. Where spec §7.1 leaves details open, this contract pins them down;
 change them here and in the fixtures together.
 
 **All hooks**
@@ -54,7 +54,7 @@ change them here and in the fixtures together.
 - Print nothing unless there is something to say. Never print `permissionDecision: "allow"`: it would skip
   the user's permission rules.
 
-**Output shapes (proposed)**
+**Output shapes**
 
 | Case | stdout (one JSON object) |
 |---|---|
@@ -66,7 +66,7 @@ change them here and in the fixtures together.
 - Target repo: the last `cd <dir>` before the git command, else `git -C <dir>`, else the payload `cwd`.
 - `git commit` with `-m`/`-am`/`--message` (double, single quotes, or the `$(cat <<'EOF' … EOF)` heredoc):
   the first line must be Angular `type(scope)!?: subject`. When `git.scopes` is non-empty the scope is
-  **required (proposed)** and must be listed. No message flag (`--no-edit`, `-F`): pass.
+  **required** and must be listed. No message flag (`--no-edit`, `-F`): pass.
 - `git push` when the effective `review.trigger` (`.local/me.yaml` over `team.yaml`) is `pre-push`: deny
   unless a file under `efforts/**` or `people/<handle>/work/**` of the team repo has frontmatter
   `sha: <full HEAD of the target repo>`.
@@ -81,13 +81,13 @@ change them here and in the fixtures together.
 **`session-end`** (`SessionEnd` / `sessionEnd`): write `.local/sessions/<session id>.unclosed` in the team
 repo. No output. No session id: do nothing.
 
-**`precompact`** (`PreCompact`): append a line with the session id and `trigger` to `.local/precompact.log`
-**(proposed path)**. No output; never block compaction.
+**`precompact`** (`PreCompact`): append a line with the session id and `trigger` to `.local/precompact.log`.
+No output; never block compaction.
 
 **`context-band`** (`UserPromptSubmit`, `PostToolBatch`): tokens in context = the last transcript line with
 `type: "assistant"`, `isSidechain: false` and non-zero usage: `input_tokens + cache_read_input_tokens +
 cache_creation_input_tokens`. Bands from `team.yaml` `handoff.bands`. A threshold counts when context is `>=` it. When the band rises above the last
 one announced for this session, inject the band text naming the threshold (`125K`); announce only the
 highest band crossed. When context falls below the last band (compaction), lower the stored band so the
-next crossing is announced again **(proposed)**. State lives in `.local/` **(proposed)**. No transcript
+next crossing is announced again. State lives in `.local/`. No transcript
 (Copilot CLI) or a missing file: do nothing.

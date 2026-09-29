@@ -113,7 +113,27 @@ Rust 1.94.1, Bun 1.3.11, Deno 2.9.7. Full table: [results/linux-x64-2026-09-29.m
 | Rust, JS launcher | npm / pnpm | 35.2 / 39.7 | 39.5 / 48.6 | 2.0 |
 | Rust, proposed command via `sh -c` | npm / pnpm | 4.7 / 9.1 | 6.1 / 11.3 | — |
 
-Also measured:
+**macOS arm64** (2026-09-29). Machine: Apple M5 Max, 18 CPUs, Node 24.21.0, npm 11.19.0, pnpm 12.4.1, Go 1.27.1.
+Rust, Bun and Deno are not installed there, so their candidates were skipped. Full table:
+[results/darwin-arm64-2026-09-29.md](../../bench/hooks/results/darwin-arm64-2026-09-29.md).
+
+| Candidate | Call path | p50 ms | p95 ms | Shipped size (MB, per platform) |
+|---|---|--:|--:|--:|
+| spawn floor (`true`) | direct | 1.2 | 1.3 | — |
+| Node, plain ESM + `yaml` | direct / npm / pnpm | 33.6 / 34.5 / 41.3 | 34.9 / 36.1 / 43.7 | 0.1 + `yaml` |
+| Node, bundled | direct / npm / pnpm | 28.4 / 29.3 / 35.8 | 29.4 / 31.9 / 37.4 | 0.3 |
+| Node, bundle + compile cache | direct / npm / pnpm | 27.0 / 27.9 / 34.8 | 28.2 / 29.2 / 36.0 | 0.3 |
+| Node, V8 startup snapshot | direct | 25.3 | 27.1 | 6.9 (blob) |
+| Node SEA (code cache) | direct / npm / pnpm | 26.1 / 25.9 / 33.7 | 28.0 / 27.2 / 37.4 | 121.5 (39.7 packed) |
+| **Go** | direct / npm `.bin` / pnpm `.bin` | **2.6 / 2.2 / 9.3** | 2.6 / 2.4 / 9.7 | **3.0** (1.3 packed) |
+| Go, JS launcher (Biome pattern) | npm / pnpm | 23.7 / 29.6 | 24.8 / 31.0 | 3.0 |
+| **Go, proposed command via `sh -c`** | npm / pnpm | **4.5 / 11.3** | 4.6 / 11.6 | — |
+
+Decision rule: Go unless Node lands under about 20 ms p50 through the npm and pnpm `.bin` paths. Node's best is 27.9
+(npm) and 34.8 (pnpm), so Go is chosen. The first run after a build is slow (Go 115–285 ms, SEA 0.8–1.4 s), likely
+macOS checking a new binary.
+
+Also measured (Linux):
 
 - **Install** of one candidate's package from a local tarball, warm cache: Go/Rust/Node 0.3 s npm, 0.1 s pnpm;
   Node SEA, Bun and Deno 1.7–2.5 s npm, 0.6 s pnpm. Registry downloads scale with packed size (1 MB vs about 40 MB).
@@ -132,15 +152,14 @@ Also measured:
 5. Per call the difference is ~45–65 ms. The hooks run on every Bash call (PreToolUse) and after every tool batch
    (PostToolBatch), so a busy session makes hundreds of calls. That is seconds per session, not minutes. The case for
    Go is responsiveness and headroom (future hooks doing more work), not throughput.
-6. macOS numbers are **not measured**. Node start-up is usually slower on macOS than on Linux (*inferred*, not
-   sourced). Summer's `node bench/hooks/run.ts` run is needed before the ADR is accepted.
+6. macOS arm64 (below) tells the same story: Node 25–41 ms, Go 2–9 ms. The best Node path is 27.9 ms, so Go wins
+   there too.
 
 ## 4. Unverified
 
 - Anything run in Copilot CLI (not installed here): loading `.claude/settings.json` hooks, payload shapes, whether
   it ignores the nested `hookSpecificOutput` in a combined output, `CLAUDE_PROJECT_DIR` for repo hooks, and
   UserPromptSubmit `additionalContext`.
-- macOS: the benchmark, `run.ts` itself (written to handle the SEA re-signing, never run there), Gatekeeper on
-  npm-installed binaries.
+- macOS: Rust, Bun and Deno (not installed on the test Mac), macOS x64, Gatekeeper on npm-installed binaries.
 - Registry installs through a company mirror; npm lockfiles written on macOS and installed on Linux.
 - The statusline's number (it doesn't run under `claude -p`); `/context` matched instead.
