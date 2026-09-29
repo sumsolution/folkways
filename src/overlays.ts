@@ -28,10 +28,10 @@ export interface CompileInput {
 const HEADING = /^(#{1,6})\s+(.*?)\s*$/;
 const ID = /\{#([a-z0-9-]+)\}$/;
 const OVERRIDE = /^Override\s+\{#([a-z0-9-]+)\}$/;
-const FENCE = /^(```|~~~)/;
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
 
 /** Wording that tries to replace a rule rather than add one. Heuristic: a warning, not an error. */
-const OVERRIDE_WORDING = ['supersede', 'override', 'ignore', 'instead of', 'no longer', 'approved by'];
+const OVERRIDE_WORDING = ['supersede', 'override', 'ignore the', 'instead of the', 'no longer', 'approved by'];
 
 interface Heading {
   line: number;
@@ -39,16 +39,28 @@ interface Heading {
   title: string;
 }
 
-/** Markdown headings outside fenced code blocks. */
-function headings(lines: string[]): Heading[] {
-  const out: Heading[] = [];
-  let fenced = false;
+/** Markdown headings outside fenced code blocks, and the line numbers inside fences (delimiters included). */
+function scan(lines: string[]): { headings: Heading[]; fenced: Set<number> } {
+  const headings: Heading[] = [];
+  const fenced = new Set<number>();
+  let open: string | undefined;
   lines.forEach((line, i) => {
-    if (FENCE.test(line)) fenced = !fenced;
-    const m = fenced ? null : HEADING.exec(line);
-    if (m) out.push({ line: i, level: m[1]!.length, title: m[2]! });
+    const fence = FENCE.exec(line)?.[1];
+    if (open !== undefined) {
+      fenced.add(i);
+      // A fence closes on the same character, at least as long, with nothing after it.
+      if (fence && fence[0] === open[0] && fence.length >= open.length && line.trim() === fence) open = undefined;
+      return;
+    }
+    if (fence) {
+      open = fence;
+      fenced.add(i);
+      return;
+    }
+    const m = HEADING.exec(line);
+    if (m) headings.push({ line: i, level: m[1]!.length, title: m[2]! });
   });
-  return out;
+  return { headings, fenced };
 }
 
 /** Index of the line that ends the section starting at `h` (next heading at the same or a higher level). */
@@ -56,33 +68,40 @@ function sectionEnd(all: Heading[], h: Heading, total: number): number {
   return all.find((x) => x.line > h.line && x.level <= h.level)?.line ?? total;
 }
 
-function level2Sections(text: string): { title: string; body: string; line: number }[] {
+function level2Sections(text: string): { title: string; body: string; line: number; end: number }[] {
   const lines = text.split('\n');
-  const all = headings(lines);
+  const all = scan(lines).headings;
   return all
     .filter((h) => h.level === 2)
-    .map((h) => ({
-      title: h.title,
-      line: h.line,
-      body: lines.slice(h.line + 1, sectionEnd(all, h, lines.length)).join('\n').trim(),
-    }));
+    .map((h) => {
+      const end = sectionEnd(all, h, lines.length);
+      return { title: h.title, line: h.line, end, body: lines.slice(h.line + 1, end).join('\n').trim() };
+    });
 }
 
 export function parseOverlay(text: string): ParsedOverlay {
   const out: ParsedOverlay = { add: '', overrides: {}, other: [] };
   for (const s of level2Sections(text)) {
     const override = OVERRIDE.exec(s.title);
-    if (s.title === 'Add') out.add = s.body;
-    else if (override) out.overrides[override[1]!] = s.body;
-    else out.other.push(s.title);
+    if (s.title === 'Add') {
+      out.add = [out.add, s.body].filter(Boolean).join('\n\n');
+    } else if (override) {
+      const id = override[1]!;
+      if (id in out.overrides) throw new FolkwaysError(`overlay overrides #${id} twice`);
+      out.overrides[id] = s.body;
+    } else {
+      out.other.push(s.title);
+    }
   }
   return out;
 }
 
 function replaceSection(skill: string, id: string, body: string): string {
   const lines = skill.split('\n');
-  const all = headings(lines);
-  const h = all.find((x) => ID.exec(x.title)?.[1] === id);
+  const all = scan(lines).headings;
+  const matches = all.filter((x) => ID.exec(x.title)?.[1] === id);
+  if (matches.length > 1) throw new FolkwaysError(`the skill has #${id} in more than one heading`);
+  const h = matches[0];
   if (!h) throw new FolkwaysError(`team overlay overrides #${id}, but the skill has no section with that ID`);
   const end = sectionEnd(all, h, lines.length);
   return [...lines.slice(0, h.line + 1), '', '<!-- team override -->', body, '', ...lines.slice(end)].join('\n');
@@ -101,6 +120,9 @@ export function compileSkill(skill: string, input: CompileInput = {}): { text: s
   if (input.team !== undefined) {
     const team = parseOverlay(input.team);
     for (const [id, body] of Object.entries(team.overrides)) text = replaceSection(text, id, body);
+    for (const title of team.other) {
+      warnings.push(`overlays: ignored ## ${title}; team overlays hold ## Add and ## Override {#id} only`);
+    }
     if (team.add) appended.push(`## Team additions\n\n${team.add}`);
   }
 
@@ -125,21 +147,33 @@ export function compileSkill(skill: string, input: CompileInput = {}): { text: s
   return { text: `${text.trimEnd()}\n\n${appended.join('\n\n')}\n`, warnings };
 }
 
-/** Structural check of a personal OVERLAY.md, plus a wording heuristic. For `doctor` and a CI check. */
+/** Structural check of a personal OVERLAY.md, plus a wording heuristic. For `sync` and `doctor`. */
 export function lintPersonalOverlay(text: string): LintFinding[] {
   const findings: LintFinding[] = [];
-  for (const s of level2Sections(text)) {
-    const override = OVERRIDE.exec(s.title);
+  const lines = text.split('\n');
+  const { headings, fenced } = scan(lines);
+  const headingLines = new Set(headings.map((h) => h.line));
+
+  for (const h of headings) {
+    const override = OVERRIDE.exec(h.title);
     if (override) {
-      findings.push({ level: 'error', message: `personal overlays may only add; remove ## Override {#${override[1]}}` });
-    } else if (s.title !== 'Add') {
-      findings.push({ level: 'error', message: `unknown section ## ${s.title}; put personal rules under ## Add` });
+      const hashes = '#'.repeat(h.level);
+      findings.push({ level: 'error', message: `personal overlays may only add; remove ${hashes} Override {#${override[1]}}` });
+    } else if (h.level === 2 && h.title !== 'Add') {
+      findings.push({ level: 'error', message: `unknown section ## ${h.title}; put personal rules under ## Add` });
     }
   }
-  const lines = text.split('\n');
-  const headingLines = new Set(headings(lines).map((h) => h.line));
+
+  // Everything before the first level-2 heading, apart from a `#` title, is read by the model but belongs to no section.
+  const firstSection = headings.find((h) => h.level === 2)?.line ?? lines.length;
+  for (let i = 0; i < firstSection; i++) {
+    const h = headings.find((x) => x.line === i);
+    if (lines[i]!.trim() === '' || (h && (h.level === 1 || OVERRIDE.test(h.title)))) continue;
+    findings.push({ level: 'error', message: `line ${i + 1} is outside ## Add; personal overlays hold only ## Add` });
+  }
+
   lines.forEach((line, i) => {
-    if (headingLines.has(i)) return;
+    if (headingLines.has(i) || fenced.has(i)) return;
     const lower = line.toLowerCase();
     const word = OVERRIDE_WORDING.find((w) => lower.includes(w));
     if (word) {

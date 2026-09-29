@@ -50,6 +50,19 @@ describe('parseOverlay', () => {
     expect(parseOverlay('## Add\n\nx\n\n## Notes\n\ny\n').other).toEqual(['Notes']);
   });
 
+  it('joins repeated Add sections', () => {
+    expect(parseOverlay('## Add\n\n- one\n\n## Add\n\n- two\n').add).toBe('- one\n\n- two');
+  });
+
+  it('refuses the same override ID twice', () => {
+    expect(() => parseOverlay('## Override {#x}\n\na\n\n## Override {#x}\n\nb\n')).toThrow(/#x.*twice/);
+  });
+
+  it('ignores headings inside a fence, matching fence character and length', () => {
+    const text = '## Add\n\n````md\n```\n## Inner\n```\n````\n\n~~~\n```\n## Also inner\n~~~\n';
+    expect(parseOverlay(text).other).toEqual([]);
+  });
+
   it('treats an empty file as an empty overlay', () => {
     expect(parseOverlay('')).toEqual({ add: '', overrides: {}, other: [] });
   });
@@ -75,6 +88,17 @@ describe('compileSkill', () => {
   it('refuses a team override of a section the skill does not have', () => {
     expect(() => compileSkill(skill, { team: '## Override {#nope}\n\nx\n' })).toThrow(FolkwaysError);
     expect(() => compileSkill(skill, { team: '## Override {#nope}\n\nx\n' })).toThrow(/#nope/);
+  });
+
+  it('refuses a section ID the skill uses twice', () => {
+    const dup = '## A {#x}\n\none\n\n## B {#x}\n\ntwo\n';
+    expect(() => compileSkill(dup, { team: '## Override {#x}\n\nnew\n' })).toThrow(/#x.*more than one/);
+  });
+
+  it('warns about team overlay sections it does not apply', () => {
+    expect(compileSkill(skill, { team: `${team}\n## Notes\n\nx\n` }).warnings).toEqual([
+      'overlays: ignored ## Notes; team overlays hold ## Add and ## Override {#id} only',
+    ]);
   });
 
   it('appends personal additions last, labelled lower priority', () => {
@@ -111,6 +135,30 @@ describe('lintPersonalOverlay', () => {
     expect(lintPersonalOverlay('## Rules\n\nx\n')).toEqual([
       { level: 'error', message: 'unknown section ## Rules; put personal rules under ## Add' },
     ]);
+  });
+
+  it('flags text outside ## Add, apart from a title', () => {
+    expect(lintPersonalOverlay('# Personal overlay: commit (alex)\n\nUse Angular headers.\n\n## Add\n\n- x\n')).toEqual([
+      { level: 'error', message: 'line 3 is outside ## Add; personal overlays hold only ## Add' },
+    ]);
+    expect(lintPersonalOverlay('Use Angular headers.\n')).toEqual([
+      { level: 'error', message: 'line 1 is outside ## Add; personal overlays hold only ## Add' },
+    ]);
+  });
+
+  it('flags an override heading at any level', () => {
+    expect(lintPersonalOverlay('## Add\n\n### Override {#commit-format}\n\nx\n')).toContainEqual({
+      level: 'error',
+      message: 'personal overlays may only add; remove ### Override {#commit-format}',
+    });
+    expect(lintPersonalOverlay('# Override {#commit-format}\n\nx\n')).toContainEqual({
+      level: 'error',
+      message: 'personal overlays may only add; remove # Override {#commit-format}',
+    });
+  });
+
+  it('does not scan fenced examples for override wording, or flag a harmless ignore', () => {
+    expect(lintPersonalOverlay('## Add\n\n```\nThis supersedes it.\n```\n- Ignore whitespace-only changes.\n')).toEqual([]);
   });
 
   it('warns on wording that tries to replace a rule', () => {
