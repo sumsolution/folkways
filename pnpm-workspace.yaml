@@ -1,0 +1,7 @@
+# Supply-chain hardening. https://pnpm.io/settings
+minimumReleaseAge: 10080        # minutes (7 days): don't resolve versions younger than this
+trustPolicy: no-downgrade       # fail if a version has weaker provenance than earlier versions
+blockExoticSubdeps: true        # transitive deps must come from the registry (no git or tarball URLs)
+strictDepBuilds: true           # fail on dependency build scripts not listed in allowBuilds
+engineStrict: true              # enforce engines.node
+allowBuilds: {}

@@ -1,10 +1,10 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-09-28 (session 2: round 11, v1 spec, moved to own repo)
+**Last updated:** 2026-09-28 (session 3: TypeScript CLI, npm distribution, round 12)
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: v1 spec drafted; moved to its own repo.** No code yet.
+**Stage: building v1.** `@folkways/cli` with `init`, `sync`, `upgrade` done (0.1.0, unpublished). Hooks and skills next.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -17,20 +17,20 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 
 | File | Holds |
 |---|---|
-| [01-interview-notes.md](01-interview-notes.md) | Every decision and its reasoning, rounds 1–11. **The source of record.** |
+| [01-interview-notes.md](01-interview-notes.md) | Every decision and its reasoning, rounds 1–12. **The source of record.** |
 | [02-naming.md](02-naming.md) | Name research and the `folkways` decision |
 | [03-research-handoff-trigger.md](03-research-handoff-trigger.md) | When and how to hand off to a fresh session (Opus-checked) |
 | [04-research-copilot-capabilities.md](04-research-copilot-capabilities.md) | Claude Code vs Copilot mechanisms (Opus-checked) |
 | [05-research-repo-split.md](05-research-repo-split.md) | Team / personal split options; why the personal repo was dropped |
-| [06-v1-spec.md](06-v1-spec.md) | **The v1 spec (draft).** Repos, vendoring, overlays, config, skills, hooks, flows |
+| [06-v1-spec.md](06-v1-spec.md) | **The v1 spec (draft).** Repos, npm distribution and sync, overlays, config, skills, hooks, flows |
 
 ## Decided (details in the notes, by round)
 
 - **Scope (1–2):** generic template; The beta team tests it. Open source, owned by Summer. **No
   company-specific content in the framework.** v1 tools: **Claude Code (desktop + CLI) and Copilot CLI
   only** (11). No IDE integrations, no Copilot cloud agent.
-- **Architecture (3, 6, 11):** framework repo (versioned) **vendored** into one team repo by
-  `folkways upgrade`. Team repo: `team.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
+- **Architecture (3, 6, 11):** framework published as npm package `@folkways/cli`, pinned in one team repo; `folkways sync`
+  copies its text files in (12). Team repo: `team.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
   skills, committed `people/<handle>/` (`overlays/`, `inbox/`, `work/`), gitignored `.local/` (`me.yaml`).
   **No separate personal repo** (11). Knowledge, skills, overlays via PR; state, efforts, people via direct
   rebased push. Promotion = `git mv` to `efforts/`. Every effort has a `00-STATUS.md`. Agent-space stays as-is.
@@ -60,11 +60,46 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 
 ## Pending
 
-- [ ] Choose a license (open source; owner's call).
+- [ ] Choose a license (open source; owner's call). `package.json` says `UNLICENSED` until then.
+- [x] npm scope `@folkways` (Summer, 2026-09-28). Maybe a dedicated `folkways` GitHub org later.
+- [ ] Later: publish a GitHub Action that runs `folkways sync` on dependency-update PRs (spec §9.7).
 - [ ] Dedicated session: architecture knowledge for the `adr` skill.
 - [ ] Trademark check for `folkways` (USPTO/EUIPO); register folkways.dev and a GitHub handle (Summer).
 
+## Built (session 3)
+
+| Part | Where | Notes |
+|---|---|---|
+| CLI `init`, `sync`, `upgrade`, `version` | [src/](../../src) | TypeScript, npm package `@folkways/cli`, Node 24+. `hook`, `review`, `run`, `doctor` are stubs |
+| Framework instructions | [assets/instructions.md](../../assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md`. Names skills not built yet |
+| Settings fragment | [assets/settings.json](../../assets/settings.json) | Push ask rule only; no hooks yet |
+| Team scaffold | [templates/](../../templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
+| Tests | [test/](../../test) | vitest, 38 tests. Packed tarball checked end to end via `npm exec` |
+
+Round 12 (see [01](01-interview-notes.md)): TypeScript instead of bash; npm distribution, pinned per team
+repo; `@` import instead of a managed block. Spec §2, §3, §5, §7, §8 updated.
+
+## Review follow-ups (PR #1, not blocking)
+
+From the fresh-process review of [sumsolution/folkways#1](https://github.com/sumsolution/folkways/pull/1). Findings 1–4 are fixed there;
+5–6 (Windows) are out of scope.
+
+- [ ] `sync` with no manifest (adopting an existing repo) overwrites existing `.folkways/` files; check `assetMap` destinations for clashes.
+- [ ] `sync` isn't atomic: a failure after copying leaves new files with the old manifest. Write the manifest last or stage in a temp dir.
+- [ ] Hook ownership matches `folkways hook ` anywhere in the command; match the `node_modules/.bin/folkways hook ` prefix. A hook group without a `hooks` array crashes with a TypeError.
+- [ ] `init .hidden` produces an invalid npm package name.
+- [ ] `npx @folkways/cli sync` outside the pinned install syncs whatever version npx resolves; `doctor` should catch the drift.
+- [ ] CI: smoke test the packed tarball (`pnpm pack` → install → `init --no-install` → `sync`); add `timeout-minutes` and a macOS runner.
+
 ## Next step
 
-**Build the framework skeleton** per [06](06-v1-spec.md): `vendor/`, `templates/`, `bin/folkways`
-(`init`, `upgrade`) → hooks → ported skills → new skills → set up the beta team repo.
+**Branch:** `feat/cli-init-upgrade` (3 commits, not pushed, no PR yet). Push and open a PR, or keep building on it.
+
+1. **Verify before building hooks** (spec §9.3): `PostToolBatch`, transcript `usage` vs statusline,
+   Copilot CLI `sessionEnd` / `PreToolUse` from `.claude/settings.json`, hook `cwd` in both tools (hook
+   commands are relative: `node_modules/.bin/folkways hook <name>`), and whether Copilot CLI loads the
+   instructions twice (it reads both `AGENTS.md` and `CLAUDE.md`, which imports it).
+2. **Hooks** (spec §7.1): `git-guard`, `session-start`, `session-end`, `precompact`, `context-band`
+   as `folkways hook <name>`, with tests. Add `yaml` as a dependency when the first one reads `team.yaml`.
+3. Ported skills → new skills → `review` / `run` / `doctor` → CI for the framework repo → publish 0.1.0 →
+   set up the beta team repo.

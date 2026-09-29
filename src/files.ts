@@ -1,0 +1,26 @@
+import { createHash } from 'node:crypto';
+import { existsSync, readdirSync, readFileSync, rmdirSync, statSync } from 'node:fs';
+import { join, sep } from 'node:path';
+
+const IGNORED = new Set(['.gitkeep', '.DS_Store']);
+
+export function sha256(file: string): string {
+  return createHash('sha256').update(readFileSync(file)).digest('hex');
+}
+
+/** Files under `dir`, as sorted POSIX paths relative to it. Empty if `dir` is missing. */
+export function listFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((rel) => statSync(join(dir, rel)).isFile())
+    .filter((rel) => !IGNORED.has(rel.split(sep).at(-1) ?? ''))
+    .map((rel) => rel.split(sep).join('/'))
+    .sort();
+}
+
+/** Delete empty directories under `dir`, bottom up. Keeps `dir` itself unless it is empty too. */
+export function pruneEmptyDirs(dir: string): void {
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) return;
+  for (const entry of readdirSync(dir)) pruneEmptyDirs(join(dir, entry));
+  if (readdirSync(dir).length === 0) rmdirSync(dir);
+}
