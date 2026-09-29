@@ -74,7 +74,7 @@ So the team gets one shared baseline, and each person can still add their own to
 Small commands the tools run at set moments: before a shell command, at session start and end, before
 compaction. They live in `.claude/settings.json`, which **both Claude Code and Copilot CLI read**.
 
-**Coming soon.** Each hook will run the pinned CLI: `node_modules/.bin/folkways hook <name>`. Planned:
+**Coming soon.** Each hook will run the pinned framework binary from `node_modules/`. Planned:
 `git-guard` (commit format, review before push, no checkouts in your main clone), `context-band`
 (announces 125K, 150K and 200K tokens so you hand off in time), `session-start`, `session-end`,
 `precompact` ([spec §7.1](../design/06-v1-spec.md)). Today `.claude/settings.json` holds one framework

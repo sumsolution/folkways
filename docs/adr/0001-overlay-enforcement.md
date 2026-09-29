@@ -85,8 +85,8 @@ out of the shared file (the eval shows why) and needs no per-person build.
 | M5 | Branch names follow the team pattern | `git-guard` on `git push` and branch creation | `team.yaml` `git.branch_pattern` | **new** |
 | M6 | Headless runs: no push to a default branch, nothing destructive | `folkways run` passes deny rules (`--disallowedTools`); `git-guard` checks headless | `team.yaml` `repos[].default_branch` | **new** (spec §7.5 is prose today) |
 | M7 | Framework files are not edited | `sync` checksum check | `.folkways/manifest.json` | built |
-| M8 | Personal overlays only add | `lintPersonalOverlay` in `sync` (warning) and `doctor` (error). **Detect only**: at runtime it's the step-0 prose (a folkway), and the lint misses a quiet contradiction | framework | prototype (`src/overlays.ts`) |
-| M9 | Team overrides apply | compiled into `SKILL.md` at `sync`; unknown section ID fails the sync | `overlays/<skill>/OVERLAY.md` | prototype |
+| M8 | Personal overlays only add | `lintPersonalOverlay` in `sync` (warning) and `doctor` (error). **Detect only**: at runtime it's the step-0 prose (a folkway), and the lint misses a quiet contradiction | framework | built in `sync` (`src/overlays.ts`); `doctor` not built |
+| M9 | Team overrides apply | compiled into `SKILL.md` at `sync`; unknown section ID fails the sync | `overlays/<skill>/OVERLAY.md` | built |
 | M10 | Framework and team skills aren't shadowed | `doctor` lists same-name skills in `~/.claude/skills`, `~/.agents/skills`, `~/.copilot/skills` | framework | **new**, detect only |
 | M11 | Hooks stay on | framework settings set `"disableAllHooks": false`, which beats a user-settings `true`; `doctor` warns on `true` in local settings | framework `assets/settings.json` | **new**; closes one route, detects the other |
 | M12 | `team.yaml`, `overlays/`, team skills change by PR | CODEOWNERS routes reviews; optional push ruleset "Restrict file paths" with a maintainer bypass | team repo, GitHub settings | recommended by `setup` |
@@ -98,14 +98,14 @@ ADR template, examples and wording · review focus areas and extra checks · tes
 source notes · tone and writing style · QA evidence format · status-doc and session-close details ·
 where side quests go.
 
-### Wiring (not done in this PR)
+### Wiring (status)
 
-- `sync.ts`: after copying a framework skill, if `overlays/<skill>/OVERLAY.md` exists, write
+- Done: `sync.ts`: after copying a framework skill, if `overlays/<skill>/OVERLAY.md` exists, write
   `compileSkill(framework, { team })`. The manifest records the compiled file's checksum (so edit
   detection still works) and the overlay's checksum (so `doctor` can spot a stale compile). A
   `FolkwaysError` from an unknown ID stops the sync before anything is written.
-- `sync.ts` and `doctor`: run `lintPersonalOverlay` over `people/*/overlays/*/OVERLAY.md`.
-- Framework skills: step 0 is one shared block: read `team.yaml` and `.local/me.yaml`, then the
+- `lintPersonalOverlay` over `people/*/overlays/*/OVERLAY.md`: done in `sync` (warnings); `doctor` not built.
+- Done: framework skills: step 0 is one shared block: read `team.yaml` and `.local/me.yaml`, then the
   personal overlay, under the precedence text tested as `hybrid`
   ([07-eval/fixtures/step0-hybrid.md](../design/07-eval/fixtures/step0-hybrid.md)). A framework-repo test
   checks every `assets/skills/*/SKILL.md` contains it.

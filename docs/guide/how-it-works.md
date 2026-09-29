@@ -35,10 +35,10 @@ flowchart LR
 | `.folkways/**` | framework | replaces |
 | `.claude/skills/<name>/` listed in the manifest | framework | replaces; the output includes your team overlay, compiled in |
 | `.github/workflows/folkways-*.yml` | framework | replaces |
-| `.claude/settings.json` hook entries whose command contains `folkways hook ` | framework | replaces those entries; leaves every other key and entry alone (no hooks ship yet) |
+| `.claude/settings.json` hook entries the framework owns | framework | replaces those entries; leaves every other key and entry alone (no hooks ship yet) |
 | `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; never removes |
 | `AGENTS.md` | team | never writes after `init`; warns if the `@.folkways/instructions.md` line is missing |
-| `.local/me` (link to `people/<handle>/`) | person | creates or fixes the link; removes one that points at another person, and warns |
+| `.local/me` (link to `people/<handle>/`) | person | creates the link or repoints it to `people/<handle>/`; removes a link to someone else only when your own folder is missing, and warns |
 | everything else: `team.yaml`, `overlays/`, `people/`, team skills, `package.json` | team or person | never writes |
 
 The team `AGENTS.md` pulls in the framework rules with one line, `@.folkways/instructions.md`. Claude

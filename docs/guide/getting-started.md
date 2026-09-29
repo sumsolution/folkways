@@ -80,11 +80,11 @@ Installing puts the pinned `@folkways/cli` in `node_modules/`, which is where ho
 
 Open Claude Code or Copilot CLI in the team repo and run the `onboard` skill. It:
 
-- write `.local/me.yaml` (your handle, projects directory and tool),
-- create `people/<handle>/`,
-- with your approval, give the tool access to your projects directory,
-- check the MCP servers and CLIs your team's research sources need,
-- run `folkways doctor` (**coming soon**).
+- writes `.local/me.yaml` (your handle, projects directory and tool),
+- creates `people/<handle>/`,
+- with your approval, gives the tool access to your projects directory,
+- checks the MCP servers and CLIs your team's research sources need,
+- runs `folkways doctor` (**coming soon**).
 
 Or create `.local/me.yaml` by hand:
 
@@ -98,11 +98,12 @@ tool: claude                           # claude | copilot
 
 Start a session in the team repo. The agent reads `AGENTS.md`, which imports
 `.folkways/instructions.md`: session start, where things go, status docs, handoff bands, git rules and
-what needs your approval. That part works today, though it names skills that aren't built yet.
+what needs your approval. That part works today.
 
 ## Staying current
 
-Once the package is on npm and a newer version ships (**coming soon**), the lead (or anyone) runs:
+Once the package is on npm and a newer version ships (**coming soon**), the lead (or anyone)
+runs:
 
 ```bash
 npx folkways upgrade 0.2.0             # or: pnpm exec folkways upgrade 0.2.0

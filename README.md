@@ -3,8 +3,8 @@
 Your team's way of working, written down once and shared by every teammate's agent.
 Shared skills, instructions and hooks for Claude Code and Copilot CLI, versioned like code.
 
-> **Status: pre-release.** v0.1.0, not on npm yet. `init`, `sync` and `upgrade` work. Skills and prompts sync too. Hooks,
-> `review`, `run` and `doctor` are next. [What works today](#status).
+> **Status: pre-release.** v0.1.0, not on npm yet. `init`, `sync` and `upgrade` work. Skills and prompts sync too.
+> Hooks, `review`, `run` and `doctor` are next. [What works today](#status).
 
 ## What it is
 
@@ -30,8 +30,7 @@ just files in a git repo your team already knows how to review.
   Upgrades never touch them.
 - **Upgrades are PRs.** `folkways upgrade <version>` makes a branch, installs, syncs and commits. You
   read the diff like any other change.
-- **A few rules have teeth.** Pushing asks first (a permission rule, built; Copilot CLI support
-  unverified).
+- **A few rules have teeth.** Pushing asks first (a permission rule, built; Copilot CLI support unverified).
   Commit format, the fresh-process review gate and "don't touch my main clone" are enforced by hooks
   (coming soon).
 
