@@ -24,8 +24,9 @@ Read these first. A missing file is normal; skip it.
 1. **Check the branch.** Not the default branch; name follows `git.branch_pattern`; working tree clean.
    Uncommitted changes go through the `commit` skill first.
 2. **Check the review gate.** A fresh-process review must cover the exact HEAD SHA: a file
-   `NN-review-<sha7>.md` in the effort (or `people/<handle>/inbox/`) whose frontmatter `sha` equals
-   `git rev-parse HEAD`. If there is none, or it covers an older SHA, run `npx folkways review` and
+   `NN-review-<sha7>.md` in the effort (or `<YYYY-MM-DD>-review-<sha7>.md` in `people/<handle>/inbox/`) whose frontmatter `sha` equals
+   `git rev-parse HEAD`. If there is none, or it covers an older SHA, run
+   `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root and
    wait for it. This holds for every trigger setting; the trigger only decides when the review runs
    on its own.
 3. **Act on the review.** Blocking findings get fixed (then commit, re-review) or the user explicitly

@@ -43,17 +43,18 @@ Read these first. A missing file is normal; skip it.
 
 ## Output {#output}
 
-`<effort>/NN-qa-<env>-<sha7>.md`:
+`<effort>/NN-qa-<env>-<sha7>.md`; with no effort,
+`people/<handle>/inbox/<YYYY-MM-DD>-qa-<env>-<sha7>.md`:
 
 ```markdown
 # QA: EX-123 in dev
 
-**Build:** web-app@1a2b3c4 (from /version) · **Env:** dev · **Date:** 2026-09-29 · **Result:** 2 of 3 pass
+**Build:** web-app@1a2b3c4 (from /version) · **Env:** dev · **Date:** 2026-09-29 · **Result:** 1 of 2 pass
 
 | # | Criterion | Result | Evidence |
 |---|---|---|---|
 | 1 | Expired token returns 401 | pass | screenshots/01.png, trace link |
-| 3 | Refresh retries once | **fail**: retries forever | log link (10:02-10:05 UTC) |
+| 2 | Refresh retries once | **fail**: retries forever | log link (10:02-10:05 UTC) |
 
 ## Defects
 <bug write-ups, if any>

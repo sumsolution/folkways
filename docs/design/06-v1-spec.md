@@ -247,7 +247,7 @@ and overlays (§3.2); writes only after approval; succinct output; claims link t
 | `start` | Session start: resume (read `00-STATUS.md` → git state → confirm next steps) or new (ticket/docs → research → create `00-STATUS.md`) | `00-STATUS.md` |
 | `status` | Update an effort's `00-STATUS.md` at milestones; team roll-up and standup from `efforts/*/00-STATUS.md` and `state/`; promote an effort (`git mv` to `efforts/`) | status docs |
 | `research` | Source order from `team.yaml`; clone rules; tool fallback = ask; subagents cheap-first; Opus re-check triggers | `NN-<topic>.md` with confidence and SHAs read |
-| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort |
+| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort; with no effort, `people/<h>/inbox/<date>-review-<sha7>.md` |
 | `commit` | Angular commit with module scope; branch naming | commit |
 | `pr` | Requires a review covering HEAD; squash-title rules; draft vs ready; asks before push | PR (draft if headless) |
 | `side-quest` | Write a finding or ticket draft to the effort or `people/<h>/inbox/`, and say so | file |

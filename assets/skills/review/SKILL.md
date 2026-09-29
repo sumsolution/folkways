@@ -1,6 +1,6 @@
 ---
 name: review
-description: Reviews a code change against its ticket and writes a verdict and findings file. Use when the user says "review this", "review my PR", "code review", "look over this diff", "is this ready to merge", "check this branch", or when `folkways review` runs the fresh-process review gate. Code only: not for ADRs or other documents (use adr), writing tests (use tests) or fixing the code.
+description: Reviews a code change against its ticket and writes a verdict and findings file. Use when the user says "review this", "review my PR", "code review", "look over this diff", "is this ready to merge", "check this branch", or when `folkways review` runs the fresh-process review gate. Code only, not ADRs or other documents (use adr), writing tests (use tests) or fixing the code.
 ---
 
 # review
@@ -42,7 +42,8 @@ author. Keep it that way: don't read the author's session notes as a substitute 
    [What to look for](#what-to-look-for)).
 4. **Verify by running.** Run the test suite at the SHA. For each risky claim (a race, an edge case,
    an error path), write a throwaway test or script and run it. When docs and source disagree, the
-   source is the citation. Delete throwaway code; report what you ran.
+   source is the citation. Delete throwaway code; report what you ran. When the review file is written, remove the worktree
+   (`git worktree remove <path>`).
 5. **Write the review** in the [Output](#output) format. Verdict first. Every finding cites evidence:
    `path:line` at the SHA, a command and its output, or a doc link.
 6. **Draft locally, post only on approval.** Save the file; show the verdict and findings. Offer to post
@@ -88,7 +89,7 @@ One of:
 ## Output {#output}
 
 Write `<effort>/NN-review-<sha7>.md`, where `NN` is the effort's next topic number. With no effort,
-use `people/<handle>/inbox/`. A re-review is a new file, never an edit of the old one.
+use `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`. A re-review is a new file, never an edit of the old one.
 
 ```markdown
 ---

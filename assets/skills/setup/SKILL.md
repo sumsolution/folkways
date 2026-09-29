@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Configures a new team repo - interviews a team lead to fill in team.yaml, moves existing team material into overlays or team skills, and writes the first state/ files. Use right after `folkways init`, or when the user says "set up the team repo", "configure folkways", "fill in team.yaml", "add our Jira project" or "import our existing templates". Not for setting up one person's machine (use onboard).
+description: Configures a new team repo - interviews a team lead to fill in team.yaml, moves existing team material into overlays or team skills, and writes the first state/ files. Use when `folkways init` has just run, or when the user says "set up the team repo", "configure folkways", "fill in team.yaml", "add our Jira project" or "import our existing templates". Not for setting up one person's machine (use onboard).
 ---
 
 # setup
@@ -38,9 +38,11 @@ Read these first. A missing file is normal; skip it.
    `.folkways/` or framework skills; `folkways sync` will refuse to run over edits.
 5. **Seed `state/`** with `state/knowledge-audit.md` (no runs yet) and any tracker the team names.
 6. **Update the READMEs** only where the team's answers change them.
-7. **Commit on a branch and offer a PR** (`team.yaml`, `overlays/` and team skills go by PR). Then tell
-   the lead the remaining manual steps: push to GitHub, add the audit workflow's secret, protect the
-   default branch (linear history), and have each member run `onboard`.
+7. **Commit on approval.** A new repo has no remote yet, so this first commit goes on the default
+   branch. Then tell the lead the remaining manual steps: push to a new GitHub repo, add the audit
+   workflow's secret, protect the default branch (linear history), and have each member run `onboard`.
+   From then on, `team.yaml`, `overlays/` and team skills change by PR. On an existing repo with a
+   remote, commit on a branch and offer a PR instead.
 
 ## Interview {#interview}
 

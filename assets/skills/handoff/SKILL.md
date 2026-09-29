@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Writes the effort's 00-STATUS.md so a fresh session can resume cold, then gives the user a resume prompt. Use when context is filling up (the 200K band), after a compaction, before a risky or long operation, or when the user says "hand off", "wrap up for now", "save progress", "I need to stop", "update the status doc" or "checkpoint".
+description: Writes the effort's 00-STATUS.md so a fresh session can resume cold, then gives the user a resume prompt. Use when context is filling up (the 200K band), after a compaction, before a risky or long operation, or when the user says "hand off", "save progress so I can resume", "I need to stop", "set up the next session" or "checkpoint". Not for milestone updates or team roll-ups (use status).
 ---
 
 # handoff
@@ -26,7 +26,6 @@ Read these first. A missing file is normal; skip it.
 | 200K tokens (band 3) | Full handoff, then end the session |
 | Just compacted | Update `00-STATUS.md` before any other work; your early turns are now a summary, so check claims against files and git |
 | Before a risky or long operation | Update `00-STATUS.md` and commit it, so a failure loses nothing |
-| Milestone, or end of session | Update `00-STATUS.md`, then offer `session-close` |
 
 ## Workflow
 
@@ -55,7 +54,7 @@ Use [references/status-template.md](references/status-template.md)
   or a question and who to ask.
 - **Where we are** says what is verified, not what was attempted.
 - **Git state** in the header: branch, worktree path, last pushed SHA, anything uncommitted.
-- **Open questions** and pending decisions carry the options already weighed, one line each, so the
+- **Pending decisions** (under `Decisions`, or `Blocked / waiting` when someone else decides) carry the options already weighed, one line each, so the
   next session doesn't redo them.
 - Dead ends worth remembering: one line under Decisions ("Tried X; fails because Y"), only if the next
   session would otherwise try it again.

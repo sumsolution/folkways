@@ -36,7 +36,7 @@ Read these first. A missing file is normal; skip it.
 7. **Check tools** from `research.sources`: each `kind: mcp` server is connected, `gh` is installed and
    logged in (`gh auth status`), each `kind: url` source is reachable. List what's missing and how to
    fix it; don't install anything without approval.
-8. **Run `npx folkways doctor`** if this version has it, and report its findings.
+8. **Run `node_modules/.bin/folkways doctor`** from the team repo root if this version has it, and report its findings.
 9. **Commit `people/<handle>/`** and push on approval (`people/` goes straight to the default branch,
    rebased).
 10. **Report** what's set up, what's missing, and the next step: run `start`.

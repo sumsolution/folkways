@@ -23,14 +23,15 @@ Then pick the task: [Update](#update), [Roll-up](#roll-up), or [Promote](#promot
 
 ## Update
 
-At milestones, before risky or long operations, and at the end of a session before `session-close`.
+At milestones, and at the end of a session before `session-close`. Handing off to a fresh session, or a
+checkpoint before a risky operation, is the `handoff` skill.
 
 1. **Read the current `00-STATUS.md`** and check it against git and the effort's files.
 2. **Change what moved:** `Where we are`, `Next`, `Blocked / waiting`, `Decisions`, the file index, the
    `Last updated` date. Keep the shape in
    [references/status-template.md](references/status-template.md)
    (`.claude/skills/status/references/status-template.md`). Content goes in topic files, not here.
-3. **Show the diff; write on approval.** Before a risky or long operation, also offer to commit it.
+3. **Show the diff; write on approval.** Offer to commit it.
 
 ## Roll-up {#roll-up}
 

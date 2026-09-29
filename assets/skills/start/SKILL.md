@@ -1,6 +1,6 @@
 ---
 name: start
-description: Starts a work session - resumes an effort from its 00-STATUS.md, or sets up a new effort from a ticket or docs. Use at the start of a session or when the user says "let's start", "pick up where we left off", "resume", "continue EX-123", "what was I working on", "new effort", "start work on this ticket" or "kick off".
+description: Starts a work session - resumes an effort from its 00-STATUS.md, or sets up a new effort from a ticket or docs. Use when a session begins, or when the user says "let's start", "pick up where we left off", "resume", "continue EX-123", "what was I working on", "new effort", "start work on this ticket" or "kick off".
 ---
 
 # start

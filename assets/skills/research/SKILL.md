@@ -70,7 +70,8 @@ The user's clones under `projects_dir` belong to the user.
 - Never check out, pull, reset or rebase in them.
 - Run `git fetch`, then read `origin/<default>` (default branch from `team.yaml` `repos`) with
   `git grep`, `git show origin/<default>:<path>`, or, for a deep read, a detached worktree at
-  `<projects_dir>/.worktrees/<repo>/research-<sha7>`. Record the full SHA you read.
+  `<projects_dir>/.worktrees/<repo>/research-<sha7>`, removed with `git worktree remove` when you
+  finish. Record the full SHA you read.
 - **Missing repo:** clone it into `projects_dir` when the search is deep (many files) or the repo will
   be referenced again. Cloning writes to the user's disk: tell them the repo and path and clone on their
   yes. A repo listed in `team.yaml` `repos` is pre-approved; say so as you clone. Then the same rules apply.
@@ -100,7 +101,7 @@ Say in the file that you escalated and what changed.
 ## Output
 
 Write `NN-<topic>.md` in the effort folder, `NN` being the next topic number (`00-STATUS.md` is 00).
-With no effort, use `people/<handle>/inbox/`. Use the template in
+With no effort, use `people/<handle>/inbox/<YYYY-MM-DD>-research-<slug>.md`. Use the template in
 [references/output-template.md](references/output-template.md)
 (`.claude/skills/research/references/output-template.md`); read it before writing.
 

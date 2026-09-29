@@ -35,8 +35,10 @@ Read these first. A missing file is normal; skip it.
 4. **Write the message** per [Message format](#message-format). Show it with the file list.
 5. **Commit on approval.** A user asking you to commit approves the commit you showed them. If you are
    committing on your own initiative (a checkpoint before a risky operation), ask first.
-6. **After the commit:** if the review trigger is `after-commit`, run `npx folkways review` and say where
-   the review file landed. Never push; that is the `pr` skill, and every push needs approval.
+6. **After the commit:** if the review trigger is `after-commit`, run
+   `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root (the
+   pinned CLI; never a bare `npx folkways`, which can fetch an unrelated package) and say where the
+   review file landed. Never push; that is the `pr` skill, and every push needs approval.
 
 ## Message format {#message-format}
 

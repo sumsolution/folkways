@@ -5,8 +5,7 @@ How to write a framework skill in `assets/skills/<name>/`. It is based on
 ([06 §3.2, §6, §7.5](design/06-v1-spec.md)). `test/skills.test.ts` checks the mechanical rules.
 
 > **Overlays may change.** This guide uses the overlay model in spec §3.2: the skill reads
-> `OVERLAY.md` files itself, as instructions. ADR 0001 (another session's work in progress) is deciding how overlays get
-> enforced. If it changes the model, update step 0 in every skill and the
+> `OVERLAY.md` files itself, as instructions. A pending ADR on overlay enforcement may change how overlays get enforced. If it changes the model, update step 0 in every skill and the
 > [Overlays](#overlays-and-section-ids) section here.
 
 ## Rules
