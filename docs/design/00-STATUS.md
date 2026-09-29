@@ -27,6 +27,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [08-research-hook-runtime.md](08-research-hook-runtime.md) | Spec §9.3 answers, hook runtime options and benchmarks; basis of ADR 0002 |
 | [09-research-skill-authoring.md](09-research-skill-authoring.md) | Skill structure, triggering and headless rules; basis of the authoring guide |
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
+| [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime (both accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -113,9 +114,9 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
-1. **Hooks** (spec §7.1) in Go, built against the [test/hooks/](../../test/hooks) contract: `git-guard`,
-   `context-band`, `session-start`, `session-end`, `precompact`. Ship as per-platform optional dependencies
-   (ADR 0002).
+1. **Hooks** in Go: follow [11-plan-hooks-build.md](11-plan-hooks-build.md). Confirm its six decisions,
+   then five PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
+   repos → packaging, smoke and release.
 2. `review` / `run` / `doctor`.
 3. Publish 0.1.0.
 4. Set up the beta team repo.
@@ -123,14 +124,14 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 ## Follow-ups (not ticketed)
 
 - [ ] Spec §4.2: `review.trigger` becomes a floor a person can only tighten (decided yes). Then reverse the
-  `test/hooks` fixtures `push-me-overrides-team-*`, which let a person loosen it.
+  fixture `push-me-overrides-team-passes`, which lets a person loosen it. Plan 11, PR 1.
 - [ ] Spec §4.1: add `git.commit_pattern` (decided yes).
-- [ ] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback).
+- [ ] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Plan 11, PR 1.
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../assets/prompts/review.md).
 - [ ] `doctor` checks: stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
-- [ ] [assets/settings.json](../../assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11).
+- [ ] [assets/settings.json](../../assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
 - [ ] `scripts/` is not in the `tsconfig.json` `include`; gitignore `.folkways-sync-*` in the team template.
-- [ ] Spec §3.1 hook ownership wording. GitHub ignores `{#id}`, so in-page skill anchors are dead in the web view.
+- [ ] Spec §3.1 hook ownership wording (plan 11, PR 4). GitHub ignores `{#id}`, so in-page skill anchors are dead in the web view.
 - [ ] Research 10: a live `@` check (new session, marker-file skill) and Copilot CLI.
 - [ ] Optional: route compiled-file staging through `fsOps` so rollback tests cover it.
 
