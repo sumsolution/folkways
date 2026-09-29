@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach } from 'vitest';
@@ -66,5 +66,9 @@ export function commitAll(team: string, message = 'team change'): void {
 
 /** Every file in a team repo outside .git, with its content. */
 export function snapshot(team: string): Record<string, string> {
-  return Object.fromEntries(listFiles(team).filter((f) => !f.startsWith('.git/')).map((f) => [f, read(join(team, f))]));
+  // Never walk .git: background git maintenance (macOS) adds and removes lock files there.
+  const files = readdirSync(team)
+    .filter((e) => e !== '.git')
+    .flatMap((e) => (statSync(join(team, e)).isDirectory() ? listFiles(join(team, e)).map((f) => `${e}/${f}`) : [e]));
+  return Object.fromEntries(files.sort().map((f) => [f, read(join(team, f))]));
 }
