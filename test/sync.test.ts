@@ -91,6 +91,13 @@ describe('sync stops on edits to framework files', () => {
     expect(result.discarded).toEqual(['modified  .folkways/instructions.md']);
     expect(read(join(team, '.folkways/instructions.md'))).not.toBe('mine\n');
   });
+
+  it('detects changes to the manifest', () => {
+    const manifest = json(join(team, '.folkways/manifest.json'));
+    manifest.version = '0.2.1';
+    put(join(team, '.folkways/manifest.json'), `${JSON.stringify(manifest)}\n`);
+    expect(() => sync(team, next)).toThrow('modified  .folkways/manifest.json');
+  });
 });
 
 describe('sync refusals and warnings', () => {
@@ -110,5 +117,19 @@ describe('sync refusals and warnings', () => {
   it('warns when AGENTS.md lost the import line', () => {
     put(join(team, 'AGENTS.md'), '# Team\n');
     expect(sync(team, next).warnings[0]).toMatch(/@\.folkways\/instructions\.md/);
+  });
+
+  it.each([
+    [{ skills: ['../../outside'], files: {} }],
+    [{ skills: [], files: { '../../outside': 'a'.repeat(64) } }],
+  ])('rejects an unsafe manifest before forced deletion', (changes) => {
+    const outside = join(team, '..', 'outside');
+    put(outside, 'keep\n');
+    put(
+      join(team, '.folkways/manifest.json'),
+      `${JSON.stringify({ version: '0.1.0', ...changes })}\n`,
+    );
+    expect(() => sync(team, next, { force: true })).toThrow(/manifest.*invalid/i);
+    expect(read(outside)).toBe('keep\n');
   });
 });

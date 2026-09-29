@@ -95,7 +95,7 @@ describe('upgrade', () => {
     expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
   });
 
-  it.each(['bad name', 'latest', '^1.0.0', '1.0', ''])('refuses the version %j', (version) => {
+  it.each(['bad name', 'latest', '^1.0.0', '1.0', '01.2.3', '1.0.0-a..b', ''])('refuses the version %j', (version) => {
     expect(() => upgrade(team, version, install)).toThrow(/not a version/);
     expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
   });
