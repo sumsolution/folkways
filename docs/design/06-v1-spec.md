@@ -349,7 +349,7 @@ Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates 
 1. **When to lift findings to `knowledge/`:** session close vs immediately. Decide from beta evidence.
 2. **Architecture knowledge for `adr`:** dedicated session.
 3. **Verify before building** (checked 2026-09-29, [08 §1](08-research-hook-runtime.md)):
-   - `PostToolBatch`: **exists** in Claude Code 2.1.284 (tested). Payload `tool_calls[]` with `tool_response` as a string;
+   - `PostToolBatch`: **exists** in Claude Code 2.1.284 (tested). Payload `tool_calls[]` with `tool_response` (a string, or a content-block array);
      `additionalContext` reaches the model. Copilot CLI has no `PostToolBatch`.
    - Transcript `usage` vs Claude Code's own count: **matches** `/context` (29,121 vs "29.1k", tested). The statusline
      doesn't run under `-p`, so it was not compared.

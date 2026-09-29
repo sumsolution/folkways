@@ -86,7 +86,7 @@ repo. No output. No session id: do nothing.
 
 **`context-band`** (`UserPromptSubmit`, `PostToolBatch`): tokens in context = the last transcript line with
 `type: "assistant"`, `isSidechain: false` and non-zero usage: `input_tokens + cache_read_input_tokens +
-cache_creation_input_tokens`. Bands from `team.yaml` `handoff.bands`. When the band rises above the last
+cache_creation_input_tokens`. Bands from `team.yaml` `handoff.bands`. A threshold counts when context is `>=` it. When the band rises above the last
 one announced for this session, inject the band text naming the threshold (`125K`); announce only the
 highest band crossed. When context falls below the last band (compaction), lower the stored band so the
 next crossing is announced again **(proposed)**. State lives in `.local/` **(proposed)**. No transcript

@@ -60,6 +60,13 @@ func deny(reason string) {
 }
 
 func main() {
+	// Fail open on a bug: a panic exits 2, and Copilot CLI denies the tool call on any nonzero preToolUse exit.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "folkways: internal error:", r)
+			os.Exit(0)
+		}
+	}()
 	if len(os.Args) < 2 || os.Args[1] != "git-guard" {
 		return
 	}

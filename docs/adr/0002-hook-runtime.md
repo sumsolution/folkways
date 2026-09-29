@@ -34,7 +34,7 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
   | Rust | 3.7 / 4.5 | 3.7 / 5.0 | 7.7 / 9.8 | 2.0 MB |
 
   The proposed command, run through `sh -c` as both tools run it: Go 4.3 (npm) and 8.3 (pnpm) ms. A full Go
-  `git-guard` prototype passes all 48 contract cases at 3.2 ms per commit check. **macOS is not measured yet.**
+  `git-guard` prototype passes all 51 git-guard contract cases at 3.2 ms per commit check. **macOS is not measured yet.**
 - **Every JS runtime lands at 48–82 ms**, compiled or not; start-up dominates. Node optimizations save 13–19 ms
   of 67. Compiled Bun, Deno and Node SEA also cost 100–127 MB per platform.
 - **A JS launcher in front of a native binary gives back ~31 ms** (esbuild, Biome, Turborepo). esbuild avoids
@@ -67,6 +67,8 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
 - The command works on every supported platform. The path contains no platform name: the lockfile holds all four
   platform packages, and each machine installs its own. `CLAUDE_PROJECT_DIR` anchors the command in Claude Code
   after a `cd`. In Copilot CLI the variable is unset for repo hooks, so `.` applies, and that is the project root.
+  This needs a shell, so the entry uses shell form, not the exec form (`args`) that the Claude Code docs prefer:
+  exec form can't fall back when the variable is unset.
 - Accept only after Summer's macOS run of `node bench/hooks/run.ts`. If Node's gap there is small enough to
   ignore, option 1 (Node, lean entry + compile cache) is the fallback: one language, no release matrix.
 
@@ -99,6 +101,8 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
   team's `pnpm-workspace.yaml`. `sync` warns when that setting is missing or `.bin/folkways-hook` is absent.
   `doctor` runs `folkways-hook --version`, compares it with the manifest, and names the fix
   (`--omit=optional`, a mirror missing the `@folkways/hooks-*` packages, a pnpm setting). `onboard` runs doctor.
+- **Hooks must fail open:** they exit 0 on every error. The Go `main` recovers from panics, because a panic exits 2
+  and Copilot CLI then denies the tool call.
   A missing binary is loud: Claude Code shows a hook error on every call, and Copilot CLI denies every Bash call.
 - **CLI:** `folkways hook <name>` in TypeScript goes away, or delegates to the binary for manual runs. The
   contract suite ([test/hooks/](../../test/hooks)) stays in TypeScript and tests the Go binary as a black box.
