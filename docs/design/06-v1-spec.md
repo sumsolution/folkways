@@ -158,7 +158,8 @@ A skill's folkways = framework skill + team overlay + personal overlay, applied 
 - Team data files (ticket templates, ADR examples) sit next to `OVERLAY.md` and are referenced from it.
 - Layering folkways is still instruction-following; that's acceptable because a lapse is cheap.
   `doctor` also reports what can't be prevented: personal skills that shadow a framework or team skill
-  (Claude Code prefers personal over project), and hooks disabled in user or local settings.
+  (Claude Code prefers personal over project), and hooks disabled in local settings. The framework
+  settings set `"disableAllHooks": false`, which outranks a user-settings `true`.
 
 ## 4. Config
 

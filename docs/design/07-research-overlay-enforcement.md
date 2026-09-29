@@ -73,7 +73,7 @@ rules can't be loosened by another scope. Its hooks run unless the user turns th
 **Is it a bypass?** In Claude Code, yes: a same-name personal skill silently replaces the team's,
 overlays and all. It is documented, intended behaviour, so folkways can't block it; it can detect it.
 `doctor` should list personal skills whose name matches a framework or team skill (both tools' home
-dirs). Spec §9.4 already keeps personal skills out of v1. (Inferred.)
+dirs). Spec §9, item 4 already keeps personal skills out of v1. (Inferred.)
 
 ## 4. What is enforceable, layer by layer
 
@@ -82,8 +82,9 @@ dirs). Spec §9.4 already keeps personal skills out of v1. (Inferred.)
 | Skill / overlay / `AGENTS.md` prose | team repo | Partly (§6) | No | §1–2 | high |
 | `SessionStart` / `UserPromptSubmit` `additionalContext` | team hook | Partly: injected as a system reminder, still advisory | No | [hooks#add-context-for-claude](https://code.claude.com/docs/en/hooks#add-context-for-claude) | high |
 | Permission `deny` in `.claude/settings.json` | team repo | Yes | Not via other settings ("no other level can allow it"); yes by editing the file or skipping project settings | [permissions](https://code.claude.com/docs/en/permissions#settings-precedence) | high |
-| Permission `ask` | team repo | Yes; ask is checked before allow | Same as deny; auto-approved in interactive bypass mode (inferred) | [permissions#manage-permissions](https://code.claude.com/docs/en/permissions#manage-permissions) | high / low |
-| `PreToolUse` hook (exit 2) | team repo | Yes: beats allow rules; held under bypass mode (§4.1) | Yes: `disableAllHooks` in user or local settings or `--settings`, or `--bare` | [hooks#disable-or-remove-hooks](https://code.claude.com/docs/en/hooks#disable-or-remove-hooks) | high |
+| Permission `ask` | team repo | Yes; ask is checked before allow | Same as deny. Never auto-approved, "in any mode, including `bypassPermissions`" | [permissions#manage-permissions](https://code.claude.com/docs/en/permissions#manage-permissions), [permission-modes#actions-no-mode-auto-approves](https://code.claude.com/docs/en/permission-modes#actions-no-mode-auto-approves) | high |
+| `PreToolUse` hook (exit 2) | team repo | Yes: beats allow rules; held under bypass mode (§4.1) | Yes: `disableAllHooks` in local settings or `--settings`, or `--bare`. A user-settings `true` loses to a project `"disableAllHooks": false`, so the team can close that route | [hooks#disable-or-remove-hooks](https://code.claude.com/docs/en/hooks#disable-or-remove-hooks) | high |
+| `permissions.disableBypassPermissionsMode` | any scope, team repo included | n/a | Rejects `--dangerously-skip-permissions`; a project value can be overridden by local settings (inferred from precedence) | [permissions](https://code.claude.com/docs/en/permissions) | high / medium |
 | Copilot CLI `preToolUse` | team repo (reads `.claude/settings.json`) | Yes: non-zero exit denies; **timeouts fail open** | Yes: `disableAllHooks` | [hooks-reference](https://docs.github.com/en/copilot/reference/hooks-reference) | high |
 | `folkways sync` checks | framework | n/a: runs at sync | Yes (`--force`, or never syncing) but visible in the upgrade PR | spec §3.1 | high |
 | `folkways doctor` lint | framework | n/a | Detects, doesn't stop | this ADR | n/a |
@@ -107,9 +108,10 @@ can only detect it (inferred, medium).
 | `--dangerously-skip-permissions` | blocked | blocked | blocked |
 | same + `--settings '{"disableAllHooks": true}'` | **created** | blocked | blocked |
 
-Raw: [results/hook-bypass.txt](07-eval/results/hook-bypass.txt). In `-p` mode an `ask` becomes a denial
-(documented in [permission-modes](https://code.claude.com/docs/en/permission-modes)); interactive
-bypass mode was not tested. **Reading:** hooks hold against the model and against bypass mode; they
+Raw: [results/hook-bypass.txt](07-eval/results/hook-bypass.txt), with each run's own report in
+[results/hook-bypass/](07-eval/results/hook-bypass/). In `-p` mode an `ask` becomes a denial; an `ask`
+is never auto-approved in any mode ([permission-modes](https://code.claude.com/docs/en/permission-modes#actions-no-mode-auto-approves)).
+Hooks in interactive bypass mode were not tested. **Reading:** hooks hold against the model and against bypass mode; they
 fall to one deliberate flag. Deny rules held in every run.
 
 ## 5. Prior art (only what informs the design)
@@ -140,8 +142,8 @@ last line `Refs: EX-<n>`. Four personal overlays: (a) add a `Tested:` line, (b) 
 | compiled-explicit | Same, heading marked lower priority, with the precedence paragraph |
 | hybrid | Team override compiled in; step 0 reads only the personal overlay, with the precedence paragraph |
 
-**Run.** Each run: a fresh `claude -p` process in a throwaway repo outside any git tree (no host
-instructions), read-only tools, prompt "write a commit message for `change.diff`". Scored
+**Run.** Each run: a fresh `claude -p` process in a throwaway repo outside any git tree (no project
+instructions; the host's user-level instructions still loaded, see threats), read-only tools, prompt "write a commit message for `change.diff`". Scored
 automatically (four sub-rules; "team rule followed" = all four). N = 3 per cell, N = 10 for the four
 deciding cells. Subject: `sonnet`; `opus` on two cells.
 
@@ -157,7 +159,9 @@ deciding cells. Subject: `sonnet`; `opus` on two cells.
 | *opus*, runtime-implicit | | | | | 3/3 |
 | *opus*, hybrid | | | | | 3/3 |
 
-Cells show *team rule followed / runs*. Sub-rules met per run were all-or-nothing (mean 4.00 ± 0.00 in
+Cells show *team rule followed / runs*. In the `compiled-*` layouts the compiler drops a personal
+`## Override` and the skill never points at the personal file, so `compiled-*/b` passes by construction:
+those two cells test the mechanism, not the model. Sub-rules met per run were all-or-nothing (mean 4.00 ± 0.00 in
 every passing cell; runtime-implicit/d 0.80 ± 1.69). Harmless add applied (`Tested:` line, cell a):
 runtime 3/3 and 3/3, hybrid 3/3, compiled-implicit 2/3, compiled-explicit 2/3.
 
@@ -187,8 +191,9 @@ runtime 3/3 and 3/3, hybrid 3/3, compiled-implicit 2/3, compiled-explicit 2/3.
 
 **Threats to validity.** One task, one easily checked rule, one team format. N = 3 separates 0/3 from
 3/3, not 2/3 from 3/3. Claude models in Claude Code only; Copilot CLI untested. The prompt names the
-skill path, so discovery and skipped step-0 reads were not tested. The host injects attribution trailers,
-which `run.ts` strips before scoring (logged per run).
+skill path, so discovery and skipped step-0 reads were not tested. The host's user-level instructions reached the
+subjects: they add attribution trailers (stripped by `run.ts` before scoring, logged per run), and one
+subject cited "the session's attribution rule". Project instructions did not load.
 
 ## 7. Does the mores/folkways framing hold?
 
@@ -210,7 +215,7 @@ can't break it and a person can't break it by accident*.
 
 ## Unknown or unverified
 
-- Interactive `bypassPermissions`: whether `ask` still prompts and hooks still block (only `-p` tested).
+- Interactive `bypassPermissions`: whether hooks still block (only `-p` tested; `ask` is documented).
 - Whether a push ruleset on `overlays/**` also blocks the merge of a PR that touches it.
 - Push ruleset plan requirement (the raw page body says "private or internal"; plan text not found).
 - Copilot CLI behaviour under the same eval (not run); Copilot CLI hooks under `--yolo` (undocumented).

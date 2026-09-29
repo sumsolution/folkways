@@ -27,8 +27,9 @@ them, and how are the remaining rules layered?
 - **Settings are enforced.** Deny rules can't be loosened by any other scope; `PreToolUse` hooks block
   before allow rules ([permissions](https://code.claude.com/docs/en/permissions#settings-precedence)). Copilot
   CLI reads the same `.claude/settings.json` hooks ([hooks-reference](https://docs.github.com/en/copilot/reference/hooks-reference)).
-- **Hooks from a team repo can be turned off by the user** (`disableAllHooks`, `--bare`); only
-  managed settings or Copilot policy hooks can't. A team repo can't deploy either. Tested here: a
+- **Hooks from a team repo can be turned off by the user** (`disableAllHooks` in local settings or
+  `--settings`, `--bare`; a project `"disableAllHooks": false` beats a user-settings `true`); only
+  managed settings or Copilot policy hooks can't be. A team repo can't deploy either. Tested here: a
   project hook held under `--dangerously-skip-permissions` and fell to one `--settings` flag
   ([07 §4.1](../design/07-research-overlay-enforcement.md#41-empirical-hooks-and-rules-under-bypass-mode)).
 - **Skill shadowing:** in Claude Code a personal skill of the same name replaces the project skill; in
@@ -39,9 +40,10 @@ them, and how are the remaining rules layered?
   precedence paragraph: 0 failures in every cell (10/10 on the deciding cells). Compiling personal
   additions into the shared skill dropped the harmless one in 2 of 6 runs.
 - **Prior decisions:** agent-side enforcement only, no CI in project repos (spec §1, round 7);
-  personal review trigger may differ from the team's (round 7); personal skills out of v1 (spec §9.4);
+  personal review trigger may differ from the team's (round 7); personal skills out of v1 (spec §9, item 4);
   overlays never touch framework files (round 11).
-- **Framing** (Summer, [02-naming](../design/02-naming.md)): Sumner's *folkways* (customs people may vary)
+- **Framing** (Summer, raised for this workstream): Sumner (1906), whose *folkways* gave the project its
+  name ([02-naming](../design/02-naming.md)), split group norms into *folkways* (customs people may vary)
   and *mores* (norms the group enforces).
 
 ## Decision
@@ -60,7 +62,8 @@ team overrides compiled in and precedence stated by the framework.**
    shadow a framework or team skill, hooks disabled in user or local settings, personal overlays with
    `## Override` or override wording, and compiled skills older than their overlay.
 5. **Hardening is optional and documented, not required:** managed settings (`allowManagedHooksOnly`),
-   Copilot policy hooks, a GitHub push ruleset on team paths. They need an org or repo admin.
+   Copilot policy hooks, a GitHub push ruleset on team paths, and
+   `permissions.disableBypassPermissionsMode` (works from the team repo too, but a person may need bypass mode in a sandbox). They need an org or repo admin.
 
 Rationale: the eval shows the folkway layer works *when precedence is stated*, and fails badly when it
 isn't, so the statement must be the framework's job. Mores can't rest on that: 18 of the eval's
@@ -76,16 +79,16 @@ out of the shared file (the eval shows why) and needs no per-person build.
 | # | Rule | Mechanism | Configured in | Status |
 |---|---|---|---|---|
 | M1 | Commit header format and allowed scopes | `git-guard` on `git commit`: checks the message | `team.yaml` `git.commit_convention`, `git.scopes` (+ proposed `git.commit_pattern` for non-Angular formats) | planned, spec §7.1 |
-| M2 | Push needs the user's approval | permission `ask: Bash(git push:*)` | framework `assets/settings.json` | built |
+| M2 | Push needs the user's approval | permission `ask: Bash(git push:*)`; never auto-approved, even in bypass mode | framework `assets/settings.json` | built |
 | M3 | A review covers HEAD before push (trigger `pre-push`) | `git-guard` on `git push` | `team.yaml` `review.trigger` | planned, spec §7.1 |
 | M4 | The main clone's checkout is never changed | `git-guard` denies `checkout`, `switch`, `pull`, `reset`, `rebase` there | `.local/me.yaml` `projects_dir` | planned, spec §7.1 |
 | M5 | Branch names follow the team pattern | `git-guard` on `git push` and branch creation | `team.yaml` `git.branch_pattern` | **new** |
 | M6 | Headless runs: no push to a default branch, nothing destructive | `folkways run` passes deny rules (`--disallowedTools`); `git-guard` checks headless | `team.yaml` `repos[].default_branch` | **new** (spec §7.5 is prose today) |
 | M7 | Framework files are not edited | `sync` checksum check | `.folkways/manifest.json` | built |
-| M8 | Personal overlays only add | step 0 ignores personal `## Override`; `lintPersonalOverlay` in `sync` (warning) and `doctor` (error) | framework | prototype (`src/overlays.ts`) |
+| M8 | Personal overlays only add | `lintPersonalOverlay` in `sync` (warning) and `doctor` (error). **Detect only**: at runtime it's the step-0 prose (a folkway), and the lint misses a quiet contradiction | framework | prototype (`src/overlays.ts`) |
 | M9 | Team overrides apply | compiled into `SKILL.md` at `sync`; unknown section ID fails the sync | `overlays/<skill>/OVERLAY.md` | prototype |
 | M10 | Framework and team skills aren't shadowed | `doctor` lists same-name skills in `~/.claude/skills`, `~/.agents/skills`, `~/.copilot/skills` | framework | **new**, detect only |
-| M11 | Hooks stay on | `doctor` warns on `disableAllHooks` in user or local settings | framework | **new**, detect only |
+| M11 | Hooks stay on | framework settings set `"disableAllHooks": false`, which beats a user-settings `true`; `doctor` warns on `true` in local settings | framework `assets/settings.json` | **new**; closes one route, detects the other |
 | M12 | `team.yaml`, `overlays/`, team skills change by PR | CODEOWNERS routes reviews; optional push ruleset "Restrict file paths" with a maintainer bypass | team repo, GitHub settings | recommended by `setup` |
 
 ### Folkways: prose; team overrides by section ID, people add
@@ -102,8 +105,9 @@ where side quests go.
   detection still works) and the overlay's checksum (so `doctor` can spot a stale compile). A
   `FolkwaysError` from an unknown ID stops the sync before anything is written.
 - `sync.ts` and `doctor`: run `lintPersonalOverlay` over `people/*/overlays/*/OVERLAY.md`.
-- Framework skills: step 0 is one shared block (the `hybrid` text in
-  [07-eval/fixtures/step0-hybrid.md](../design/07-eval/fixtures/step0-hybrid.md)). A framework-repo test
+- Framework skills: step 0 is one shared block: read `team.yaml` and `.local/me.yaml`, then the
+  personal overlay, under the precedence text tested as `hybrid`
+  ([07-eval/fixtures/step0-hybrid.md](../design/07-eval/fixtures/step0-hybrid.md)). A framework-repo test
   checks every `assets/skills/*/SKILL.md` contains it.
 - `compileSkill`'s personal branch exists for the eval (Option 4); production doesn't use it.
 
@@ -124,12 +128,14 @@ where side quests go.
   both checksums; §4.1 adds `git.commit_pattern`; §6 step 0 becomes the shared block; §7.1 `git-guard`
   gains M5 and M6 and reads every more from `team.yaml`; §7.2 `doctor` gains M8, M10, M11; §7.5 headless
   limits become deny rules; §8.1 `setup` offers CODEOWNERS and the optional push ruleset.
-- **Code:** wire `src/overlays.ts` into `sync.ts` and `doctor` (description above). `git-guard` must stay
+- **Code:** wire `src/overlays.ts` into `sync.ts` and `doctor` (description above). `assets/settings.json`
+  gains `"disableAllHooks": false`, and `mergeSettings` must carry that key (today it merges hooks and `ask` only). `git-guard` must stay
   fast: Copilot CLI hook timeouts fail open.
 - **Skills:** a skill section that documents a more says where it's configured and that `git-guard`
   checks it. Team overrides of that section change the prose only.
 - **Teams:** put rules that must hold in `team.yaml`, not in an overlay. Review `overlays/` like code.
 - **Docs:** `assets/instructions.md` and the team README explain mores vs folkways in two lines each.
+  `AGENTS.md` ("Step 0 reads `team.yaml`, `.local/me.yaml` and both overlays") changes to the new step 0.
 - **Open:** round 7 lets a person set their own review trigger, which loosens M3 (see PR "Decision
   needed"). Interactive bypass mode and push-ruleset behaviour on PR merges are untested
   ([07, unknowns](../design/07-research-overlay-enforcement.md#unknown-or-unverified)).
