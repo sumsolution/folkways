@@ -55,6 +55,7 @@ export interface Vars {
   HEAD: string;
   HEAD7: string;
   OLD_HEAD: string;
+  OLD_HEAD7: string;
   TRANSCRIPT: string;
 }
 
@@ -178,7 +179,7 @@ export function buildEnv(fixture: Fixture): Vars {
   const head = git(worktree, 'rev-parse', 'HEAD');
 
   const vars: Vars = {
-    TEAM: team, PROJECTS: projects, MAIN: main, WORKTREE: worktree, HEAD: head, HEAD7: head.slice(0, 7), OLD_HEAD: oldHead,
+    TEAM: team, PROJECTS: projects, MAIN: main, WORKTREE: worktree, HEAD: head, HEAD7: head.slice(0, 7), OLD_HEAD: oldHead, OLD_HEAD7: oldHead.slice(0, 7),
     TRANSCRIPT: join(root, 'transcript.jsonl'),
   };
   const env = fixture.env ?? {};

@@ -35,7 +35,7 @@ FOLKWAYS_HOOK_CMD="node /abs/path/to/src/cli.ts hook" FOLKWAYS_HOOKS=git-guard,s
 
 Placeholders, filled in payloads, files and expectations: `${TEAM}` (team repo, the default cwd and
 `CLAUDE_PROJECT_DIR`), `${PROJECTS}`, `${MAIN}` (a main clone under `projects_dir`), `${WORKTREE}` (a worktree
-of it on `feat/EX-1-orders`), `${HEAD}` / `${HEAD7}` (the worktree's HEAD), `${OLD_HEAD}`, `${TRANSCRIPT}`.
+of it on `feat/EX-1-orders`), `${HEAD}` / `${HEAD7}` (the worktree's HEAD), `${OLD_HEAD}` / `${OLD_HEAD7}` (its first commit), `${TRANSCRIPT}`.
 
 ## The contract
 
@@ -67,9 +67,12 @@ change them here and in the fixtures together.
 - `git commit` with `-m`/`-am`/`--message` (double, single quotes, or the `$(cat <<'EOF' … EOF)` heredoc):
   the first line must be Angular `type(scope)!?: subject`. When `git.scopes` is non-empty the scope is
   **required** and must be listed. No message flag (`--no-edit`, `-F`): pass.
-- `git push` when the effective `review.trigger` (`.local/me.yaml` over `team.yaml`) is `pre-push`: deny
-  unless a file under `efforts/**` or `people/<handle>/work/**` of the team repo has frontmatter
-  `sha: <full HEAD of the target repo>`.
+- `git push` when the effective `review.trigger` is `pre-push`: deny unless the team repo holds a review
+  covering the target repo's HEAD. The effective trigger is the stricter of `team.yaml` and
+  `.local/me.yaml` (`on-demand` < `after-commit` < `pre-push`); a person can tighten it, not loosen it.
+  A review is either a file under `efforts/**` or `people/<handle>/work/**` with frontmatter
+  `sha: <full HEAD>`, or `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md` with `<sha7>` the first 7
+  characters of HEAD.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.

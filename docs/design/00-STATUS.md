@@ -97,7 +97,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Go hooks | [hooks/](../../hooks) | `folkways-hook` binary; `git-guard` done (with the trigger floor and inbox review lookup), four hooks to go. CI runs the git-guard contract cases ([plan](11-plan-hooks-build.md)) |
 | Hook benchmark | [bench/hooks/](../../bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
-| Tests | [test/](../../test) | vitest: 336 pass, 85 skipped |
+| Tests | [test/](../../test) | vitest: 336 pass, 88 skipped |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -124,10 +124,10 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 ## Follow-ups (not ticketed)
 
-- [ ] Spec §4.2: `review.trigger` becomes a floor a person can only tighten (decided yes). Then reverse the
-  fixture `push-me-overrides-team-passes`, which lets a person loosen it. Plan 11, PR 1.
+- [x] Spec §4.2: `review.trigger` becomes a floor a person can only tighten (decided yes). Contract and
+  fixtures done (`push-me-cannot-loosen-denied`); the Go implementation lands in plan 11, PR 2.
 - [ ] Spec §4.1: add `git.commit_pattern` (decided yes).
-- [ ] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Plan 11, PR 1.
+- [x] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Contract and fixtures done; the Go implementation lands in plan 11, PR 2.
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../assets/prompts/review.md).
 - [ ] `doctor` checks: stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
 - [ ] [assets/settings.json](../../assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.

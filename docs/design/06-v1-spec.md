@@ -230,10 +230,13 @@ handle: alex
 projects_dir: /Users/alex/projects     # absolute; `~` is not reliably expanded
 tool: claude                           # claude | copilot (default for `folkways run`)
 review:
-  trigger: pre-push                    # may differ from team (round 7)
+  trigger: pre-push                    # may only tighten the team's value
 models: {}                             # optional override of team.yaml models
 notifications: { slack_user: "@alex" }
 ```
+
+`review.trigger` here is a floor set by the team: a person can only tighten it. Order: `on-demand` <
+`after-commit` < `pre-push`. The effective trigger is the stricter of the team's and the person's.
 
 ## 5. Instructions
 
@@ -322,9 +325,13 @@ the contract suite, [test/hooks/README.md](../../test/hooks/README.md) ([ADR 000
 
 - `folkways review` starts a **separate headless process** with the fixed prompt `.folkways/prompts/review.md`,
   filled with: repo, branch, base, HEAD SHA, ticket, effort path. The working agent can't frame it.
-- Output: `<effort>/NN-review-<sha7>.md` with frontmatter `sha: <full SHA>`.
+- Output: `<effort>/NN-review-<sha7>.md` with frontmatter `sha: <full SHA>`. With no effort:
+  `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`.
 - `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard` blocks the push
   until a review for HEAD exists. `on-demand`: never automatic.
+- A review covers HEAD when a file under `efforts/**` or `people/<handle>/work/**` has frontmatter
+  `sha:` equal to the target repo's HEAD, or a file `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
+  has `<sha7>` equal to the first 7 characters of HEAD.
 
 ### 7.4 Knowledge audit (GitHub Action)
 
