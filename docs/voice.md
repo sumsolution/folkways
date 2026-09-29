@@ -54,7 +54,7 @@ Easter eggs, not themes. They fit because they're true, not because they're deco
 - **Set and setting.** Context shapes the experience. That's context engineering, and it fits once, where
   we talk about what an agent reads at session start.
 - **PLUR** (peace, love, unity, respect). A light touch where we talk about working together.
-- Never drug jokes. Never explain the reference.
+- Nod to the idea, not the scene. Never explain the reference.
 
 ## Before and after
 
