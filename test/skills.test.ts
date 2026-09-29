@@ -68,6 +68,10 @@ describe('framework skills', () => {
       expect(fm.description!.length).toBeGreaterThan(0);
       expect(fm.description!.length).toBeLessThanOrEqual(DESCRIPTION_MAX);
       expect(fm.description).not.toMatch(/[<>]/);
+      expect(fm.description, 'names its triggers').toMatch(/Use when/);
+      // Plain YAML scalars break on ': ' and ' #'; a skill with invalid frontmatter never triggers.
+      const raw = /^description: (.*)$/m.exec(text)?.[1] ?? '';
+      if (!/^["']/.test(raw)) expect(raw).not.toMatch(/: | #/);
     });
 
     it(`keeps SKILL.md under ${SKILL_MD_MAX_LINES} lines`, () => {
