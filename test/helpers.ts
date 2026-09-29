@@ -22,11 +22,15 @@ export function tmp(): string {
 /**
  * A copy of this package at `version`: package.json, assets/, templates/, src/.
  * `src/` lets tests run the copy's CLI directly with Node's type stripping.
+ * Skills, prompts and workflows are left out so tests control them (`addFrameworkContent`).
  */
 export function makePackage(version: string): string {
   const pkg = join(tmp(), 'pkg');
   mkdirSync(pkg);
-  for (const d of ['assets', 'templates', 'src']) cpSync(join(REPO, d), join(pkg, d), { recursive: true });
+  const content = ['skills', 'prompts', 'workflows'].map((d) => join(REPO, 'assets', d));
+  for (const d of ['assets', 'templates', 'src']) {
+    cpSync(join(REPO, d), join(pkg, d), { recursive: true, filter: (src) => !content.includes(src) });
+  }
   writeFileSync(join(pkg, 'package.json'), JSON.stringify({ name: '@folkways/cli', version, type: 'module' }));
   return pkg;
 }
