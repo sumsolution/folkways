@@ -25,8 +25,9 @@ folkways the framework is built on that split:
 | Changed by | An overlay or a PR | A team decision |
 
 Most of the framework is folkways, on purpose. Mores are few, and each one has a reason we'd defend in a
-review. Today one of them is enforced (push asks
-first); the rest arrive with the hooks.
+review. Some are enforced today (push asks first,
+framework files aren't edited, team overrides apply); the rest arrive with the hooks. The split, and
+which is which, is in [ADR 0001](../adr/0001-overlay-enforcement.md).
 
 We borrow Sumner's words, not his whole worldview: he was also a champion of laissez-faire and social
 Darwinism, and this project is about the opposite instinct, a group looking after each other.

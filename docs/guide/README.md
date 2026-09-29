@@ -15,8 +15,8 @@ New here? Read Concepts, then Getting started. Evaluating the design? How it wor
 
 ## Where things stand
 
-folkways is at **v0.1.0 and unpublished**. The CLI's `init`, `sync` and `upgrade` work and are tested.
-Hooks and skills are being built now. Each page marks what's coming soon, and the
+folkways is at **v0.1.0 and unpublished**. The CLI's `init`, `sync` and `upgrade` work and are tested, and the 16 skills ship.
+Hooks are being built now. Each page marks what's coming soon, and the
 [status doc](../design/00-STATUS.md) has the details.
 
 ## Other docs

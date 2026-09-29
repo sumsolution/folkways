@@ -44,10 +44,10 @@ Your team repo is ready. <(^_^<)
 
 ### 2. Fill in the config
 
-Open Claude Code or Copilot CLI in the new repo and run the `setup` skill (**coming soon**). It will
-interview you for `team.yaml` and move existing team material into `overlays/` or team skills.
+Open Claude Code or Copilot CLI in the new repo and run the `setup` skill. It interviews you for `team.yaml` and moves existing team material into
+`overlays/` or team skills.
 
-Today: edit `team.yaml` by hand. The comments say what each field is for. Keep examples synthetic until
+Or edit `team.yaml` by hand. The comments say what each field is for. Keep examples synthetic until
 you're in your own private repo.
 
 ### 3. Push it
@@ -78,7 +78,7 @@ Installing puts the pinned `@folkways/cli` in `node_modules/`, which is where ho
 
 ### 2. Onboard
 
-Open Claude Code or Copilot CLI in the team repo and run the `onboard` skill (**coming soon**). It will:
+Open Claude Code or Copilot CLI in the team repo and run the `onboard` skill. It:
 
 - write `.local/me.yaml` (your handle, projects directory and tool),
 - create `people/<handle>/`,
@@ -86,7 +86,7 @@ Open Claude Code or Copilot CLI in the team repo and run the `onboard` skill (**
 - check the MCP servers and CLIs your team's research sources need,
 - run `folkways doctor` (**coming soon**).
 
-Today: create `.local/me.yaml` by hand:
+Or create `.local/me.yaml` by hand:
 
 ```yaml
 handle: alex

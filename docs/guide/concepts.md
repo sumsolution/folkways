@@ -42,10 +42,10 @@ A skill is a folder with a `SKILL.md` that teaches the agent one method: how we 
 how we research. Both tools read skills from `.claude/skills/`. Frontmatter is `name` and `description`
 only, so the same file works in both.
 
-Framework skills are synced in from the package. Teams can add their own skills next to them. Planned
-v1 skills include `setup`, `onboard`, `start`, `status`, `research`, `review`, `commit`, `pr`,
-`handoff` and `session-close` ([spec §6](../design/06-v1-spec.md)). **Coming soon:** none ship in
-v0.1.0 yet.
+Framework skills are synced in from the package. Teams can add their own skills next to them. Sixteen
+ship: `setup`, `onboard`, `start`, `status`, `handoff`, `session-close`, `side-quest`, `research`,
+`ticket`, `adr`, `tests`, `commit`, `pr`, `review`, `qa` and `knowledge-audit`
+([spec §6](../design/06-v1-spec.md)).
 
 ## Overlays
 
@@ -57,8 +57,15 @@ The way teams and people customize a framework skill without editing it.
 | Person | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no |
 
 Framework skills mark replaceable sections with an ID, like `## Commit format {#commit-format}`. An
-overlay has `## Add` for extra rules and `## Override {#commit-format}` to replace that section. Every
-skill's step 0 reads `team.yaml`, `.local/me.yaml` and both overlays.
+overlay has `## Add` for extra rules and `## Override {#commit-format}` to replace that section.
+
+Team overlays are **compiled in** by `folkways sync`: an override replaces its section in the synced
+skill, and an add goes under `## Team additions`. An unknown ID stops the sync before anything is
+written. Rerun `sync` after you change an overlay. Personal overlays are attached at runtime: each
+skill's step 0 reads `team.yaml` and `.local/me.yaml`, then attaches your overlay through `.local/me`, a
+link to `people/<handle>/` that `onboard` creates and `sync` keeps. The framework's precedence text says
+personal rules may only add, and `sync` lints them. Reasoning:
+[ADR 0001](../adr/0001-overlay-enforcement.md).
 
 So the team gets one shared baseline, and each person can still add their own touches on top.
 
@@ -79,22 +86,27 @@ Most of folkways is **folkways**: customs the team shapes and changes freely. Sk
 `team.yaml`. If your team does it differently, write an overlay.
 
 A few things are **mores**: norms the team agrees are worth enforcing, so they're backed by settings and
-hooks, not just instructions.
+hooks, not just instructions. They live in config (`team.yaml`, framework settings), which changes by
+PR, so an overlay can't loosen them.
 
-- Ask before every push.
-- A fresh-process review covers the commit before a PR opens. The `pr` skill checks for one, and with
-  the `pre-push` trigger `git-guard` blocks the push until it exists.
-- Commits follow the team's format.
-- Agents never check out, pull or reset in your main clones. They use worktrees.
+- Ask before every push. Built: a permission rule, enforced in Claude Code (whether Copilot CLI honors
+  `permissions.ask` is unverified).
+- Framework files aren't edited. Built: `sync` checks their checksums.
+- Team overlay overrides apply. Built: `sync` compiles them in and fails on an unknown ID.
+- Personal overlays only add. `sync` warns when one doesn't; `doctor` will report it (coming soon).
+- Commits follow the team's format. Coming soon: `git-guard`.
+- A fresh-process review covers the commit before a push, with the `pre-push` trigger. Coming soon:
+  `git-guard`.
+- Agents never check out, pull or reset in your main clones. Coming soon: `git-guard`.
 
-The push rule is enforced today in Claude Code (whether Copilot CLI honors `permissions.ask` is
-unverified). The rest arrive with the hooks. The idea comes from the book the
+The full table is in [ADR 0001](../adr/0001-overlay-enforcement.md). The idea comes from the book the
 project is named after; see [The name](the-name.md).
 
 ## Headless runs
 
 Sometimes nobody's watching: `folkways run` (coming soon) or a CI job, like the monthly knowledge audit
-(coming soon). Headless runs create things **for review only**: local files, draft PRs, an @mention.
+(the `knowledge-audit` skill ships; the workflow that runs it is coming soon). Headless runs create things **for review only**: local files, draft PRs, an
+@mention.
 Never `main`, never destructive actions, never writes to external systems. Every judgement call is
 flagged in the output, so a person decides.
 
@@ -108,7 +120,7 @@ A session has a shape:
    written down, not chased.
 3. **Hand off in time.** At 125K tokens look for a stopping point; at 150K start nothing new; at 200K
    write `00-STATUS.md` and end.
-4. **Close.** `session-close` (coming soon) lifts what we learned into `knowledge/`, `state/` and the
+4. **Close.** `session-close` lifts what we learned into `knowledge/`, `state/` and the
    status doc.
 
 These rules ship today in `.folkways/instructions.md`, which the team `AGENTS.md` imports.

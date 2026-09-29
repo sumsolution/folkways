@@ -3,7 +3,7 @@
 Your team's way of working, written down once and shared by every teammate's agent.
 Shared skills, instructions and hooks for Claude Code and Copilot CLI, versioned like code.
 
-> **Status: pre-release.** v0.1.0, not on npm yet. `init`, `sync` and `upgrade` work. Hooks, skills,
+> **Status: pre-release.** v0.1.0, not on npm yet. `init`, `sync` and `upgrade` work. Skills and prompts sync too. Hooks,
 > `review`, `run` and `doctor` are next. [What works today](#status).
 
 ## What it is
@@ -22,11 +22,12 @@ just files in a git repo your team already knows how to review.
   per team. Everyone runs their agent from the team repo.
 - **Pinned, not floating.** The team repo pins an exact `@folkways/cli` version in `package.json`, so
   the whole team runs the same one.
-- **Sync copies text in.** `folkways sync` copies framework instructions (skills and prompts coming soon)
-  into the team repo and writes a checksummed manifest. If someone edited a framework file, sync stops
+- **Sync copies text in.** `folkways sync` copies framework instructions, skills and prompts
+  into the team repo, compiles team overlays into the skills and writes a checksummed manifest. If someone edited a framework file, sync stops
   and names it instead of overwriting it.
 - **Overlays, not forks.** Teams change framework skills through `overlays/<skill>/OVERLAY.md` (add or
-  override a section). People add their own in `people/<handle>/overlays/`. Upgrades never touch them.
+  override a section), which `sync` compiles in. People add their own in `people/<handle>/overlays/`.
+  Upgrades never touch them.
 - **Upgrades are PRs.** `folkways upgrade <version>` makes a branch, installs, syncs and commits. You
   read the diff like any other change.
 - **A few rules have teeth.** Pushing asks first (a permission rule, built; Copilot CLI support
@@ -45,7 +46,7 @@ npx @folkways/cli init my-team        # or: pnpm dlx @folkways/cli init my-team
 cd my-team
 ```
 
-Then open Claude Code or Copilot CLI in `my-team` and run the `setup` skill (coming soon) to fill in
+Then open Claude Code or Copilot CLI in `my-team` and run the `setup` skill to fill in
 `team.yaml`.
 
 Today, from a clone of this repo (Node 24+):
@@ -65,9 +66,9 @@ That scaffolds the team repo, syncs the framework files and makes the first comm
 | `init`, `sync`, `upgrade`, `version` | built, tested |
 | Push approval rule in `.claude/settings.json` | built |
 | Team repo scaffold (`team.yaml`, folders, READMEs) | built |
-| Framework instructions (`.folkways/instructions.md`) | built; names skills that don't exist yet |
+| Framework instructions (`.folkways/instructions.md`) | built |
+| 16 skills (`setup`, `onboard`, `start`, `review`, `commit`, `pr`, …) and the review prompt | built; synced with team overlays compiled in |
 | Hooks (`git-guard`, `context-band`, session start and end) | coming soon |
-| Skills (`setup`, `onboard`, `start`, `review`, `commit`, `pr`, …) | coming soon |
 | `review`, `run`, `doctor` | coming soon; today they say "not built yet" |
 | npm release | coming soon |
 
