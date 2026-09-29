@@ -1,0 +1,21 @@
+{
+  "description": "Writes .local/sessions/<session_id>.unclosed; no output",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "SessionEnd",
+        "reason": "prompt_input_exit"
+      },
+      "expect": {
+        "stdout": null,
+        "exists": [
+          "${TEAM}/.local/sessions/11111111-1111-4111-8111-111111111111.unclosed"
+        ]
+      }
+    }
+  ]
+}

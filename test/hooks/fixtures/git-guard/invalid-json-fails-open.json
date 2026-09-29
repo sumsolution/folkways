@@ -1,0 +1,11 @@
+{
+  "description": "Unparsable stdin exits 0 (Copilot CLI denies every tool on a nonzero exit)",
+  "steps": [
+    {
+      "payload": "not json",
+      "expect": {
+        "stdout": null
+      }
+    }
+  ]
+}

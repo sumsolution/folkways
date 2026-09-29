@@ -1,0 +1,23 @@
+{
+  "description": "A valid heredoc message passes",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git commit -m \"$(cat <<'EOF'\nfeat(web-app): add the orders page\n\nLonger body.\nEOF\n)\"",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "expect": {
+        "stdout": null
+      }
+    }
+  ]
+}

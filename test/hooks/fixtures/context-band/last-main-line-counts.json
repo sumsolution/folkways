@@ -1,0 +1,22 @@
+{
+  "description": "The last main-chain line counts, not the largest",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "transcript": [
+        210000,
+        20000
+      ],
+      "expect": {
+        "stdout": null
+      }
+    }
+  ]
+}
