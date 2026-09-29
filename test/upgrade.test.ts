@@ -1,6 +1,7 @@
 import { chmodSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { FolkwaysError } from '../src/errors.ts';
 import { git, isClean } from '../src/git.ts';
 import { type Installer, upgrade } from '../src/upgrade.ts';
 import { addFrameworkContent, json, makePackage, makeTeam, put, read } from './helpers.ts';
@@ -118,5 +119,30 @@ describe('upgrade', () => {
 
   it('refuses outside a team repo', () => {
     expect(() => upgrade('/', '0.2.0', install)).toThrow(/inside the team repo/);
+  });
+});
+
+describe('upgrade when the commit fails', () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    process.env = { ...saved };
+  });
+
+  it('goes back, cleans up and keeps git\'s error', () => {
+    for (const k of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'EMAIL']) delete process.env[k];
+    Object.assign(process.env, { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'user.useConfigOnly', GIT_CONFIG_VALUE_0: 'true' });
+    let error: unknown;
+    try {
+      upgrade(team, '0.2.0', install);
+    } catch (e) {
+      error = e;
+    }
+    process.env = { ...saved };
+    expect(error).toBeInstanceOf(FolkwaysError);
+    expect((error as Error).message).toMatch(/git commit failed; back on main:\n[\s\S]*(identity|user\.email|name)/i);
+    expect(git(team, 'branch', '--show-current')).toBe('main');
+    expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
+    expect(isClean(team)).toBe(true);
+    expect(upgrade(team, '0.2.0', install).branch).toBe('chore/folkways-0.2.0');
   });
 });

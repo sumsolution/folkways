@@ -1,0 +1,5 @@
+Only one of the three commands worked:
+
+- `touch hooked-file` **succeeded**.
+- `touch asked-file` **failed**. It needed a Bash permission that hasn't been granted.
+- `touch denied-file` **failed**. Permission for that command was denied.

@@ -37,8 +37,8 @@ Published to npm as `@folkways/cli` (spec §3). Team repos pin an exact version.
 - **CI actions** are pinned to full commit SHAs with a version comment (the repo requires it).
 - **TDD:** write a failing test first, then fix. Run `pnpm run check && pnpm test` before every commit.
 - **Expected failures** throw `FolkwaysError`; the CLI prints `folkways: <message>` with no stack trace.
-- **Skills:** frontmatter is `name` and `description` only. Overridable sections carry an ID:
-  `## Commit format {#commit-format}`. Step 0 reads `team.yaml`, `.local/me.yaml` and both overlays.
+- **Skills:** follow [docs/skill-authoring.md](docs/skill-authoring.md) (skeleton, overlay IDs, headless
+  rules, trigger eval). `test/skills.test.ts` checks the mechanical rules.
 - **Commits:** Angular conventional commits, module scope (`cli`, `assets`, `templates`, `skills`, `hooks`,
   `docs`, `test`, `build`). Squash PRs.
 - **Releases:** bump `version` in `package.json`, add a `CHANGELOG.md` entry, tag `v<version>`, publish.
