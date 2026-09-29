@@ -119,6 +119,10 @@ describe('sync refusals and warnings', () => {
     [{ skills: [], files: { '../../outside': 'a'.repeat(64) } }, /unsafe path "\.\.\/\.\.\/outside"/],
     [{ skills: ['start'], files: { '.claude/skills/other/x.md': 'a'.repeat(64) } }, /unsafe path/],
     [{ skills: [], files: { 'team.yaml': 'a'.repeat(64) } }, /unsafe path "team\.yaml"/],
+    [{ skills: [], files: {}, overlays: { '../x': 'a'.repeat(64) } }, /unsafe overlay path "\.\.\/x"/],
+    [{ skills: [], files: {}, overlays: { 'overlays/a/b/OVERLAY.md': 'a'.repeat(64) } }, /unsafe overlay path/],
+    [{ skills: [], files: {}, overlays: { 'overlays/a/OVERLAY.md': 'nope' } }, /bad checksum for overlays\/a\/OVERLAY\.md/],
+    [{ skills: [], files: {}, overlays: [] }, /bad overlays/],
   ])('rejects an unsafe manifest before forced deletion: %j', (changes, message) => {
     const outside = join(team, '..', 'outside');
     put(outside, 'keep\n');
@@ -317,6 +321,25 @@ describe('sync links .local/me to the person\'s folder', () => {
     symlinkSync('../people/alex', link());
     sync(team, next);
     expect(readlinkSync(link())).toBe('../people/sam');
+  });
+
+  it('leaves a correct link alone', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    const before = lstatSync(link()).ino;
+    sync(team, next);
+    expect(lstatSync(link()).ino).toBe(before);
+  });
+
+  it('removes a link to another person when this handle has no folder, and warns', () => {
+    put(join(team, '.local/me.yaml'), 'handle: sam\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    expect(sync(team, next).warnings).toEqual([
+      "people/sam/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.",
+    ]);
+    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
   });
 
   it('does nothing without a handle or a people folder', () => {

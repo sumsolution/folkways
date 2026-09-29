@@ -250,10 +250,15 @@ function linkPersonalFolder(team: string): string | undefined {
   const me = join(team, '.local/me.yaml');
   if (!existsSync(me)) return undefined;
   const handle = HANDLE.exec(readFileSync(me, 'utf8'))?.[2];
-  if (!handle || !existsSync(join(team, 'people', handle))) return undefined;
+  if (!handle) return undefined;
   const link = join(team, '.local/me');
   const target = `../people/${handle}`;
   const stat = lstatSync(link, { throwIfNoEntry: false });
+  if (!existsSync(join(team, 'people', handle))) {
+    // A link left from another handle would attach someone else's overlays.
+    if (stat?.isSymbolicLink() && readlinkSync(link) !== target) unlinkSync(link);
+    return `people/${handle}/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.`;
+  }
   if (stat && !stat.isSymbolicLink()) {
     return '.local/me is not a symlink; skills attach personal overlays through it. Move it and rerun sync.';
   }

@@ -151,6 +151,24 @@ function countId(text: string, id: string): number {
   return scan(text.split('\n')).headings.filter((h) => ID.exec(h.title)?.[1] === id).length;
 }
 
+/** Throw if one overridden section sits inside another: the outer replacement would remove the inner one. */
+function checkNesting(files: Record<string, string>, ids: string[]): void {
+  for (const text of Object.values(files)) {
+    const lines = text.split('\n');
+    const all = scan(lines).headings;
+    const sections = all
+      .map((h) => ({ h, id: ID.exec(h.title)?.[1] }))
+      .filter((s): s is { h: Heading; id: string } => s.id !== undefined && ids.includes(s.id));
+    for (const outer of sections) {
+      const end = sectionEnd(all, outer.h, lines.length);
+      const inner = sections.find((s) => s.h.line > outer.h.line && s.h.line < end);
+      if (inner) {
+        throw new FolkwaysError(`team overlay overrides both #${outer.id} and #${inner.id}, but #${inner.id} sits inside #${outer.id}; override one`);
+      }
+    }
+  }
+}
+
 function unappliedWarnings(overlay: ParsedOverlay): string[] {
   return overlay.other.map((title) => `overlays: ignored ## ${title}; team overlays hold ## Add and ## Override {#id} only`);
 }
@@ -170,6 +188,10 @@ export function compileSkillFiles(
   const current = (path: string): string => out[path] ?? files[path]!;
   const markdown = Object.keys(files).filter((f) => f.endsWith('.md')).sort();
 
+  checkNesting(
+    Object.fromEntries(markdown.map((f) => [f, files[f]!])),
+    Object.keys(overlay.overrides),
+  );
   for (const [id, body] of Object.entries(overlay.overrides)) {
     const holders = markdown.filter((f) => countId(current(f), id) > 0);
     if (holders.length === 0) throw new FolkwaysError(`team overlay overrides #${id}, but the skill has no section with that ID`);

@@ -150,6 +150,16 @@ describe('compileSkillFiles', () => {
     );
   });
 
+  it('says when an override targets a section a parent override already replaced', () => {
+    const nested = { 'SKILL.md': '## A {#a}\n\none\n\n### B {#b}\n\ntwo\n' };
+    expect(() => compileSkillFiles(nested, '## Override {#a}\n\nnew\n\n## Override {#b}\n\nx\n')).toThrow(
+      /#b sits inside #a/,
+    );
+    expect(() => compileSkillFiles(nested, '## Override {#b}\n\nx\n\n## Override {#a}\n\nnew\n')).toThrow(
+      /#b sits inside #a/,
+    );
+  });
+
   it('ignores IDs and headings in non-markdown files', () => {
     const shell = { ...files, 'scripts/run.sh': '## Fake {#fake}\n' };
     expect(() => compileSkillFiles(shell, '## Override {#fake}\n\nx\n')).toThrow(/#fake/);

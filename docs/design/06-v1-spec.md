@@ -146,8 +146,9 @@ A skill's folkways = framework skill + team overlay + personal overlay, applied 
 - `OVERLAY.md` has two parts: `## Add` (extra rules) and `## Override {#id}` (team only; replaces that
   section). Team additions are appended as `## Team additions`.
 - `sync` compiles the team overlay into `.claude/skills/<skill>/` (an override may target `SKILL.md` or a
-  reference file) and records the compiled and overlay checksums in the manifest. **An override of an unknown ID stops the sync.** After changing a
-  team overlay, run `folkways sync`; `doctor` flags a stale compile.
+  reference file) and records the compiled and overlay checksums in the manifest. **An override of an
+  unknown ID stops the sync.** After changing a team overlay, run `folkways sync`. `doctor` (not built
+  yet) will flag a stale compile with `staleOverlays`.
 - **Step 0** of every framework skill is one shared, framework-written block: read `team.yaml` and
   `.local/me.yaml`, then attach the personal overlay with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`
   on its own line, with `people/<handle>/overlays/<skill>/OVERLAY.md` as the read fallback (Copilot CLI,
