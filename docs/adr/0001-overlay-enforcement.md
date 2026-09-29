@@ -136,6 +136,7 @@ where side quests go.
 - **Teams:** put rules that must hold in `team.yaml`, not in an overlay. Review `overlays/` like code.
 - **Docs:** `assets/instructions.md` and the team README explain mores vs folkways in two lines each.
   `AGENTS.md` ("Step 0 reads `team.yaml`, `.local/me.yaml` and both overlays") changes to the new step 0.
-- **Open:** round 7 lets a person set their own review trigger, which loosens M3 (see PR "Decision
-  needed"). Interactive bypass mode and push-ruleset behaviour on PR merges are untested
+- **Closed:** round 7 let a person set their own review trigger, which could loosen M3. The trigger is now a
+  floor: `.local/me.yaml` can only tighten the team's value (spec §4.2).
+- **Open:** interactive bypass mode and push-ruleset behaviour on PR merges are untested
   ([07, unknowns](../design/07-research-overlay-enforcement.md#unknown-or-unverified)).

@@ -33,6 +33,7 @@ describe('buildEnv', () => {
     expect(read(join(vars.TEAM, `efforts/x/r-${vars.HEAD7}.md`))).toBe(`sha: ${vars.HEAD}\n`);
     expect(read(join(vars.WORKTREE, '.git'))).toMatch(/^gitdir:/);
     expect(vars.HEAD).not.toBe(vars.OLD_HEAD);
+    expect(vars.OLD_HEAD7).toBe(vars.OLD_HEAD.slice(0, 7));
   });
   it('omits me.yaml when me is null', () => {
     const vars = buildEnv({ description: '', env: { me: null }, steps: [] });
