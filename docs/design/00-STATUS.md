@@ -28,6 +28,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [09-research-skill-authoring.md](09-research-skill-authoring.md) | Skill structure, triggering and headless rules; basis of the authoring guide |
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
 | [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
+| [12-retro-git-guard-review-rounds.md](12-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes and proposed skill changes (step back, proportion, acting on review) |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime (both accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -117,9 +118,10 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 1. **Hooks** in Go: follow [11-plan-hooks-build.md](11-plan-hooks-build.md). Confirm its six decisions,
    then five PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
    repos → packaging, smoke and release.
-2. `review` / `run` / `doctor`.
-3. Publish 0.1.0.
-4. Set up the beta team repo.
+2. **Skills from the retro:** make the changes in [12](12-retro-git-guard-review-rounds.md) and run its behavior eval.
+3. `review` / `run` / `doctor`.
+4. Publish 0.1.0.
+5. Set up the beta team repo.
 
 ## Follow-ups (not ticketed)
 
