@@ -138,3 +138,25 @@ describe('init when the first commit fails', () => {
     expect(existsSync(dest)).toBe(false);
   });
 });
+
+describe('init without a git identity', () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    process.env = { ...saved };
+  });
+
+  it('fails with git\'s message and removes the scaffold', () => {
+    for (const k of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'EMAIL']) delete process.env[k];
+    Object.assign(process.env, { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'user.useConfigOnly', GIT_CONFIG_VALUE_0: 'true' });
+    const dest = join(tmp(), 'team');
+    let error: unknown;
+    try {
+      init(dest, { install: false, pkg: makePackage('1.0.0') });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(FolkwaysError);
+    expect((error as Error).message).toMatch(/git commit failed;[\s\S]*(identity|user\.email|name)/i);
+    expect(existsSync(dest)).toBe(false);
+  });
+});

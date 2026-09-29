@@ -77,6 +77,12 @@ export function upgrade(cwd: string, versionArg: string, install: Installer = pa
   } catch {
     // staged changes exist
   }
-  git(team, 'commit', '-q', '-m', `chore(folkways): upgrade to ${version}`, '-m', `From ${manifest.version}.`);
+  try {
+    git(team, 'commit', '-q', '-m', `chore(folkways): upgrade to ${version}`, '-m', `From ${manifest.version}.`);
+  } catch (e) {
+    abandon();
+    const detail = (e as { stderr?: Buffer | string }).stderr?.toString().trim() || (e as Error).message;
+    throw new FolkwaysError(`git commit failed; back on ${start}:\n${detail}`);
+  }
   return { branch, from: manifest.version, to: version };
 }
