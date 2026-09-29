@@ -77,7 +77,14 @@ change them here and in the fixtures together.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.
-- Every git command in a chain (`&&`, `;`, `||`) is checked.
+- Every git command in a chain (`&&`, `;`, `||`, `|`, `&`, newlines) is checked, including inside `( )` and
+  `{ }` groups and inside command substitutions (`$( )`, backticks). Git global options before the subcommand
+  (`-C`, `-c`, `--no-pager`, `--git-dir`, ...) are skipped. Heredoc bodies are data, not commands; a commit
+  message heredoc (`-m "$(cat <<'EOF' ... EOF)"`) is read as the message.
+- Directories are tracked conservatively. After `cd X &&` a command runs in X; after `cd X ||` in the original
+  directory; after `cd X ;` (or a newline) in X or the original. A command is denied when it is denied in
+  any directory it could run in. A `cd` inside `( )`, a pipeline or the background does not affect what follows.
+- git-guard catches agent mistakes, not a determined bypass: `bash -c`, `eval`, aliases and scripts are out of scope.
 
 **`session-start`** (`SessionStart`): always remind the `start` procedure. `source: compact`: say to update
 `00-STATUS.md` now. Any `.local/sessions/*.unclosed`: offer `session-close`.

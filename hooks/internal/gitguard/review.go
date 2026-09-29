@@ -1,6 +1,8 @@
 package gitguard
 
 import (
+	"bufio"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -31,42 +33,62 @@ func hasFrontmatterReview(dir, handle, head string) bool {
 			}
 			return nil
 		})
-	}
-	return found
-}
-
-// hasInboxReview matches by file name only: the date part is not validated.
-func hasInboxReview(dir, handle, head string) bool {
-	if handle == "" || len(head) < 7 {
-		return false
-	}
-	matches, _ := filepath.Glob(filepath.Join(dir, "people", handle, "inbox", "*-review-"+head[:7]+".md"))
-	for _, m := range matches {
-		if info, err := os.Stat(m); err == nil && info.Mode().IsRegular() {
+		if found {
 			return true
 		}
 	}
 	return false
 }
 
-// frontmatterSHA returns the `sha` of a file's leading `---` YAML block ("" if none).
+// hasInboxReview reads the person's inbox directory literally (the handle is never a glob) and matches by
+// file name only: the date part is not validated.
+func hasInboxReview(dir, handle, head string) bool {
+	if handle == "" || len(head) < 7 {
+		return false
+	}
+	entries, _ := os.ReadDir(filepath.Join(dir, "people", handle, "inbox"))
+	suffix := "-review-" + head[:7] + ".md"
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+// Frontmatter limits: a review file's frontmatter is small; never read more than this of any file.
+const (
+	maxFrontmatterBytes = 64 << 10
+	maxFrontmatterLines = 500
+)
+
+// frontmatterSHA returns the `sha` of a file's leading `---` YAML block ("" if none). It reads only the
+// start of the file, and gives up when the first line is not `---` or the block does not close within the limits.
 func frontmatterSHA(path string) string {
-	raw, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return ""
 	}
-	text := strings.ReplaceAll(string(raw), "\r\n", "\n")
-	rest, ok := strings.CutPrefix(text, "---\n")
-	if !ok {
+	defer f.Close()
+	r := bufio.NewReader(io.LimitReader(f, maxFrontmatterBytes))
+	first, err := r.ReadString('\n')
+	if err != nil || strings.TrimRight(first, "\r\n") != "---" {
 		return ""
 	}
-	block, _, ok := strings.Cut(rest, "\n---")
-	if !ok {
-		return ""
+	var block strings.Builder
+	for n := 0; n < maxFrontmatterLines; n++ {
+		line, err := r.ReadString('\n')
+		if strings.TrimRight(line, "\r\n") == "---" {
+			var fm struct {
+				SHA string `yaml:"sha"`
+			}
+			_ = yaml.Unmarshal([]byte(block.String()), &fm)
+			return fm.SHA
+		}
+		block.WriteString(strings.TrimRight(line, "\r\n") + "\n")
+		if err != nil {
+			return ""
+		}
 	}
-	var fm struct {
-		SHA string `yaml:"sha"`
-	}
-	_ = yaml.Unmarshal([]byte(block), &fm)
-	return fm.SHA
+	return ""
 }

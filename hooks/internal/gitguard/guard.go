@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/sumsolution/folkways/hooks/internal/output"
@@ -31,22 +32,130 @@ func Run(p payload.Payload, cfg team.Config) {
 	}
 }
 
-// checkCommand walks every command of a chain and returns the first deny reason ("" to allow).
+// checkCommand checks every git command of a command line and returns the first deny reason ("" to allow).
+// Directories are tracked conservatively: a git command is denied when it is denied in any directory it
+// could run in (see dirsFor).
 func checkCommand(cmd, payloadCwd string, cfg team.Config) string {
 	cur := payloadCwd
 	if cur == "" {
 		cur, _ = os.Getwd()
 	}
-	for _, seg := range splitCommands(cmd) {
-		w := words(seg)
-		for len(w) > 0 && envAssign.MatchString(w[0]) {
-			w = w[1:]
+	return checkScript(cmd, []string{cur}, cfg)
+}
+
+// checkScript checks a shell script (a command line or a substitution body) that starts in one of dirs.
+// Top-level heredoc bodies are data and skipped.
+func checkScript(script string, dirs []string, cfg team.Config) string {
+	elems, _ := parseSeq(stripHeredocs(script), 0, false)
+	return checkSeq(elems, dirs, cfg)
+}
+
+// checkSeq walks a sequence of commands. It tracks two sets of possible directories:
+//   - ok: where the shell is if every command so far succeeded (a `cd` moved),
+//   - failed: where it is if some command failed (a failed `cd` did not move).
+//
+// `a && b` runs b in ok; `a || b` runs b in failed; after `;`, a newline, `|` or `&` a command may run in either.
+// A `cd` in a pipeline or in the background, and in a ( ) subshell, does not affect what follows.
+func checkSeq(elems []elem, start []string, cfg team.Config) string {
+	var ok, failed []string
+	for k, e := range elems {
+		var dirs []string
+		prev := ""
+		if k > 0 {
+			prev = elems[k-1].op
 		}
 		switch {
-		case len(w) >= 2 && w[0] == "cd":
-			cur = resolve(cur, w[1])
-		case len(w) >= 2 && w[0] == "git":
-			if reason := checkGit(w[1:], cur, cfg); reason != "" {
+		case k == 0:
+			dirs = start
+		case prev == "&&":
+			dirs = ok
+		case prev == "||" && len(failed) > 0:
+			dirs = failed
+		default:
+			dirs = union(ok, failed)
+		}
+		var moved []string // where a successful cd leaves us; nil when the command is not a persistent cd
+		if e.sub != nil {
+			if reason := checkSeq(e.sub, dirs, cfg); reason != "" {
+				return reason
+			}
+		} else {
+			if reason := checkSegment(e.text, dirs, cfg); reason != "" {
+				return reason
+			}
+			if target, isCD := cdTarget(e.text); isCD && prev != "|" && e.op != "|" && e.op != "&" {
+				for _, d := range dirs {
+					moved = append(moved, resolve(d, target))
+				}
+			}
+		}
+		succ, fail := dirs, dirs
+		if moved != nil {
+			succ = moved
+		}
+		switch {
+		case k == 0:
+			ok, failed = succ, fail
+		case prev == "&&":
+			ok, failed = succ, union(failed, fail)
+		case prev == "||":
+			ok, failed = union(ok, succ), fail
+		default:
+			ok, failed = succ, fail
+		}
+	}
+	return ""
+}
+
+func union(a, b []string) []string {
+	out := append([]string(nil), a...)
+	for _, d := range b {
+		if !slices.Contains(out, d) {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
+// reserved words that may precede a command: `if git push; then`, `! git push`, `{ git push; }`.
+var reserved = map[string]bool{"if": true, "then": true, "else": true, "elif": true, "do": true, "while": true, "until": true, "!": true, "time": true, "{": true, "}": true}
+
+// commandWords returns the words of one command without leading assignments and reserved words.
+func commandWords(text string) []string {
+	w := words(text)
+	for len(w) > 0 && (envAssign.MatchString(w[0]) || reserved[w[0]]) {
+		w = w[1:]
+	}
+	return w
+}
+
+// cdTarget returns the directory of a `cd <dir>` whose target is known.
+func cdTarget(text string) (string, bool) {
+	w := commandWords(text)
+	if len(w) < 2 || w[0] != "cd" {
+		return "", false
+	}
+	w = w[1:]
+	for len(w) > 0 && (w[0] == "--" || w[0] == "-L" || w[0] == "-P") {
+		w = w[1:]
+	}
+	if len(w) == 0 || w[0] == "-" || strings.ContainsAny(w[0], "$`~") {
+		return "", false
+	}
+	return w[0], true
+}
+
+// checkSegment checks one simple command in each of dirs: the commands substituted into it, then the command.
+func checkSegment(text string, dirs []string, cfg team.Config) string {
+	for _, body := range substitutions(text) {
+		if reason := checkScript(body, dirs, cfg); reason != "" {
+			return reason
+		}
+	}
+	w := commandWords(text)
+	if len(w) >= 2 && w[0] == "git" {
+		for _, d := range dirs {
+			if reason := checkGit(w[1:], d, cfg); reason != "" {
 				return reason
 			}
 		}
@@ -61,13 +170,30 @@ func resolve(base, dir string) string {
 	return filepath.Join(base, dir)
 }
 
-// checkGit checks one `git [-C dir] [-c k=v] <sub> args...` (args excludes the leading "git").
+// Git global options that take an operand: `--opt value` or `--opt=value`, and `-C dir`, `-c k=v`.
+var gitOptWithArg = map[string]bool{"-C": true, "-c": true, "--git-dir": true, "--work-tree": true, "--namespace": true, "--config-env": true}
+
+// Git global options without an operand (`--exec-path` takes one only as `--exec-path=<path>`).
+var gitFlag = map[string]bool{"-p": true, "-P": true, "--paginate": true, "--no-pager": true, "--no-replace-objects": true,
+	"--no-optional-locks": true, "--bare": true, "--literal-pathspecs": true, "--glob-pathspecs": true,
+	"--noglob-pathspecs": true, "--icase-pathspecs": true, "--no-lazy-fetch": true, "--exec-path": true}
+
+// checkGit checks one `git [global options] <sub> args...` (args excludes the leading "git").
 func checkGit(args []string, dir string, cfg team.Config) string {
-	for len(args) >= 2 && (args[0] == "-C" || args[0] == "-c") {
-		if args[0] == "-C" {
+options:
+	for len(args) > 0 {
+		name, _, hasEq := strings.Cut(args[0], "=")
+		switch {
+		case args[0] == "-C" && len(args) >= 2:
 			dir = resolve(dir, args[1])
+			args = args[2:]
+		case gitOptWithArg[name] && hasEq, gitFlag[name]:
+			args = args[1:]
+		case gitOptWithArg[args[0]] && len(args) >= 2:
+			args = args[2:]
+		default:
+			break options
 		}
-		args = args[2:]
 	}
 	if len(args) == 0 {
 		return ""

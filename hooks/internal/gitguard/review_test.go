@@ -3,6 +3,7 @@ package gitguard
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -78,5 +79,36 @@ func TestHasReviewNoHandle(t *testing.T) {
 	write(t, dir, "efforts/e1/r.md", "---\nsha: "+head+"\n---\n")
 	if !hasReview(dir, "", head) {
 		t.Error("with no handle, efforts/** must still count")
+	}
+}
+
+func TestHasReviewHandleIsLiteral(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "people/alex/inbox/2026-09-29-review-abc1234.md", "x")
+	write(t, dir, "people/alex/work/r.md", "---\nsha: "+head+"\n---\n")
+	for _, h := range []string{"*", "a*", "[a-z]lex", "?lex"} {
+		if hasReview(dir, h, head) {
+			t.Errorf("handle %q must not act as a glob", h)
+		}
+	}
+	write(t, dir, "people/*/inbox/2026-09-29-review-abc1234.md", "x")
+	if !hasReview(dir, "*", head) {
+		t.Error("a literal directory named * is that person's own folder")
+	}
+}
+
+func TestFrontmatterSHAReadsOnlyTheStart(t *testing.T) {
+	dir := t.TempDir()
+	big := strings.Repeat("filler: line\n", 20000)
+	write(t, dir, "huge.md", "---\nsha: xyz\n---\n"+big)
+	write(t, dir, "unterminated.md", "---\nsha: xyz\n"+big)
+	write(t, dir, "notfm.md", big+"---\nsha: xyz\n---\n")
+	if got := frontmatterSHA(filepath.Join(dir, "huge.md")); got != "xyz" {
+		t.Errorf("huge body: %q", got)
+	}
+	for _, f := range []string{"unterminated.md", "notfm.md"} {
+		if got := frontmatterSHA(filepath.Join(dir, f)); got != "" {
+			t.Errorf("%s: %q, want empty", f, got)
+		}
 	}
 }

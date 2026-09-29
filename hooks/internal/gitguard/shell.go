@@ -72,7 +72,7 @@ func heredocStart(s string, i int) (string, int) {
 		j++ // opening quote
 	}
 	start := j
-	for j < len(s) && strings.IndexByte(" \t\n)'\"", s[j]) < 0 {
+	for j < len(s) && strings.IndexByte(" \t\n)'\";|&<>", s[j]) < 0 {
 		j++
 	}
 	word := s[start:j]
@@ -109,15 +109,99 @@ func skipHeredoc(s string, i int) int {
 	return len(s)
 }
 
-// splitCommands splits a command line on && || ; | & and newlines outside quotes and $(...).
-func splitCommands(s string) []string {
-	var out []string
-	last := 0
-	flush := func(end, next int) {
-		if seg := strings.TrimSpace(s[last:end]); seg != "" {
-			out = append(out, seg)
+// elem is one command of a sequence: its text, or a ( ) subshell, and the operator that follows it
+// ("&&", "||", ";", "|", "&", "\n", or "" for the last).
+type elem struct {
+	text string
+	sub  []elem
+	op   string
+}
+
+// parseSeq splits s from index i into commands on && || ; | & and newlines outside quotes and substitutions.
+// A ( at the start of a command opens a subshell, parsed recursively; nested reports that a ) ends the sequence.
+// It returns the elements and the index after the closing ) (or len(s)).
+func parseSeq(s string, i int, nested bool) ([]elem, int) {
+	var out []elem
+	var sub []elem
+	hasSub := false
+	last := i
+	flush := func(end int, op string) {
+		text := strings.TrimSpace(s[last:end])
+		if hasSub {
+			out = append(out, elem{sub: sub, op: op})
+		} else if text != "" {
+			out = append(out, elem{text: text, op: op})
+		} else if op != "" && len(out) > 0 && out[len(out)-1].op == "" {
+			out[len(out)-1].op = op
 		}
-		last = next
+		sub, hasSub = nil, false
+	}
+	for i < len(s) {
+		switch {
+		case s[i] == '\\':
+			i += 2
+		case s[i] == '\'':
+			i = skipSingle(s, i)
+		case s[i] == '"':
+			i = skipDouble(s, i)
+		case s[i] == '`':
+			i = skipBacktick(s, i)
+		case startsSubst(s, i):
+			i = skipSubst(s, i)
+		case s[i] == '(' && !hasSub && strings.TrimSpace(s[last:i]) == "":
+			sub, i = parseSeq(s, i+1, true)
+			hasSub = true
+			last = i
+		case s[i] == ')' && nested:
+			flush(i, "")
+			return out, i + 1
+		case strings.HasPrefix(s[i:], "&&") || strings.HasPrefix(s[i:], "||"):
+			flush(i, s[i:i+2])
+			i += 2
+			last = i
+		case strings.IndexByte(";|&\n", s[i]) >= 0:
+			flush(i, s[i:i+1])
+			i++
+			last = i
+		default:
+			i++
+		}
+	}
+	if last < len(s) || hasSub {
+		flush(len(s), "")
+	}
+	return out, len(s)
+}
+
+// startsSubst reports whether s[i:] opens $( ... ), <( ... ) or >( ... ).
+func startsSubst(s string, i int) bool {
+	return strings.HasPrefix(s[i:], "$(") || strings.HasPrefix(s[i:], "<(") || strings.HasPrefix(s[i:], ">(")
+}
+
+// skipBacktick returns the index after the `...` starting at s[i].
+func skipBacktick(s string, i int) int {
+	for j := i + 1; j < len(s); {
+		switch s[j] {
+		case '\\':
+			j += 2
+		case '`':
+			return j + 1
+		default:
+			j++
+		}
+	}
+	return len(s)
+}
+
+// substitutions returns the bodies of the command substitutions ($( ), backticks, <( ), >( )) in s that the
+// shell would run: outside single quotes, including inside double quotes. Nested ones stay inside their body.
+func substitutions(s string) []string {
+	var out []string
+	body := func(start, end int, closer byte) string {
+		if end > start && end <= len(s) && s[end-1] == closer {
+			end--
+		}
+		return s[start:end]
 	}
 	for i := 0; i < len(s); {
 		switch {
@@ -126,23 +210,103 @@ func splitCommands(s string) []string {
 		case s[i] == '\'':
 			i = skipSingle(s, i)
 		case s[i] == '"':
-			i = skipDouble(s, i)
-		case strings.HasPrefix(s[i:], "$("):
-			i = skipSubst(s, i)
-		case strings.HasPrefix(s[i:], "&&") || strings.HasPrefix(s[i:], "||"):
-			flush(i, i+2)
-			i += 2
-		case strings.IndexByte(";|&\n", s[i]) >= 0:
-			flush(i, i+1)
 			i++
+			for i < len(s) && s[i] != '"' {
+				switch {
+				case s[i] == '\\':
+					i += 2
+				case s[i] == '`':
+					end := skipBacktick(s, i)
+					out = append(out, body(i+1, end, '`'))
+					i = end
+				case strings.HasPrefix(s[i:], "$("):
+					end := skipSubst(s, i)
+					out = append(out, body(i+2, end, ')'))
+					i = end
+				default:
+					i++
+				}
+			}
+			i++
+		case s[i] == '`':
+			end := skipBacktick(s, i)
+			out = append(out, body(i+1, end, '`'))
+			i = end
+		case startsSubst(s, i):
+			end := skipSubst(s, i)
+			out = append(out, body(i+2, end, ')'))
+			i = end
 		default:
 			i++
 		}
 	}
-	if last < len(s) {
-		flush(len(s), len(s))
-	}
 	return out
+}
+
+// stripHeredocs removes the bodies (and terminator lines) of top-level heredocs: they are data, not commands.
+// Heredocs inside quotes or substitutions are left alone; those belong to their enclosing word.
+func stripHeredocs(s string) string {
+	type pending struct {
+		word string
+		dash bool
+	}
+	var out strings.Builder
+	var queue []pending
+	for i := 0; i < len(s); {
+		from := i
+		switch {
+		case s[i] == '\\':
+			i = min(i+2, len(s))
+		case s[i] == '\'':
+			i = skipSingle(s, i)
+		case s[i] == '"':
+			i = skipDouble(s, i)
+		case s[i] == '`':
+			i = skipBacktick(s, i)
+		case startsSubst(s, i):
+			i = skipSubst(s, i)
+		case strings.HasPrefix(s[i:], "<<") && !strings.HasPrefix(s[i:], "<<<"):
+			word, j := heredocStart(s, i)
+			if word == "" {
+				j = i + 2
+			} else {
+				queue = append(queue, pending{word, strings.HasPrefix(s[i:], "<<-")})
+			}
+			i = j
+		case s[i] == '\n' && len(queue) > 0:
+			out.WriteByte('\n')
+			i++
+			for _, p := range queue {
+				i = heredocBodyEnd(s, i, p.word, p.dash)
+			}
+			queue = nil
+			continue
+		default:
+			i++
+		}
+		out.WriteString(s[from:i])
+	}
+	return out.String()
+}
+
+// heredocBodyEnd returns the index after the terminator line of the heredoc body starting at pos.
+func heredocBodyEnd(s string, pos int, word string, dash bool) int {
+	for pos < len(s) {
+		end := strings.IndexByte(s[pos:], '\n')
+		line, next := s[pos:], len(s)
+		if end >= 0 {
+			line, next = s[pos:pos+end], pos+end+1
+		}
+		line = strings.TrimSuffix(line, "\r")
+		if dash {
+			line = strings.TrimLeft(line, "\t")
+		}
+		if line == word {
+			return next
+		}
+		pos = next
+	}
+	return len(s)
 }
 
 // words splits one command into arguments with quotes removed. A $(...) is kept verbatim inside its word.
