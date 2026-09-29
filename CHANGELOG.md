@@ -14,4 +14,6 @@
 - Team `AGENTS.md` imports the framework instructions with `@.folkways/instructions.md`.
 - `upgrade` refuses non-exact versions and a detached HEAD, and cleans up fully when install or sync fails.
   `init` removes what it created when the install fails, so a rerun works.
+- `sync` and `upgrade` reject a manifest with paths outside framework-owned folders, so `--force` can't
+  delete team files. `init` reports a failed first commit cleanly. Versions must be strict SemVer.
 - Settings ask before `git push`. No hooks yet.

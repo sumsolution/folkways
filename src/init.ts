@@ -70,5 +70,10 @@ function scaffold(dest: string, pkg: string, options: InitOptions): void {
   }
   sync(dest, pkg);
   git(dest, 'add', '-A');
-  git(dest, 'commit', '-q', '-m', `chore(folkways): init at ${version}`);
+  try {
+    git(dest, 'commit', '-q', '-m', `chore(folkways): init at ${version}`);
+  } catch (e) {
+    const detail = (e as { stderr?: Buffer | string }).stderr?.toString().trim() || (e as Error).message;
+    throw new FolkwaysError(`git commit failed; removed what init created:\n${detail}`);
+  }
 }

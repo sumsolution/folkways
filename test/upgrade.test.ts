@@ -95,7 +95,7 @@ describe('upgrade', () => {
     expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
   });
 
-  it.each(['bad name', 'latest', '^1.0.0', '1.0', ''])('refuses the version %j', (version) => {
+  it.each(['bad name', 'latest', '^1.0.0', '1.0', '01.2.3', '1.0.0-a..b', ''])('refuses the version %j', (version) => {
     expect(() => upgrade(team, version, install)).toThrow(/not a version/);
     expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
   });
@@ -106,6 +106,14 @@ describe('upgrade', () => {
 
   it('accepts a prerelease', () => {
     expect(() => upgrade(team, '1.0.0-beta.1', install)).toThrow(/upgrade to 1\.0\.0-beta\.1 failed/);
+  });
+
+  it('refuses an unsafe manifest', () => {
+    const manifest = json(join(team, '.folkways/manifest.json'));
+    manifest.files['../outside'] = 'a'.repeat(64);
+    put(join(team, '.folkways/manifest.json'), JSON.stringify(manifest));
+    git(team, 'commit', '-qam', 'tamper');
+    expect(() => upgrade(team, '0.2.0', install)).toThrow(/unsafe path/);
   });
 
   it('refuses outside a team repo', () => {

@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -88,5 +89,24 @@ describe('init when the install fails', () => {
     const dest = tmp();
     expect(() => init(dest, { pkg: makePackage('1.0.0') })).toThrow(/npm install failed/);
     expect(readdirSync(dest)).toEqual([]);
+  });
+});
+
+describe('init when the first commit fails', () => {
+  const path = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = path;
+  });
+
+  it('removes the scaffold and reports the git error concisely', () => {
+    const realGit = execFileSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).trim();
+    const bin = join(tmp(), 'bin');
+    put(join(bin, 'git'), `#!/bin/sh\nif [ "$1" = commit ]; then echo "commit rejected" >&2; exit 1; fi\nexec ${realGit} "$@"\n`);
+    chmodSync(join(bin, 'git'), 0o755);
+    process.env.PATH = `${bin}:${path}`;
+    const dest = join(tmp(), 'team');
+    expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(FolkwaysError);
+    expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(/git commit failed;[\s\S]*commit rejected/);
+    expect(existsSync(dest)).toBe(false);
   });
 });
