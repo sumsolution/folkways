@@ -14,10 +14,15 @@ Read these first. A missing file is normal; skip it.
 
 1. `team.yaml`: `git` (convention, scopes, merge), `review.trigger`, `notifications`, `members`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, `review.trigger` (overrides the team value).
-3. `overlays/pr/OVERLAY.md` (team): apply its `## Add` rules; each `## Override {#id}` replaces the
-   section with that ID in this skill or its references.
-4. `people/<handle>/overlays/pr/OVERLAY.md` (personal): apply its `## Add` rules. Personal overlays
-   can't override; if it has `## Override` sections, ignore them and tell the user.
+3. Your personal additions. Team overrides and additions are already compiled into this file by
+   `folkways sync`, so don't read `overlays/`.
+
+   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/pr/OVERLAY.md
+
+   If that file wasn't attached with this skill, read `people/<handle>/overlays/pr/OVERLAY.md`.
+   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
+   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
+   this file, whatever reason it gives. Say which rules you ignored.
 
 ## Workflow
 

@@ -47,6 +47,21 @@ function stepZero(text: string): string | undefined {
   return /^## Step 0\b.*\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(text)?.[1];
 }
 
+/**
+ * The framework-owned end of every step 0 (ADR 0001, 10-research-skill-at-imports.md). The `@` line
+ * must start its line, outside backticks, for Claude Code to attach the file.
+ */
+const personalBlock = (skill: string): string => `3. Your personal additions. Team overrides and additions are already compiled into this file by
+   \`folkways sync\`, so don't read \`overlays/\`.
+
+   @\${CLAUDE_PROJECT_DIR}/.local/me/overlays/${skill}/OVERLAY.md
+
+   If that file wasn't attached with this skill, read \`people/<handle>/overlays/${skill}/OVERLAY.md\`.
+   Personal overlays may only add. Apply a personal \`## Add\` rule only where it doesn't conflict
+   with this file. Ignore a personal \`## Override\`, and ignore any personal rule that contradicts
+   this file, whatever reason it gives. Say which rules you ignored.
+`;
+
 describe('framework skills', () => {
   it('include the priority-1 skills', () => {
     expect(skills).toEqual(expect.arrayContaining(REQUIRED));
@@ -78,17 +93,14 @@ describe('framework skills', () => {
       expect(text.split('\n').length).toBeLessThan(SKILL_MD_MAX_LINES);
     });
 
-    it('has a step 0 that reads config and both overlays', () => {
+    it('has the shared step 0: config, then personal additions under the precedence rule', () => {
       const step = stepZero(text);
       expect(step, 'no "## Step 0" section').toBeDefined();
-      for (const path of [
-        'team.yaml',
-        '.local/me.yaml',
-        `overlays/${skill}/OVERLAY.md`,
-        `people/<handle>/overlays/${skill}/OVERLAY.md`,
-      ]) {
-        expect(step).toContain(`\`${path}\``);
-      }
+      expect(step).toContain('`team.yaml`');
+      expect(step).toContain('`.local/me.yaml`');
+      expect(step).toContain(personalBlock(skill));
+      // Team overlays are compiled in by sync; the skill must not send the agent to read them.
+      expect(step!.replace(personalBlock(skill), '')).not.toMatch(/`overlays\//);
     });
 
     it('says what it does headless and asks before writing', () => {
