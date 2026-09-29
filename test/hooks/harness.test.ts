@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { read } from '../helpers.ts';
-import { buildEnv, check, fill, merge, mismatch, transcriptJsonl, type Vars } from './harness.ts';
+import { buildEnv, check, fill, hookEnv, merge, mismatch, transcriptJsonl, type Vars } from './harness.ts';
 
 describe('mismatch', () => {
   it('matches a deep subset', () => {
@@ -38,6 +38,18 @@ describe('buildEnv', () => {
   it('omits me.yaml when me is null', () => {
     const vars = buildEnv({ description: '', env: { me: null }, steps: [] });
     expect(() => read(join(vars.TEAM, '.local/me.yaml'))).toThrow();
+  });
+});
+
+describe('hookEnv', () => {
+  it('sets HOME to the temp root above the projects directory', () => {
+    const vars = buildEnv({ description: '', steps: [] });
+    const env = hookEnv(vars, true);
+    expect(env.HOME).toBe(join(vars.PROJECTS, '..'));
+    expect(vars.WORKTREE.startsWith(`${env.HOME}/`)).toBe(true);
+    expect(vars.MAIN.startsWith(`${env.HOME}/`)).toBe(true);
+    expect(env.CLAUDE_PROJECT_DIR).toBe(vars.TEAM);
+    expect(hookEnv(vars, false).CLAUDE_PROJECT_DIR).toBeUndefined();
   });
 });
 

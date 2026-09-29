@@ -77,10 +77,20 @@ change them here and in the fixtures together.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.
-- Every git command in a chain (`&&`, `;`, `||`, `|`, `&`, newlines) is checked, including inside `( )` and
-  `{ }` groups and inside command substitutions (`$( )`, backticks). Git global options before the subcommand
-  (`-C`, `-c`, `--no-pager`, `--git-dir`, ...) are skipped. Heredoc bodies are data, not commands; a commit
-  message heredoc (`-m "$(cat <<'EOF' ... EOF)"`) is read as the message.
+- The command line is parsed as bash (`mvdan.cc/sh/v3/syntax`). Every git command is checked wherever it
+  runs: in chains (`&&`, `;`, `||`, `|`, `&`, newlines), `( )` and `{ }` groups, `if`/`while`/`for`/`case`
+  bodies, and command or process substitutions (`$( )`, backticks, `<( )`), also inside double quotes and
+  unquoted heredoc bodies. Quoted-delimiter heredoc bodies, plain text and comments are data. Line
+  continuations work. A line that does not parse is allowed.
+- Words are resolved as the shell would: quotes, escapes, `~`, `~/x`, `$HOME`, `${HOME}` (from the process's
+  `HOME`; the harness sets it to the temp root above the projects directory). A directory that cannot be
+  resolved (`cd "$OTHER"`, `git -C "$X"`, an unknown subcommand) makes the target repo unknown: that command
+  is not checked (fail open). After `cd <unknown> ||` or `;` the original directory still counts.
+- Git global options before the subcommand are skipped: `-C <dir>`/`-C<dir>`, `-c <k=v>`/`-c<k=v>`,
+  `--no-pager`, `--namespace`, ... `--git-dir` and `--work-tree` pick the target repo (the work tree, else the
+  parent of a git dir named `.git`, else the git dir), relative to the directory after any `-C`. Both guards
+  use it. A commit message is read from `-m`, `-am`, `-m<msg>`, `--message <msg>`, `--message=<msg>` or
+  `-m "$(cat <<'EOF' ... EOF)"`; any other expansion in it is not evaluated (pass).
 - Directories are tracked conservatively. After `cd X &&` a command runs in X; after `cd X ||` in the original
   directory; after `cd X ;` (or a newline) in X or the original. A command is denied when it is denied in
   any directory it could run in. A `cd` inside `( )`, a pipeline or the background does not affect what follows.

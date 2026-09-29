@@ -97,7 +97,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Go hooks | [hooks/](../../hooks) | `folkways-hook` binary; `git-guard` done (with the trigger floor and inbox review lookup), four hooks to go. CI runs the git-guard contract cases ([plan](11-plan-hooks-build.md)) |
 | Hook benchmark | [bench/hooks/](../../bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
-| Tests | [test/](../../test) | vitest: 336 pass, 97 skipped |
+| Tests | [test/](../../test) | vitest: 337 pass, 112 skipped |
 
 ## Review follow-ups (PR #1, not blocking)
 

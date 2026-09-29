@@ -203,11 +203,21 @@ export interface Result {
   stderr: string;
 }
 
-export function runHook(command: string, hook: string, step: Step, vars: Vars, claudeProjectDir: boolean): Result {
-  if (step.transcript) writeFileSync(vars.TRANSCRIPT, transcriptJsonl(step.transcript));
+/**
+ * The hook process environment. `HOME` is the temp root that holds the team repo and the projects
+ * directory, so fixtures can `cd ~/projects/web-app` or `cd "$HOME/projects/web-app"`.
+ */
+export function hookEnv(vars: Vars, claudeProjectDir: boolean): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
   delete env.CLAUDE_PROJECT_DIR;
   if (claudeProjectDir) env.CLAUDE_PROJECT_DIR = vars.TEAM;
+  env.HOME = resolve(vars.PROJECTS, '..');
+  return env;
+}
+
+export function runHook(command: string, hook: string, step: Step, vars: Vars, claudeProjectDir: boolean): Result {
+  if (step.transcript) writeFileSync(vars.TRANSCRIPT, transcriptJsonl(step.transcript));
+  const env = hookEnv(vars, claudeProjectDir);
   const r = spawnSync('/bin/sh', ['-c', `${command} ${hook}`], {
     cwd: fill(step.cwd, vars) ?? vars.TEAM,
     env,

@@ -23,7 +23,7 @@ Published to npm as `@folkways/cli` (spec §3). Team repos pin an exact version.
 | `pnpm test` | vitest |
 | `pnpm run check` | `tsc --noEmit` |
 | `pnpm run build` | compile `src/` to `dist/` (runs on `pnpm pack` / `pnpm publish`) |
-| `cd hooks && go vet ./... && go test ./...` | vet and test the Go hooks (Go 1.24+) |
+| `cd hooks && go vet ./... && go test ./...` | vet and test the Go hooks (Go 1.26+) |
 | `cd hooks && go build -o bin/folkways-hook .` | build the hook binary (`bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm test test/hooks` | run the hook contract suite against the built binary |
 | `node src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |

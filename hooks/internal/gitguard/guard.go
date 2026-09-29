@@ -6,18 +6,16 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/sumsolution/folkways/hooks/internal/output"
 	"github.com/sumsolution/folkways/hooks/internal/payload"
 	"github.com/sumsolution/folkways/hooks/internal/team"
+	"mvdan.cc/sh/v3/syntax"
 )
 
 var (
 	header    = regexp.MustCompile(`^(?:feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(?:\(([a-z0-9._-]+)\))?!?: \S`)
-	shortMsg  = regexp.MustCompile(`^-[a-zA-Z]*m$`) // -m, -am
-	envAssign = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
 	mainGuard = map[string]bool{"checkout": true, "switch": true, "pull": true, "reset": true, "rebase": true}
 )
 
@@ -33,134 +31,20 @@ func Run(p payload.Payload, cfg team.Config) {
 }
 
 // checkCommand checks every git command of a command line and returns the first deny reason ("" to allow).
-// Directories are tracked conservatively: a git command is denied when it is denied in any directory it
-// could run in (see dirsFor).
+// A line that does not parse is allowed: git-guard catches mistakes, it is not a shell.
 func checkCommand(cmd, payloadCwd string, cfg team.Config) string {
+	file, err := syntax.NewParser(syntax.Variant(syntax.LangBash)).Parse(strings.NewReader(cmd), "")
+	if err != nil {
+		return ""
+	}
 	cur := payloadCwd
 	if cur == "" {
 		cur, _ = os.Getwd()
 	}
-	return checkScript(cmd, []string{cur}, cfg)
-}
-
-// checkScript checks a shell script (a command line or a substitution body) that starts in one of dirs.
-// Top-level heredoc bodies are data and skipped.
-func checkScript(script string, dirs []string, cfg team.Config) string {
-	elems, _ := parseSeq(stripHeredocs(script), 0, false)
-	return checkSeq(elems, dirs, cfg)
-}
-
-// checkSeq walks a sequence of commands. It tracks two sets of possible directories:
-//   - ok: where the shell is if every command so far succeeded (a `cd` moved),
-//   - failed: where it is if some command failed (a failed `cd` did not move).
-//
-// `a && b` runs b in ok; `a || b` runs b in failed; after `;`, a newline, `|` or `&` a command may run in either.
-// A `cd` in a pipeline or in the background, and in a ( ) subshell, does not affect what follows.
-func checkSeq(elems []elem, start []string, cfg team.Config) string {
-	var ok, failed []string
-	for k, e := range elems {
-		var dirs []string
-		prev := ""
-		if k > 0 {
-			prev = elems[k-1].op
-		}
-		switch {
-		case k == 0:
-			dirs = start
-		case prev == "&&":
-			dirs = ok
-		case prev == "||" && len(failed) > 0:
-			dirs = failed
-		default:
-			dirs = union(ok, failed)
-		}
-		var moved []string // where a successful cd leaves us; nil when the command is not a persistent cd
-		if e.sub != nil {
-			if reason := checkSeq(e.sub, dirs, cfg); reason != "" {
-				return reason
-			}
-		} else {
-			if reason := checkSegment(e.text, dirs, cfg); reason != "" {
-				return reason
-			}
-			if target, isCD := cdTarget(e.text); isCD && prev != "|" && e.op != "|" && e.op != "&" {
-				for _, d := range dirs {
-					moved = append(moved, resolve(d, target))
-				}
-			}
-		}
-		succ, fail := dirs, dirs
-		if moved != nil {
-			succ = moved
-		}
-		switch {
-		case k == 0:
-			ok, failed = succ, fail
-		case prev == "&&":
-			ok, failed = succ, union(failed, fail)
-		case prev == "||":
-			ok, failed = union(ok, succ), fail
-		default:
-			ok, failed = succ, fail
-		}
-	}
-	return ""
-}
-
-func union(a, b []string) []string {
-	out := append([]string(nil), a...)
-	for _, d := range b {
-		if !slices.Contains(out, d) {
-			out = append(out, d)
-		}
-	}
-	return out
-}
-
-// reserved words that may precede a command: `if git push; then`, `! git push`, `{ git push; }`.
-var reserved = map[string]bool{"if": true, "then": true, "else": true, "elif": true, "do": true, "while": true, "until": true, "!": true, "time": true, "{": true, "}": true}
-
-// commandWords returns the words of one command without leading assignments and reserved words.
-func commandWords(text string) []string {
-	w := words(text)
-	for len(w) > 0 && (envAssign.MatchString(w[0]) || reserved[w[0]]) {
-		w = w[1:]
-	}
-	return w
-}
-
-// cdTarget returns the directory of a `cd <dir>` whose target is known.
-func cdTarget(text string) (string, bool) {
-	w := commandWords(text)
-	if len(w) < 2 || w[0] != "cd" {
-		return "", false
-	}
-	w = w[1:]
-	for len(w) > 0 && (w[0] == "--" || w[0] == "-L" || w[0] == "-P") {
-		w = w[1:]
-	}
-	if len(w) == 0 || w[0] == "-" || strings.ContainsAny(w[0], "$`~") {
-		return "", false
-	}
-	return w[0], true
-}
-
-// checkSegment checks one simple command in each of dirs: the commands substituted into it, then the command.
-func checkSegment(text string, dirs []string, cfg team.Config) string {
-	for _, body := range substitutions(text) {
-		if reason := checkScript(body, dirs, cfg); reason != "" {
-			return reason
-		}
-	}
-	w := commandWords(text)
-	if len(w) >= 2 && w[0] == "git" {
-		for _, d := range dirs {
-			if reason := checkGit(w[1:], d, cfg); reason != "" {
-				return reason
-			}
-		}
-	}
-	return ""
+	home, err := os.UserHomeDir()
+	w := &walker{cfg: cfg, res: resolver{home: home, homeOK: err == nil && home != ""}}
+	w.list(file.Stmts, dirset{dirs: []string{cur}})
+	return w.reason
 }
 
 func resolve(base, dir string) string {
@@ -170,93 +54,97 @@ func resolve(base, dir string) string {
 	return filepath.Join(base, dir)
 }
 
-// Git global options that take an operand: `--opt value` or `--opt=value`, and `-C dir`, `-c k=v`.
-var gitOptWithArg = map[string]bool{"-C": true, "-c": true, "--git-dir": true, "--work-tree": true, "--namespace": true, "--config-env": true}
-
-// Git global options without an operand (`--exec-path` takes one only as `--exec-path=<path>`).
-var gitFlag = map[string]bool{"-p": true, "-P": true, "--paginate": true, "--no-pager": true, "--no-replace-objects": true,
-	"--no-optional-locks": true, "--bare": true, "--literal-pathspecs": true, "--glob-pathspecs": true,
-	"--noglob-pathspecs": true, "--icase-pathspecs": true, "--no-lazy-fetch": true, "--exec-path": true}
-
-// checkGit checks one `git [global options] <sub> args...` (args excludes the leading "git").
-func checkGit(args []string, dir string, cfg team.Config) string {
-options:
-	for len(args) > 0 {
-		name, _, hasEq := strings.Cut(args[0], "=")
-		switch {
-		case args[0] == "-C" && len(args) >= 2:
-			dir = resolve(dir, args[1])
-			args = args[2:]
-		case gitOptWithArg[name] && hasEq, gitFlag[name]:
-			args = args[1:]
-		case gitOptWithArg[args[0]] && len(args) >= 2:
-			args = args[2:]
-		default:
-			break options
-		}
+// messageArg returns the value of the commit message word: its literal text, or the body of
+// `$(cat <<'EOF' ... EOF)`. ok is false for any other expansion, which cannot be evaluated here.
+func (r resolver) messageArg(w *syntax.Word) (string, bool) {
+	if s, ok := r.word(w); ok {
+		return s, true
 	}
-	if len(args) == 0 {
-		return ""
+	if len(w.Parts) != 1 {
+		return "", false
 	}
-	sub, rest := args[0], args[1:]
-	switch {
-	case sub == "commit":
-		return checkCommit(rest, cfg)
-	case sub == "push":
-		return checkPush(dir, cfg)
-	case mainGuard[sub]:
-		return checkMainClone(sub, dir, cfg)
+	dq, ok := w.Parts[0].(*syntax.DblQuoted)
+	if !ok || len(dq.Parts) != 1 {
+		return "", false
 	}
-	return ""
-}
-
-// commitMessage returns the first -m/-am/--message value; ok is false when there is none.
-func commitMessage(args []string) (string, bool) {
-	for i, a := range args {
-		switch {
-		case shortMsg.MatchString(a) || a == "--message":
-			if i+1 < len(args) {
-				return args[i+1], true
-			}
-		case strings.HasPrefix(a, "--message="):
-			return strings.TrimPrefix(a, "--message="), true
-		}
+	cs, ok := dq.Parts[0].(*syntax.CmdSubst)
+	if !ok || len(cs.Stmts) != 1 {
+		return "", false
+	}
+	st := cs.Stmts[0]
+	call, ok := st.Cmd.(*syntax.CallExpr)
+	if !ok || len(call.Args) == 0 || len(st.Redirs) != 1 {
+		return "", false
+	}
+	if name, ok := r.word(call.Args[0]); !ok || name != "cat" {
+		return "", false
+	}
+	if h := st.Redirs[0]; (h.Op == syntax.Hdoc || h.Op == syntax.DashHdoc) && h.Hdoc != nil {
+		return r.heredocBody(h.Hdoc)
 	}
 	return "", false
 }
 
-// subjectOf returns the first non-empty line of a message, reading through `$(cat <<'EOF' ... EOF)`.
-// ok is false for other command substitutions, which cannot be evaluated here.
-func subjectOf(msg string) (string, bool) {
-	if strings.HasPrefix(msg, "$(") {
-		at := strings.Index(msg, "<<")
-		if at < 0 {
+// commitMessage returns the first message given by -m, -am, -m<msg>, --message <msg> or --message=<msg>.
+// ok is false when there is none or it is not statically known.
+func commitMessage(r resolver, args []arg) (string, bool) {
+	for i, a := range args {
+		if !a.ok {
+			continue
+		}
+		v := a.val
+		var attached string
+		var hasAttached, isMsg bool
+		switch {
+		case v == "--message":
+			isMsg = true
+		case strings.HasPrefix(v, "--message="):
+			isMsg, attached, hasAttached = true, strings.TrimPrefix(v, "--message="), true
+		case strings.HasPrefix(v, "-") && !strings.HasPrefix(v, "--"):
+			// a cluster of short flags: everything after the first m is the message
+			if k := strings.IndexByte(v, 'm'); k > 0 && letters(v[1:k]) {
+				isMsg, attached, hasAttached = true, v[k+1:], k+1 < len(v)
+			}
+		}
+		if !isMsg {
+			continue
+		}
+		if hasAttached {
+			return attached, true
+		}
+		if i+1 >= len(args) {
 			return "", false
 		}
-		word, j := heredocStart(msg, at)
-		nl := strings.IndexByte(msg[j:], '\n')
-		if word == "" || nl < 0 {
-			return "", false
-		}
-		msg = msg[j+nl+1:]
+		return r.messageArg(args[i+1].w)
 	}
-	for _, line := range strings.Split(msg, "\n") {
-		if line = strings.TrimSpace(line); line != "" {
-			return line, true
-		}
-	}
-	return "", true
+	return "", false
 }
 
-func checkCommit(args []string, cfg team.Config) string {
-	msg, ok := commitMessage(args)
+func letters(s string) bool {
+	for _, c := range s {
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
+			return false
+		}
+	}
+	return true
+}
+
+// subjectOf returns the first non-empty line of a message.
+func subjectOf(msg string) string {
+	for _, line := range strings.Split(msg, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			return line
+		}
+	}
+	return ""
+}
+
+func checkCommit(r resolver, args []arg, cfg team.Config) string {
+	msg, ok := commitMessage(r, args)
 	if !ok {
 		return ""
 	}
-	subject, ok := subjectOf(msg)
-	if !ok {
-		return ""
-	}
+	subject := subjectOf(msg)
 	m := header.FindStringSubmatch(subject)
 	if m == nil {
 		return fmt.Sprintf("Commit message is not Angular \"type(scope): subject\": \"%s\".", subject)
