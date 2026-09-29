@@ -49,18 +49,5 @@ the idea, and it meant the name had to come from further afield. Sociology was f
 | `collegium` | Roman body of people sharing a function; the root of *colleague* | Free on npm; not picked |
 | `quorate` | Enough members present for decisions to count | Taken on npm, and an LLM tool already uses it |
 
-### Names we loved and let go
-
-| Name | The idea | What was already there |
-|---|---|---|
-| `cairn` | Trail markers each hiker adds to for the next | Two AI agent products |
-| `stigmergy` | Coordination through traces left in a shared space, like ants | An agent coordination MCP server |
-| `waggle` | The bee dance that tells the hive where the flowers are | An agent handoff project |
-| `commonplace` | Commonplace books, where you collect what's worth keeping | An agent-operated knowledge framework |
-| `brigade` | A kitchen brigade: head chef orchestrates, the pass is the review gate | brigadecore, a 2.4k-star project |
-| `mise` | *Mise en place*: everything in its place before service | A popular dev tool |
-| `dogwatch` | Short split watches, built for crew rotation and handoffs | An observability DSL, confusing next to it |
-| `quire` | Bound pages; sounds like *choir* | A project management product |
-
 The full research, with checks and dates, is in [02-naming.md](../design/02-naming.md). For now
 `folkways` is a working name.
