@@ -1,6 +1,6 @@
 ---
 name: review
-description: Reviews a code change against its ticket and writes a verdict and findings file. Use when the user says "review this", "review my PR", "code review", "look over this diff", "is this ready to merge", "check this branch", or when `folkways review` runs the fresh-process review gate. Not for writing tests or fixing the code.
+description: Reviews a code change against its ticket and writes a verdict and findings file. Use when the user says "review this", "review my PR", "code review", "look over this diff", "is this ready to merge", "check this branch", or when `folkways review` runs the fresh-process review gate. Code only: not for ADRs or other documents (use adr), writing tests (use tests) or fixing the code.
 ---
 
 # review
