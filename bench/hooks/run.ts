@@ -301,6 +301,23 @@ teams.push(makeTeam('npm'));
 if (tools.pnpm) teams.push(makeTeam('pnpm'));
 else notes.push('pnpm not installed: `pnpm-bin` paths skipped.');
 
+// Per-candidate install: a team repo with only that candidate's platform package (or the JS package).
+interface Install { candidate: string; npm?: number; pnpm?: number }
+const installs: Install[] = [];
+for (const c of [...(tarballs['bench-hook-node'] ? [{ id: 'node (JS)', pkg: 'bench-hook-node' }] : []),
+  ...natives.map((n) => ({ id: n.id, pkg: `bench-hook-${n.id}-${PLATFORM}` }))]) {
+  const row: Install = { candidate: c.id };
+  for (const pm of ['npm', 'pnpm'] as const) {
+    if (pm === 'pnpm' && !tools.pnpm) continue;
+    const dir = join(TEAMS, `install-${c.pkg}-${pm}`);
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'example-team', private: true, dependencies: { [c.pkg]: `file:${tarballs[c.pkg]}` } }));
+    const args = pm === 'npm' ? ['install', '--no-audit', '--no-fund', '--loglevel=error'] : ['install', '--reporter=silent'];
+    try { [, row[pm]] = timed(() => sh(pm, args, dir)); } catch (e) { notes.push(`${pm} install of ${c.pkg} failed: ${(e as Error).message.split('\n')[0]}`); }
+  }
+  installs.push(row);
+}
+
 // ---------- call paths ----------
 
 interface Path {
@@ -378,6 +395,10 @@ for (const t of teams) {
   const size = existsSync(join(t.dir, 'node_modules')) ? dirSize(join(t.dir, 'node_modules')) : undefined;
   row([t.pm, t.installMs ? (t.installMs / 1000).toFixed(1) : '–', t.binKind ?? '–', mb(size), t.error ?? '']);
 }
+lines.push('', '### Install per candidate (local tarball, warm package manager cache)', '');
+row(['Candidate', 'npm install (s)', 'pnpm install (s)']);
+row(['---', '--:', '--:']);
+for (const i of installs) row([i.candidate, i.npm ? (i.npm / 1000).toFixed(1) : '–', i.pnpm ? (i.pnpm / 1000).toFixed(1) : '–']);
 if (notes.length > 0) lines.push('', '### Notes', '', ...notes.map((n) => `- ${n}`));
 
 const report = lines.join('\n') + '\n';
@@ -386,7 +407,7 @@ const outDir = join(HERE, 'results');
 mkdirSync(outDir, { recursive: true });
 const base = join(outDir, `${PLATFORM}-${date}`);
 writeFileSync(`${base}.md`, report);
-writeFileSync(`${base}.json`, JSON.stringify({ platform: PLATFORM, date, cpu, runs: RUNS, tools, notes, teams, candidates, paths }, null, 2) + '\n');
+writeFileSync(`${base}.json`, JSON.stringify({ platform: PLATFORM, date, cpu, runs: RUNS, tools, notes, teams, installs, candidates, paths }, null, 2) + '\n');
 console.error(`wrote ${resolve(base)}.md and .json`);
 if (opts.keep) console.error(`kept team repos in ${TEAMS}`);
 else rmSync(TEAMS, { recursive: true, force: true });

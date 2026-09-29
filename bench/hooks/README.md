@@ -62,11 +62,27 @@ The bench fixture always denies; `run.ts` checks every candidate's stdout agains
 | Path | What it measures |
 |---|---|
 | `direct` | the executable (or `node <file>`) spawned directly |
-| `npm-bin` | `node_modules/.bin/<name>` after `npm install` of a local tarball: a symlink on POSIX |
-| `pnpm-bin` | the same after `pnpm install`: a generated `/bin/sh` shim |
+| `npm-bin` | `node_modules/.bin/<name>` after `npm install` of local tarballs: a symlink on POSIX. Native candidates use the proposed layout: a main package lists one package per platform (`os`/`cpu` set, `bin` = the executable) as optional dependencies; npm hoists the matching one and links its bin |
+| `pnpm-bin` | the same after `pnpm install`: a generated `/bin/sh` shim. The team repo sets `publicHoistPattern` so the platform package's bin is linked |
 | `*-shim` | esbuild/Biome pattern: `.bin` points at a JS launcher in the main package that resolves the platform binary and spawns it |
-| `sh -c` | the hook runners start commands through a shell; this row adds that cost for the proposed design |
+| `sh -c` | the proposed committed command, `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/<name> hook git-guard`, started through `/bin/sh -c` as both hook runners do |
 
 Timing is wall clock around `spawnSync`, one fresh process per run, candidates interleaved. `floor` is the
 cost of spawning `true`; subtract it to compare with other machines. "Cold" here means a fresh process with a
 warm OS file cache; the first run after a build is reported separately.
+
+Every run also installs each candidate's package alone into a fresh npm and pnpm repo and reports the time.
+Local tarballs and a warm cache understate real downloads; package size is the better guide.
+
+## Other prototypes
+
+| Dir | What |
+|---|---|
+| [go-git-guard/](go-git-guard) | Full `git-guard` in Go, passes the git-guard cases of the [contract suite](../../test/hooks/README.md) |
+| [reference/](reference) | Node reference of the other four hooks, to check the contract fixtures |
+
+```
+cd bench/hooks/go-git-guard && go build -o folkways-hook . && cd ../../..
+FOLKWAYS_HOOK_CMD="$PWD/bench/hooks/go-git-guard/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm test test/hooks
+FOLKWAYS_HOOK_CMD="node $PWD/bench/hooks/reference/hooks.mjs" FOLKWAYS_HOOKS=session-start,session-end,precompact,context-band pnpm test test/hooks
+```
