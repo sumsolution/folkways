@@ -2,6 +2,9 @@
 
 Rules for every agent session in this repo. Skills in `.claude/skills/` hold the detail.
 
+Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `side-quest`, `ticket`, `adr`,
+`tests`, `commit`, `review`, `pr`, `qa`, `knowledge-audit`, `onboard`, `setup`.
+
 ## Session start
 
 - Read `team.yaml` and `.local/me.yaml`. If `me.yaml` is missing, run the `onboard` skill first.
@@ -92,6 +95,8 @@ actions, `main`, external systems. Flag every judgement call in the output with 
 ## Customizing
 
 - Never edit `.folkways/` or framework skills in `.claude/skills/`. `folkways sync` and `upgrade` stop if you do.
-- Team changes go in `overlays/<skill>/OVERLAY.md` (add or override). Personal ones go in
-  `people/<handle>/overlays/<skill>/OVERLAY.md` (add only).
-- Every framework skill reads `team.yaml`, `.local/me.yaml` and both overlay files first.
+- Team changes go in `overlays/<skill>/OVERLAY.md` (add or override). `folkways sync` compiles them into
+  the skill, so run it after an overlay change. Personal ones go in
+  `people/<handle>/overlays/<skill>/OVERLAY.md` (add only); each skill attaches them in step 0.
+- Rules that must hold whatever an overlay says (commit format, push approval, the review gate) live in
+  `team.yaml` and are checked by hooks. Put them there, not in an overlay.

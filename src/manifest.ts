@@ -4,15 +4,18 @@ import { FolkwaysError } from './errors.ts';
 
 export const MANIFEST = '.folkways/manifest.json';
 
-/** What the last sync wrote: version, framework skills, and a checksum per file. */
+/** What the last sync wrote: version, framework skills, a checksum per file, and per team overlay it compiled. */
 export interface Manifest {
   version: string;
   skills: string[];
   files: Record<string, string>;
+  /** `overlays/<skill>/OVERLAY.md` → checksum at the last sync. Absent when no overlay was compiled. */
+  overlays?: Record<string, string>;
 }
 
 const SKILL_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SHA256 = /^[a-f0-9]{64}$/;
+const OVERLAY_PATH = /^overlays\/[A-Za-z0-9][A-Za-z0-9._-]*\/OVERLAY\.md$/;
 
 /**
  * Whether `path` is a plain relative path in a framework-owned location (spec §3.1).
@@ -40,6 +43,13 @@ function validate(value: unknown): Manifest {
   for (const [path, hash] of Object.entries(m.files)) {
     if (!isOwnedPath(path, m.skills)) throw invalid(`unsafe path ${JSON.stringify(path)}`);
     if (typeof hash !== 'string' || !SHA256.test(hash)) throw invalid(`bad checksum for ${path}`);
+  }
+  if (m.overlays !== undefined) {
+    if (typeof m.overlays !== 'object' || m.overlays === null || Array.isArray(m.overlays)) throw invalid('bad overlays');
+    for (const [path, hash] of Object.entries(m.overlays)) {
+      if (!OVERLAY_PATH.test(path)) throw invalid(`unsafe overlay path ${JSON.stringify(path)}`);
+      if (typeof hash !== 'string' || !SHA256.test(hash)) throw invalid(`bad checksum for ${path}`);
+    }
   }
   return m as Manifest;
 }

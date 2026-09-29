@@ -1,8 +1,21 @@
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import { FolkwaysError } from './errors.ts';
-import { fsOps, listFiles, pruneEmptyDirs, sha256 } from './files.ts';
+import { fsOps, listFiles, pruneEmptyDirs, sha256, sha256Text } from './files.ts';
 import { MANIFEST, type Manifest, readManifest, writeManifest } from './manifest.ts';
+import { compileSkillFiles, lintPersonalOverlay } from './overlays.ts';
 import { PACKAGE_ROOT, packageVersion } from './package.ts';
 import { mergeSettings, type Settings } from './settings.ts';
 
@@ -14,7 +27,11 @@ const STAGE_PREFIX = '.folkways-sync-';
 interface FileCopy {
   src: string;
   dest: string;
+  /** Compiled content that replaces `src` (a skill file with a team overlay applied). */
+  content?: string;
 }
+
+const copyHash = (c: FileCopy): string => (c.content === undefined ? sha256(c.src) : sha256Text(c.content));
 
 /** Every file `sync` copies from the package into a team repo. */
 export function assetMap(pkg: string): FileCopy[] {
@@ -94,11 +111,12 @@ function findOverwrites(team: string, pkg: string, manifest: Manifest | undefine
     const parent = blockingParent(team, dest);
     if (parent) out.add(`replaced  ${parent}`);
   }
-  for (const { src, dest } of copies) {
+  for (const c of copies) {
+    const { dest } = c;
     if (tracked.has(dest) || ownedSkills.some((dir) => dest.startsWith(dir)) || blockingParent(team, dest)) continue;
     const full = join(team, dest);
     const stat = lstatSync(full, { throwIfNoEntry: false });
-    if (stat && (!stat.isFile() || sha256(full) !== sha256(src))) out.add(`replaced  ${dest}`);
+    if (stat && (!stat.isFile() || sha256(full) !== copyHash(c))) out.add(`replaced  ${dest}`);
   }
   if (!manifest) {
     // Adopting: files in framework skill folders that this version doesn't ship would be left behind.
@@ -165,6 +183,95 @@ function swap(team: string, stage: string, outgoing: string[], incoming: string[
   }
 }
 
+/** Team overlays: `overlays/<skill>/OVERLAY.md` in the team repo. */
+function teamOverlays(team: string): { path: string; skill: string }[] {
+  return listFiles(join(team, 'overlays')).flatMap((f) => {
+    const skill = /^([^/]+)\/OVERLAY\.md$/.exec(f)?.[1];
+    return skill ? [{ path: `overlays/${f}`, skill }] : [];
+  });
+}
+
+/**
+ * Compile each team overlay into the copies of its framework skill (spec §3.2, ADR 0001). Reads only,
+ * so an unknown section ID stops the sync before anything is written.
+ */
+function compileOverlays(team: string, pkg: string, copies: FileCopy[]): { overlays: Record<string, string>; warnings: string[] } {
+  const shipped = new Set(skillNames(pkg));
+  const overlays: Record<string, string> = {};
+  const warnings: string[] = [];
+  for (const { path, skill } of teamOverlays(team)) {
+    if (!shipped.has(skill)) {
+      warnings.push(`${path}: no framework skill named ${skill}; the overlay is not applied`);
+      continue;
+    }
+    const prefix = `.claude/skills/${skill}/`;
+    const own = copies.filter((c) => c.dest.startsWith(prefix));
+    const files = Object.fromEntries(
+      own.filter((c) => c.dest.endsWith('.md')).map((c) => [c.dest.slice(prefix.length), readFileSync(c.src, 'utf8')]),
+    );
+    let compiled: ReturnType<typeof compileSkillFiles>;
+    try {
+      compiled = compileSkillFiles(files, readFileSync(join(team, path), 'utf8'));
+    } catch (e) {
+      if (e instanceof FolkwaysError) throw new FolkwaysError(`${path}: ${e.message}`);
+      throw e;
+    }
+    for (const c of own) c.content = compiled.files[c.dest.slice(prefix.length)] ?? c.content;
+    warnings.push(...compiled.warnings.map((w) => `${path}: ${w.replace(/^overlays: /, '')}`));
+    overlays[path] = sha256(join(team, path));
+  }
+  return { overlays, warnings };
+}
+
+/** Team overlays changed, added or removed since the last sync compiled them; `doctor` reports these. */
+export function staleOverlays(team: string, manifest: Manifest): string[] {
+  const recorded = manifest.overlays ?? {};
+  const onDisk = teamOverlays(team)
+    .filter((o) => manifest.skills.includes(o.skill))
+    .map((o) => o.path);
+  const paths = new Set([...Object.keys(recorded), ...onDisk]);
+  return [...paths].filter((p) => !existsSync(join(team, p)) || recorded[p] !== sha256(join(team, p))).sort();
+}
+
+/** Lint findings for every personal overlay, as sync warnings (errors in `doctor`). */
+function lintPersonalOverlays(team: string): string[] {
+  return listFiles(join(team, 'people'))
+    .filter((f) => /^[^/]+\/overlays\/[^/]+\/OVERLAY\.md$/.test(f))
+    .flatMap((f) => lintPersonalOverlay(readFileSync(join(team, 'people', f), 'utf8')).map((l) => `people/${f}: ${l.message}`));
+}
+
+const HANDLE = /^handle:\s*(["']?)([A-Za-z0-9][A-Za-z0-9._-]*)\1\s*(?:#.*)?$/m;
+
+/**
+ * Point `.local/me` at `people/<handle>` (handle from `.local/me.yaml`), so skills can attach the
+ * person's overlays with one path for everyone. Returns a warning when it can't.
+ */
+function linkPersonalFolder(team: string): string | undefined {
+  const me = join(team, '.local/me.yaml');
+  if (!existsSync(me)) return undefined;
+  const handle = HANDLE.exec(readFileSync(me, 'utf8'))?.[2];
+  if (!handle) return undefined;
+  const link = join(team, '.local/me');
+  const target = `../people/${handle}`;
+  const stat = lstatSync(link, { throwIfNoEntry: false });
+  if (!existsSync(join(team, 'people', handle))) {
+    // A link left from another handle would attach someone else's overlays.
+    if (stat?.isSymbolicLink() && readlinkSync(link) !== target) unlinkSync(link);
+    return `people/${handle}/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.`;
+  }
+  if (stat && !stat.isSymbolicLink()) {
+    return '.local/me is not a symlink; skills attach personal overlays through it. Move it and rerun sync.';
+  }
+  if (stat && readlinkSync(link) === target) return undefined;
+  try {
+    if (stat) unlinkSync(link);
+    symlinkSync(target, link, 'dir');
+  } catch (e) {
+    return `could not link .local/me to people/${handle} (${(e as Error).message}); skills fall back to reading people/${handle}/overlays/`;
+  }
+  return undefined;
+}
+
 /** The merged .claude/settings.json content. Reads only, so sync can fail before writing anything. */
 function mergedSettings(team: string, pkg: string): string {
   const path = join(team, '.claude/settings.json');
@@ -219,6 +326,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   }
 
   const copies = assetMap(pkg);
+  const compiled = compileOverlays(team, pkg, copies);
   const overwrites = findOverwrites(team, pkg, manifest, copies);
   if (overwrites.length > 0 && !options.force) {
     throw new FolkwaysError(
@@ -238,16 +346,18 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   const stage = mkdtempSync(join(team, STAGE_PREFIX));
   try {
     const files: Record<string, string> = {};
-    for (const { src, dest } of copies) {
+    for (const { src, dest, content } of copies) {
       const staged = join(stage, 'new', dest);
       mkdirSync(dirname(staged), { recursive: true });
-      fsOps.copy(src, staged);
+      if (content === undefined) fsOps.copy(src, staged);
+      else writeFileSync(staged, content);
       files[dest] = sha256(staged);
     }
     mkdirSync(join(stage, 'new/.claude'), { recursive: true });
     writeFileSync(join(stage, 'new/.claude/settings.json'), settings);
     mkdirSync(join(stage, 'new/.folkways'), { recursive: true });
-    writeManifest(join(stage, 'new'), { version, skills, files });
+    const overlays = Object.keys(compiled.overlays).length > 0 ? { overlays: compiled.overlays } : {};
+    writeManifest(join(stage, 'new'), { version, skills, files, ...overlays });
 
     const incoming = [...copies.map((c) => c.dest), '.claude/settings.json', MANIFEST];
     swap(team, stage, replacedPaths(team, manifest, overwrites, incoming), incoming);
@@ -260,7 +370,9 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   pruneEmptyDirs(join(team, '.folkways'));
   pruneEmptyDirs(join(team, '.github'));
 
-  const warnings: string[] = [];
+  const warnings = [...compiled.warnings, ...lintPersonalOverlays(team)];
+  const link = linkPersonalFolder(team);
+  if (link) warnings.push(link);
   const agents = join(team, 'AGENTS.md');
   const imports = existsSync(agents) && readFileSync(agents, 'utf8').split('\n').some((l) => l.trim() === INSTRUCTIONS_IMPORT);
   if (!imports) warnings.push(`AGENTS.md has no '${INSTRUCTIONS_IMPORT}' line; agents won't see the framework instructions.`);

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Framework skills: 16 skills in `assets/skills/` and the review prompt in `assets/prompts/review.md`,
+  synced to `.claude/skills/` and `.folkways/prompts/`. Section IDs (`{#id}`) are an interface for
+  team overlays: renaming or removing one is a breaking change.
+- `sync` compiles each team overlay (`overlays/<skill>/OVERLAY.md`) into the synced skill (ADR 0001).
+  Overrides replace sections by ID in `SKILL.md` or a reference file; additions are appended as
+  `## Team additions`. An unknown ID stops the sync before anything is written. The manifest records
+  overlay checksums (`overlays`), and `staleOverlays` lists overlays changed since the last sync.
+- `sync` warns about personal overlays that try to override, and about team overlays for skills the
+  framework doesn't ship.
+- `sync` links `.local/me` to `people/<handle>/` (handle from `.local/me.yaml`). Step 0 of every skill
+  attaches the person's overlay through it with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`.
 - `sync` refuses to overwrite team files that differ at framework paths the manifest doesn't track,
   including every path when there is no manifest (adopting a repo). `--force` overwrites them and lists
   them as `replaced`. Adopting a repo whose framework skill folders already match now works.

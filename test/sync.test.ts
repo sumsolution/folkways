@@ -1,9 +1,9 @@
-import { chmodSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
 import { fsOps } from '../src/files.ts';
-import { sync } from '../src/sync.ts';
+import { staleOverlays, sync } from '../src/sync.ts';
 import { addFrameworkContent, commitAll, json, makePackage, makeTeam, put, read, snapshot } from './helpers.ts';
 
 let team: string;
@@ -119,6 +119,10 @@ describe('sync refusals and warnings', () => {
     [{ skills: [], files: { '../../outside': 'a'.repeat(64) } }, /unsafe path "\.\.\/\.\.\/outside"/],
     [{ skills: ['start'], files: { '.claude/skills/other/x.md': 'a'.repeat(64) } }, /unsafe path/],
     [{ skills: [], files: { 'team.yaml': 'a'.repeat(64) } }, /unsafe path "team\.yaml"/],
+    [{ skills: [], files: {}, overlays: { '../x': 'a'.repeat(64) } }, /unsafe overlay path "\.\.\/x"/],
+    [{ skills: [], files: {}, overlays: { 'overlays/a/b/OVERLAY.md': 'a'.repeat(64) } }, /unsafe overlay path/],
+    [{ skills: [], files: {}, overlays: { 'overlays/a/OVERLAY.md': 'nope' } }, /bad checksum for overlays\/a\/OVERLAY\.md/],
+    [{ skills: [], files: {}, overlays: [] }, /bad overlays/],
   ])('rejects an unsafe manifest before forced deletion: %j', (changes, message) => {
     const outside = join(team, '..', 'outside');
     put(outside, 'keep\n');
@@ -221,6 +225,139 @@ describe('sync without a manifest, with framework skills in place', () => {
     expect(result.discarded).toEqual(['replaced  .claude/skills/start/SKILL.md', 'replaced  .claude/skills/start/extra.md']);
     expect(existsSync(join(team, '.claude/skills/start/extra.md'))).toBe(false);
     expect(sync(team, next).discarded).toEqual([]);
+  });
+});
+
+describe('sync compiles team overlays (ADR 0001)', () => {
+  const skill = '---\nname: start\ndescription: test\n---\n\n## Format {#format}\n\nframework format\n';
+  const overlay = '## Add\n\n- team rule\n\n## Override {#format}\n\nteam format\n';
+
+  beforeEach(() => {
+    put(join(next, 'assets/skills/start/SKILL.md'), skill);
+    put(join(next, 'assets/skills/start/references/a.md'), '## Template {#template}\n\nframework template\n');
+  });
+
+  it('writes the compiled skill and records both checksums', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    expect(sync(team, next).warnings).toEqual([]);
+    const text = read(join(team, '.claude/skills/start/SKILL.md'));
+    expect(text).toContain('team format');
+    expect(text).not.toContain('framework format');
+    expect(text).toMatch(/## Team additions\n\n- team rule\n$/);
+    const manifest = json(join(team, '.folkways/manifest.json'));
+    expect(manifest.overlays).toEqual({ 'overlays/start/OVERLAY.md': expect.stringMatching(/^[a-f0-9]{64}$/) });
+    expect(staleOverlays(team, manifest)).toEqual([]);
+  });
+
+  it('overrides a section in a reference file', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), '## Override {#template}\n\nteam template\n');
+    sync(team, next);
+    expect(read(join(team, '.claude/skills/start/references/a.md'))).toContain('team template');
+    expect(read(join(team, '.claude/skills/start/SKILL.md'))).toBe(skill);
+  });
+
+  it('stops before writing anything on an unknown section ID', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), '## Override {#nope}\n\nx\n');
+    commitAll(team);
+    const before = snapshot(team);
+    expect(() => sync(team, next)).toThrow(/overlays\/start\/OVERLAY\.md: .*#nope/);
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('recompiles after the overlay changes, without reporting an edit', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    sync(team, next);
+    commitAll(team);
+    put(join(team, 'overlays/start/OVERLAY.md'), '## Add\n\n- newer rule\n');
+    expect(staleOverlays(team, json(join(team, '.folkways/manifest.json')))).toEqual(['overlays/start/OVERLAY.md']);
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(read(join(team, '.claude/skills/start/SKILL.md'))).toContain('- newer rule');
+    expect(read(join(team, '.claude/skills/start/SKILL.md'))).toContain('framework format');
+  });
+
+  it('reports a compiled skill edited by hand like any framework edit', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    sync(team, next);
+    put(join(team, '.claude/skills/start/SKILL.md'), 'hand edit\n');
+    expect(() => sync(team, next)).toThrow(/modified  \.claude\/skills\/start\/SKILL\.md/);
+  });
+
+  it('adopts a repo whose skills are already compiled', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    sync(team, next);
+    rmSync(join(team, '.folkways/manifest.json'));
+    expect(sync(team, next).discarded).toEqual([]);
+  });
+
+  it('warns about an overlay for a skill the framework does not ship', () => {
+    put(join(team, 'overlays/nope/OVERLAY.md'), '## Add\n\n- x\n');
+    expect(sync(team, next).warnings).toEqual([
+      'overlays/nope/OVERLAY.md: no framework skill named nope; the overlay is not applied',
+    ]);
+  });
+
+  it('warns about personal overlays that try to override', () => {
+    put(join(team, 'people/alex/overlays/start/OVERLAY.md'), '## Override {#format}\n\nmine\n');
+    expect(sync(team, next).warnings).toEqual([
+      'people/alex/overlays/start/OVERLAY.md: personal overlays may only add; remove ## Override {#format}',
+    ]);
+  });
+});
+
+describe('sync links .local/me to the person\'s folder', () => {
+  const link = () => join(team, '.local/me');
+
+  it('links people/<handle> from .local/me.yaml', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex # me\nprojects_dir: /tmp\n');
+    mkdirSync(join(team, 'people/alex/overlays'), { recursive: true });
+    sync(team, next);
+    expect(lstatSync(link()).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(link())).toBe('../people/alex');
+  });
+
+  it('repoints a link to another handle', () => {
+    put(join(team, '.local/me.yaml'), 'handle: "sam"\n');
+    mkdirSync(join(team, 'people/sam'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    sync(team, next);
+    expect(readlinkSync(link())).toBe('../people/sam');
+  });
+
+  it('leaves a correct link alone', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    const before = lstatSync(link()).ino;
+    sync(team, next);
+    expect(lstatSync(link()).ino).toBe(before);
+  });
+
+  it('removes a link to another person when this handle has no folder, and warns', () => {
+    put(join(team, '.local/me.yaml'), 'handle: sam\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    expect(sync(team, next).warnings).toEqual([
+      "people/sam/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.",
+    ]);
+    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
+  });
+
+  it('does nothing without a handle or a people folder', () => {
+    sync(team, next);
+    expect(existsSync(link())).toBe(false);
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    sync(team, next);
+    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
+  });
+
+  it('warns and leaves a real folder at .local/me', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    put(join(team, '.local/me/keep.md'), 'mine\n');
+    expect(sync(team, next).warnings).toEqual([
+      '.local/me is not a symlink; skills attach personal overlays through it. Move it and rerun sync.',
+    ]);
+    expect(read(join(team, '.local/me/keep.md'))).toBe('mine\n');
   });
 });
 

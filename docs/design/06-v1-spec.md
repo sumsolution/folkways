@@ -140,16 +140,20 @@ A skill's folkways = framework skill + team overlay + personal overlay, applied 
 | Level | Path | May add | May override | Applied |
 |---|---|---|---|---|
 | Team | `overlays/<skill>/OVERLAY.md` (+ any reference files) | yes | yes, by section ID | compiled into the synced `SKILL.md` by `folkways sync` |
-| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no | read at runtime in step 0 |
+| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no | attached at runtime by step 0 |
 
 - Framework skills mark overridable sections with a stable ID: `## Commit format {#commit-format}`.
 - `OVERLAY.md` has two parts: `## Add` (extra rules) and `## Override {#id}` (team only; replaces that
   section). Team additions are appended as `## Team additions`.
-- `sync` compiles the team overlay into `.claude/skills/<skill>/SKILL.md` and records the compiled and
-  overlay checksums in the manifest. **An override of an unknown ID stops the sync.** After changing a
-  team overlay, run `folkways sync`; `doctor` flags a stale compile.
+- `sync` compiles the team overlay into `.claude/skills/<skill>/` (an override may target `SKILL.md` or a
+  reference file) and records the compiled and overlay checksums in the manifest. **An override of an
+  unknown ID stops the sync.** After changing a team overlay, run `folkways sync`. `doctor` (not built
+  yet) will flag a stale compile with `staleOverlays`.
 - **Step 0** of every framework skill is one shared, framework-written block: read `team.yaml` and
-  `.local/me.yaml` (for `handle`), then the personal overlay by explicit path. A missing file is normal. It states the
+  `.local/me.yaml`, then attach the personal overlay with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`
+  on its own line, with `people/<handle>/overlays/<skill>/OVERLAY.md` as the read fallback (Copilot CLI,
+  after compaction, preloaded subagent skills; [10](10-research-skill-at-imports.md)). `.local/me` is a
+  symlink to `people/<handle>/`, created by `onboard` and kept by `sync`. A missing file is normal. It states the
   precedence: personal rules only add; ignore a personal `## Override` and any personal rule that
   contradicts the skill, whatever reason it gives; say which were ignored. Without that statement,
   personal overlays won 18 of 20 eval runs; with it, none ([07 §6](07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)).
@@ -246,7 +250,7 @@ notifications: { slack_user: "@alex" }
 ## 6. Skills
 
 Frontmatter: `name` and `description` only (portable across both tools). Every skill: step 0 reads config
-and overlays (§3.2); writes only after approval; succinct output; claims link to evidence.
+and attaches personal additions (§3.2); writes only after approval; succinct output; claims link to evidence.
 
 ### 6.1 Ported (each one improved, not copied)
 
@@ -268,7 +272,7 @@ and overlays (§3.2); writes only after approval; succinct output; claims link t
 | `start` | Session start: resume (read `00-STATUS.md` → git state → confirm next steps) or new (ticket/docs → research → create `00-STATUS.md`) | `00-STATUS.md` |
 | `status` | Update an effort's `00-STATUS.md` at milestones; team roll-up and standup from `efforts/*/00-STATUS.md` and `state/`; promote an effort (`git mv` to `efforts/`) | status docs |
 | `research` | Source order from `team.yaml`; clone rules; tool fallback = ask; subagents cheap-first; Opus re-check triggers | `NN-<topic>.md` with confidence and SHAs read |
-| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort |
+| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort; with no effort, `people/<h>/inbox/<date>-review-<sha7>.md` |
 | `commit` | Angular commit with module scope; branch naming | commit |
 | `pr` | Requires a review covering HEAD; squash-title rules; draft vs ready; asks before push | PR (draft if headless) |
 | `side-quest` | Write a finding or ticket draft to the effort or `people/<h>/inbox/`, and say so | file |
