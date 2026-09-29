@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- `sync` refuses to overwrite team files that differ at framework paths the manifest doesn't track,
+  including every path when there is no manifest (adopting a repo). `--force` overwrites them and lists
+  them as `replaced`.
+- `sync` stages new files inside the team repo and swaps them in by rename, manifest last. A failure
+  undoes the swap, so the repo keeps the old files and a rerun works.
+- Framework hooks are those whose command starts with `node_modules/.bin/folkways hook `
+  (`FRAMEWORK_HOOK_PREFIX`, `isFrameworkHook`). Team hooks that mention `folkways hook` stay.
+- Settings merge keeps hook groups and entries of unexpected shape instead of crashing, and reports
+  settings it can't merge into as a `folkways:` error.
+- `init` derives a valid npm package name from the folder (`init .hidden` → `hidden`), or refuses before
+  creating anything.
+- `upgrade` reports a failed commit (e.g. no git identity) cleanly and goes back to the starting branch.
+- CI: `pnpm run smoke` packs the tarball, installs it, runs `init --no-install`, `sync` twice and
+  `version`. Test and smoke run on Linux and macOS; every job has a timeout.
+
 ## 0.1.0 (unreleased)
 
 - `@folkways/cli` npm package. Node 24+.
