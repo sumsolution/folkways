@@ -184,6 +184,54 @@ describe('sync without a manifest (adopting a repo)', () => {
   });
 });
 
+describe('sync without a manifest, with framework skills in place', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  beforeEach(() => {
+    sync(team, next);
+    rmSync(join(team, '.folkways/manifest.json'));
+    commitAll(team, 'drop manifest');
+  });
+
+  it('keeps the adopted files when the swap fails', () => {
+    const before = snapshot(team);
+    let calls = 0;
+    const real = fsOps.rename;
+    vi.spyOn(fsOps, 'rename').mockImplementation((from, to) => {
+      if (++calls === 5) throw new Error('injected rename failure');
+      real(from, to);
+    });
+    expect(() => sync(team, next)).toThrow(/injected/);
+    vi.restoreAllMocks();
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('adopts identical skills', () => {
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(json(join(team, '.folkways/manifest.json')).skills).toEqual(['start']);
+  });
+
+  it('refuses differing or extra skill files, and --force replaces them', () => {
+    put(join(team, '.claude/skills/start/SKILL.md'), 'ours\n');
+    put(join(team, '.claude/skills/start/extra.md'), 'extra\n');
+    expect(() => sync(team, next)).toThrow(/replaced  \.claude\/skills\/start\/SKILL\.md\n.*replaced  \.claude\/skills\/start\/extra\.md/);
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toEqual(['replaced  .claude/skills/start/SKILL.md', 'replaced  .claude/skills/start/extra.md']);
+    expect(existsSync(join(team, '.claude/skills/start/extra.md'))).toBe(false);
+    expect(sync(team, next).discarded).toEqual([]);
+  });
+});
+
+describe('sync after an interrupted sync', () => {
+  it('refuses and says how to recover', () => {
+    put(join(team, '.folkways-sync-abc123/old/.folkways/manifest.json'), '{}');
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next, { force: true })).toThrow(/interrupted[\s\S]*\.folkways-sync-abc123/);
+  });
+});
+
 describe('sync with a manifest', () => {
   it('refuses to overwrite a team file at a new framework path', () => {
     put(join(team, '.folkways/prompts/review.md'), 'team prompt\n');

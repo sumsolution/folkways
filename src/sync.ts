@@ -8,6 +8,9 @@ import { mergeSettings, type Settings } from './settings.ts';
 
 export const INSTRUCTIONS_IMPORT = '@.folkways/instructions.md';
 
+/** Staging folder for a sync in progress, inside the team repo. */
+const STAGE_PREFIX = '.folkways-sync-';
+
 interface FileCopy {
   src: string;
   dest: string;
@@ -80,9 +83,10 @@ function blockingParent(team: string, dest: string): string | undefined {
 
 /**
  * Team files this version would overwrite that the manifest doesn't track, e.g. `replaced  .folkways/x.md`.
- * Without a manifest (adopting a repo) that is every destination. Files that already match are fine.
+ * Without a manifest (adopting a repo) that is every destination, plus extra files in framework skill folders.
+ * Files that already match are fine.
  */
-function findOverwrites(team: string, manifest: Manifest | undefined, copies: FileCopy[]): string[] {
+function findOverwrites(team: string, pkg: string, manifest: Manifest | undefined, copies: FileCopy[]): string[] {
   const tracked = new Set(Object.keys(manifest?.files ?? {}));
   const ownedSkills = (manifest?.skills ?? []).map((s) => `.claude/skills/${s}/`);
   const out = new Set<string>();
@@ -96,12 +100,26 @@ function findOverwrites(team: string, manifest: Manifest | undefined, copies: Fi
     const stat = lstatSync(full, { throwIfNoEntry: false });
     if (stat && (!stat.isFile() || sha256(full) !== sha256(src))) out.add(`replaced  ${dest}`);
   }
+  if (!manifest) {
+    // Adopting: files in framework skill folders that this version doesn't ship would be left behind.
+    const shipped = new Set(copies.map((c) => c.dest));
+    for (const skill of skillNames(pkg)) {
+      if (blockingParent(team, `.claude/skills/${skill}/x`)) continue;
+      for (const f of listFiles(join(team, '.claude/skills', skill))) {
+        const path = `.claude/skills/${skill}/${f}`;
+        if (!shipped.has(path)) out.add(`replaced  ${path}`);
+      }
+    }
+  }
   return [...out];
 }
 
-/** Paths this sync replaces or removes: the last sync's files, edits in its skills, and forced overwrites. */
-function replacedPaths(team: string, manifest: Manifest | undefined, overwrites: string[]): string[] {
-  const paths = new Set(Object.keys(manifest?.files ?? {}));
+/**
+ * Paths this sync replaces or removes: the last sync's files, edits in its skills, forced overwrites,
+ * and every existing destination, so a failed swap can put all of them back.
+ */
+function replacedPaths(team: string, manifest: Manifest | undefined, overwrites: string[], incoming: string[]): string[] {
+  const paths = new Set([...Object.keys(manifest?.files ?? {}), ...incoming]);
   for (const skill of manifest?.skills ?? []) {
     for (const f of listFiles(join(team, '.claude/skills', skill))) paths.add(`.claude/skills/${skill}/${f}`);
   }
@@ -176,6 +194,13 @@ export interface SyncResult {
 
 /** Copy the package's text files into a team repo (spec §3.1). Does not commit. */
 export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOptions = {}): SyncResult {
+  const leftover = readdirSync(team).find((f) => f.startsWith(STAGE_PREFIX));
+  if (leftover) {
+    throw new FolkwaysError(
+      `a previous sync was interrupted and left ${leftover}/ (the files it replaced are in ${leftover}/old).\n` +
+        `Restore the committed files with 'git checkout -- .', delete ${leftover}/, then rerun.`,
+    );
+  }
   const manifest = readManifest(team);
   const discarded = manifest ? findEdits(team, manifest) : [];
   if (discarded.length > 0 && !options.force) {
@@ -184,7 +209,8 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
 
   const owned = new Set(manifest?.skills ?? []);
   const skills = skillNames(pkg);
-  const clashes = skills.filter((s) => !owned.has(s) && existsSync(join(team, '.claude/skills', s)));
+  // Without a manifest (adopting a repo), findOverwrites compares skill folders file by file instead.
+  const clashes = manifest ? skills.filter((s) => !owned.has(s) && existsSync(join(team, '.claude/skills', s))) : [];
   if (clashes.length > 0) {
     throw new FolkwaysError(
       `team skills clash with new framework skills: ${clashes.map((s) => `.claude/skills/${s}`).join(', ')}\n` +
@@ -193,7 +219,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   }
 
   const copies = assetMap(pkg);
-  const overwrites = findOverwrites(team, manifest, copies);
+  const overwrites = findOverwrites(team, pkg, manifest, copies);
   if (overwrites.length > 0 && !options.force) {
     throw new FolkwaysError(
       [
@@ -209,7 +235,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   const version = packageVersion(pkg);
 
   // Stage the new files inside the team repo (same filesystem, so renames are atomic), then swap.
-  const stage = mkdtempSync(join(team, '.folkways-sync-'));
+  const stage = mkdtempSync(join(team, STAGE_PREFIX));
   try {
     const files: Record<string, string> = {};
     for (const { src, dest } of copies) {
@@ -224,7 +250,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
     writeManifest(join(stage, 'new'), { version, skills, files });
 
     const incoming = [...copies.map((c) => c.dest), '.claude/settings.json', MANIFEST];
-    swap(team, stage, replacedPaths(team, manifest, overwrites), incoming);
+    swap(team, stage, replacedPaths(team, manifest, overwrites, incoming), incoming);
   } catch (e) {
     if (!(e instanceof RestoreError)) rmSync(stage, { recursive: true, force: true });
     throw e;

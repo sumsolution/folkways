@@ -57,10 +57,13 @@ describe('packageName', () => {
     ['.hidden', 'hidden'],
     ['__.team', 'team'],
     ['Team_A.B~c', 'team_a.b-c'],
+    ['équipe', 'equipe'],
+    ['(x)', 'x-'],
+    ['-.-team', 'team'],
     ['x'.repeat(300), 'x'.repeat(214)],
   ])('%s -> %s', (folder, name) => expect(packageName(folder)).toBe(name));
 
-  it.each(['...', '._', '', 'node_modules', 'favicon.ico'])('refuses %j', (folder) => {
+  it.each(['...', '._', '', 'node_modules', 'favicon.ico', '中文', '!', ' node_modules'])('refuses %j', (folder) => {
     expect(() => packageName(folder)).toThrow(FolkwaysError);
     expect(() => packageName(folder)).toThrow(/valid npm package name/);
   });

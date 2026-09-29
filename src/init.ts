@@ -16,14 +16,16 @@ export function templateTarget(rel: string): string {
 const RESERVED_NAMES = new Set(['node_modules', 'favicon.ico']);
 
 /**
- * An npm package name for a team repo in `folder`: lowercase, URL-safe, no leading `.` or `_`,
+ * An npm package name for a team repo in `folder`: lowercase, URL-safe, no leading `.`, `_` or `-`,
  * at most 214 characters (https://docs.npmjs.com/cli/configuring-npm/package-json#name).
  */
 export function packageName(folder: string): string {
   const name = folder
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9._-]/g, '-')
-    .replace(/^[._]+/, '')
+    .replace(/^[-._]+/, '')
     .slice(0, 214);
   if (name === '' || RESERVED_NAMES.has(name)) {
     throw new FolkwaysError(`can't derive a valid npm package name from '${folder}'; use another folder name`);
