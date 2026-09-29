@@ -9,5 +9,7 @@
   the team repo and merge its settings. Stops on edited framework files (`--force` discards them) and on
   team skills that clash with new framework skills.
 - `folkways upgrade <version>`: install a version on `chore/folkways-<version>`, run its sync, and commit.
+- Team repos use npm or pnpm, detected from `packageManager` or the lockfile. `init --package-manager`
+  defaults to the one that ran it.
 - Team `AGENTS.md` imports the framework instructions with `@.folkways/instructions.md`.
 - Settings ask before `git push`. No hooks yet.

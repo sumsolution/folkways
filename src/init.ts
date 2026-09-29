@@ -5,6 +5,7 @@ import { FolkwaysError } from './errors.ts';
 import { listFiles } from './files.ts';
 import { git } from './git.ts';
 import { PACKAGE_NAME, PACKAGE_ROOT, packageVersion } from './package.ts';
+import { installCommand, type PackageManager, packageManagerField } from './package-manager.ts';
 import { sync } from './sync.ts';
 
 /** Template paths: `dot-x` becomes `.x`, `name.tmpl` becomes `name`. */
@@ -13,8 +14,10 @@ export function templateTarget(rel: string): string {
 }
 
 export interface InitOptions {
-  /** Run `npm install` to create the lockfile. Default true. */
+  /** Install dependencies to create the lockfile. Default true. */
   install?: boolean;
+  /** Default npm. The team repo's lockfile and `packageManager` field follow this. */
+  packageManager?: PackageManager;
   pkg?: string;
 }
 
@@ -31,13 +34,23 @@ export function init(path: string, options: InitOptions = {}): string {
     copyFileSync(join(pkg, 'templates', rel), out);
   }
 
+  const pm = options.packageManager ?? 'npm';
+  const pmField = packageManagerField(pm);
   const version = packageVersion(pkg);
   const name = basename(dest).toLowerCase().replace(/[^a-z0-9._-]/g, '-');
-  const manifest = { name, private: true, devDependencies: { [PACKAGE_NAME]: version } };
+  const manifest = {
+    name,
+    private: true,
+    ...(pmField && { packageManager: pmField }),
+    devDependencies: { [PACKAGE_NAME]: version },
+  };
   writeFileSync(join(dest, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
   git(dest, 'init', '-q', '-b', 'main');
-  if (options.install ?? true) execFileSync('npm', ['install'], { cwd: dest, stdio: 'inherit' });
+  if (options.install ?? true) {
+    const [cmd, args] = installCommand(pm);
+    execFileSync(cmd, args, { cwd: dest, stdio: 'inherit' });
+  }
   sync(dest, pkg);
   git(dest, 'add', '-A');
   git(dest, 'commit', '-q', '-m', `chore(folkways): init at ${version}`);

@@ -1,7 +1,8 @@
 # Example Team
 
 The team's shared agent workspace, built on [folkways](https://github.com/sumsolution/folkways).
-New to the repo? Run `npm ci`, open Claude Code or Copilot CLI here, and run the `onboard` skill.
+New to the repo? Install dependencies (`npm ci`, or `pnpm install --frozen-lockfile` if there's a
+`pnpm-lock.yaml`), open Claude Code or Copilot CLI here, and run the `onboard` skill.
 
 | Path | Holds | Changes by |
 |---|---|---|
@@ -15,5 +16,5 @@ New to the repo? Run `npm ci`, open Claude Code or Copilot CLI here, and run the
 | `.folkways/` | Framework files. Don't edit; `folkways sync` replaces them | PR |
 | `.local/` | Machine-local config (`me.yaml`). Not committed | — |
 
-Direct pushes are rebased and linear. Upgrade the framework with `npx folkways upgrade <version>`, then
-open a PR. Run `npm ci` after pulling an upgrade.
+Direct pushes are rebased and linear. Upgrade the framework with `npx folkways upgrade <version>` (or
+`pnpm exec folkways upgrade <version>`), then open a PR. Reinstall after pulling an upgrade.

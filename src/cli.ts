@@ -4,16 +4,20 @@ import { FolkwaysError } from './errors.ts';
 import { git } from './git.ts';
 import { init } from './init.ts';
 import { packageVersion } from './package.ts';
+import { fromUserAgent, PACKAGE_MANAGERS, type PackageManager } from './package-manager.ts';
 import { sync } from './sync.ts';
 import { upgrade } from './upgrade.ts';
 
 const USAGE = `usage: folkways <command> [options]
 
-  init <path> [--no-install]   scaffold a team repo at <path>, pin this version, sync, commit
-                               (run with: npx @folkways/cli init <path>)
+  init <path> [--no-install] [--package-manager npm|pnpm]
+                               scaffold a team repo at <path>, pin this version, sync, commit
+                               (npx @folkways/cli init <path>, or pnpm dlx @folkways/cli init <path>)
+                               --package-manager  default: the one that ran this, else npm
   sync [--force]               copy the installed version's files into this team repo
                                --force  discard edits to framework-owned files
   upgrade <version>            install <version> on branch chore/folkways-<version>, sync, commit
+                               (uses the team repo's package manager)
   version                      print the installed version
   hook | review | run | doctor not built yet`;
 
@@ -32,10 +36,16 @@ function main(argv: string[]): void {
       const { positionals, values } = parseArgs({
         args: rest,
         allowPositionals: true,
-        options: { 'no-install': { type: 'boolean' } },
+        options: { 'no-install': { type: 'boolean' }, 'package-manager': { type: 'string' } },
       });
-      if (positionals.length !== 1) throw new FolkwaysError('usage: folkways init <path> [--no-install]');
-      const dest = init(positionals[0]!, { install: !values['no-install'] });
+      if (positionals.length !== 1) {
+        throw new FolkwaysError('usage: folkways init <path> [--no-install] [--package-manager npm|pnpm]');
+      }
+      const pm = values['package-manager'] ?? fromUserAgent() ?? 'npm';
+      if (!(PACKAGE_MANAGERS as readonly string[]).includes(pm)) {
+        throw new FolkwaysError(`--package-manager must be ${PACKAGE_MANAGERS.join(' or ')}`);
+      }
+      const dest = init(positionals[0]!, { install: !values['no-install'], packageManager: pm as PackageManager });
       console.log(`Created ${dest} with folkways ${packageVersion()}.`);
       console.log(`Next: open Claude Code or Copilot CLI in ${dest} and run the setup skill.`);
       return;

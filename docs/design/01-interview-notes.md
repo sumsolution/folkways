@@ -432,4 +432,9 @@ generic ticket skill; its team templates move into team config.
   upgrade PRs show framework changes. Edit detection and overlays are unchanged.
 - **Later:** publish a GitHub Action that runs on dependency-update PRs, detects a `@folkways/cli` bump, and
   runs the sync automatically.
+- **Package managers:** team repos use **whatever the team uses**: npm or pnpm, detected from the
+  `packageManager` field or lockfile. The beta team uses npm today; the user is pushing for pnpm. The
+  framework repo itself uses pnpm with supply-chain settings (7-day minimum release age, no provenance
+  downgrades, registry-only subdependencies, no unapproved build scripts) and a matching Dependabot cooldown.
+- **CI actions stay pinned to commit SHAs** (tags can be moved; SHAs can't). The repo requires SHA pinning.
 - **GitHub org:** `sumsolution` for now; a dedicated `folkways` org may come later.

@@ -48,3 +48,15 @@ describe('init', () => {
     expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(/not empty/);
   });
 });
+
+describe('init with pnpm', () => {
+  it('pins pnpm in the packageManager field', () => {
+    const dest = init(join(tmp(), 'team'), { install: false, pkg: makePackage('1.0.0'), packageManager: 'pnpm' });
+    expect(json(join(dest, 'package.json')).packageManager).toMatch(/^pnpm@\d+\.\d+\.\d+$/);
+  });
+
+  it('leaves packageManager unset for npm', () => {
+    const dest = init(join(tmp(), 'team'), { install: false, pkg: makePackage('1.0.0'), packageManager: 'npm' });
+    expect(json(join(dest, 'package.json')).packageManager).toBeUndefined();
+  });
+});

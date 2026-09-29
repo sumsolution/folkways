@@ -4,15 +4,15 @@ import { FolkwaysError } from './errors.ts';
 import { branchExists, git, isClean } from './git.ts';
 import { readManifest } from './manifest.ts';
 import { PACKAGE_NAME } from './package.ts';
+import { addDevExactCommand, detectPackageManager } from './package-manager.ts';
 import { editsMessage, findEdits } from './sync.ts';
 
 export type Installer = (team: string, version: string) => void;
 
-export const npmInstall: Installer = (team, version) => {
-  execFileSync('npm', ['install', '--save-dev', '--save-exact', `${PACKAGE_NAME}@${version}`], {
-    cwd: team,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+/** Pin `version` with the team repo's own package manager. */
+export const packageInstall: Installer = (team, version) => {
+  const [cmd, args] = addDevExactCommand(detectPackageManager(team), `${PACKAGE_NAME}@${version}`);
+  execFileSync(cmd, args, { cwd: team, stdio: ['ignore', 'pipe', 'pipe'] });
 };
 
 export interface UpgradeResult {
@@ -25,7 +25,7 @@ export interface UpgradeResult {
  * Install `version` on branch chore/folkways-<version>, run that version's sync, and commit (spec §3.1).
  * The new version's own `sync` runs, so its assets and rules apply.
  */
-export function upgrade(cwd: string, versionArg: string, install: Installer = npmInstall): UpgradeResult {
+export function upgrade(cwd: string, versionArg: string, install: Installer = packageInstall): UpgradeResult {
   const version = versionArg.replace(/^v/, '');
   let team: string;
   try {

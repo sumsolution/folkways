@@ -51,8 +51,9 @@ directly under Node 24 during development.
 team-repo/
 ├── AGENTS.md                # team text + `@.folkways/instructions.md` (§5)
 ├── CLAUDE.md                # @AGENTS.md (+ Claude-only extras)
-├── package.json             # private; devDependencies: "@folkways/cli": "<exact version>"
-├── package-lock.json        # committed; `npm ci` after clone and after upgrades
+├── package.json             # private; devDependencies: "@folkways/cli": "<exact version>";
+│                            #   pnpm teams also pin `packageManager: pnpm@<version>`
+├── package-lock.json        # or pnpm-lock.yaml; committed; install after clone and after upgrades
 ├── team.yaml                # team config (§4.1)
 ├── knowledge/               # durable facts, `Last verified:` + method          [PR]
 ├── state/                   # live trackers, one file per track                 [direct push]
@@ -110,11 +111,16 @@ Code and text are delivered differently (round 12):
 3. Replaces the framework files, merges settings, writes the manifest. It does not commit.
 
 `folkways upgrade <version>`: refuses on a dirty tree → branch `chore/folkways-<version>` →
-`npm install --save-exact @folkways/cli@<version>` → runs the **new** version's `sync` → commits
+installs `@folkways/cli@<version>` as an exact dev dependency with the team's package manager → runs the
+**new** version's `sync` → commits
 `chore(folkways): upgrade to <version>`. The user reviews and opens the PR.
 
-Dependabot or Renovate may bump the package instead; then someone runs `npm ci && npx folkways sync` on
-that branch. `doctor` and the `SessionStart` hook warn when the installed version differs from the manifest.
+Dependabot or Renovate may bump the package instead; then someone installs and runs `folkways sync` on
+that branch.
+
+**Package managers** (round 12): the team repo uses **npm or pnpm**. `folkways` detects it from the
+`packageManager` field, then the lockfile (`pnpm-lock.yaml` → pnpm), else npm, and uses it for every
+install. `init` takes `--package-manager`, defaulting to whichever ran it (`npx` → npm, `pnpm dlx` → pnpm). `doctor` and the `SessionStart` hook warn when the installed version differs from the manifest.
 **Later:** a published GitHub Action does this in CI (§9.7).
 
 ### 3.2 Overlays
@@ -252,7 +258,7 @@ and overlays (§3.2); writes only after approval; succinct output; claims link t
 
 All hooks live in `.claude/settings.json`, which both Claude Code and Copilot CLI read ([04 §3](04-research-copilot-capabilities.md)).
 Each hook entry runs the pinned package: `node_modules/.bin/folkways hook <name>`. If the package isn't
-installed, the command fails; `doctor` and `onboard` make sure `npm ci` has run.
+installed, the command fails; `doctor` and `onboard` make sure dependencies are installed.
 Matchers work in both, so scripts still self-filter on command text only as a safety net.
 
 ### 7.1 Hooks
@@ -271,7 +277,7 @@ Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]`
 
 | Command | Does |
 |---|---|
-| `init <path>` | `npx @folkways/cli init <path>`: scaffold a team repo from `templates/`, pin this version in `package.json`, `npm install`, sync, first commit |
+| `init <path> [--package-manager npm\|pnpm]` | `npx @folkways/cli init <path>` or `pnpm dlx @folkways/cli init <path>`: scaffold a team repo from `templates/`, pin this version in `package.json`, install, sync, first commit |
 | `sync [--force]` | §3.1 |
 | `upgrade <version>` | §3.1 |
 | `hook <name>` | run a hook (§7.1); reads the hook payload on stdin |
@@ -303,7 +309,7 @@ destructive actions, `main`, external systems. Judgement calls are flagged in th
 
 ### 8.1 Team setup (once, by a lead)
 
-1. `npx @folkways/cli init example-team` → scaffold + install + sync + first commit. No framework clone
+1. `npx @folkways/cli init example-team` (or `pnpm dlx …`) → scaffold + install + sync + first commit. No framework clone
    needed (works behind a company npm mirror).
 2. Open Claude Code or Copilot CLI in the new repo; run `setup`. It interviews for `team.yaml` fields,
    moves any existing team material into `overlays/` or team `skills/`, writes READMEs.
@@ -311,7 +317,7 @@ destructive actions, `main`, external systems. Judgement calls are flagged in th
 
 ### 8.2 Onboarding (per person, per machine)
 
-1. Clone the team repo; `npm ci`; open the tool there; run `onboard`.
+1. Clone the team repo; install (`npm ci` or `pnpm install --frozen-lockfile`); open the tool there; run `onboard`.
 2. It writes `.local/me.yaml` (handle, projects dir, tool) and creates `people/<handle>/`.
 3. Grants access to the projects dir, with approval:
    - Claude Code: add `projects_dir` to `permissions.additionalDirectories` in `~/.claude/settings.json` (absolute path).
@@ -328,7 +334,7 @@ feature branch; the main agent merges. The main clone's checkout is never change
 ### 8.4 Upgrade
 
 `npx folkways upgrade 1.1.0` → review the branch diff (framework files only) → PR → merge. Or merge a
-Dependabot/Renovate bump after running `npx folkways sync` on its branch. Teammates run `npm ci` after pulling.
+Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates reinstall after pulling.
 
 ## 9. Open and deferred
 
@@ -342,5 +348,5 @@ Dependabot/Renovate bump after running `npx folkways sync` on its branch. Teamma
 6. **Trademark and domain** for `folkways` (Summer). npm scope `@folkways` claimed by Summer (2026-09-28).
    A dedicated `folkways` GitHub org may replace `sumsolution` later.
 7. **Published GitHub Action for sync (later):** runs on dependency-update PRs (Dependabot/Renovate),
-   detects a `@folkways/cli` version change, runs `npm ci && npx folkways sync`, and pushes the synced
+   detects a `@folkways/cli` version change, installs with the team's package manager, runs `folkways sync`, and pushes the synced
    files to the PR branch. Removes the manual sync step.

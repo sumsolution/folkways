@@ -7,7 +7,7 @@ on Claude Code and Copilot CLI.
 **Status:** early build, not published yet. `init`, `sync` and `upgrade` work; hooks and skills are next.
 
 ```bash
-npx @folkways/cli init my-team
+npx @folkways/cli init my-team       # or: pnpm dlx @folkways/cli init my-team
 ```
 
 - [Status](docs/design/00-STATUS.md): where the project stands and what's next
