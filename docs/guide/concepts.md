@@ -8,8 +8,7 @@ One git repo per team. Everyone opens Claude Code or Copilot CLI **in the team r
 starts from the same instructions, skills and config. Code changes still happen in your project repos,
 in git worktrees; the team repo is where the agent's context lives.
 
-Set and setting matter: what an agent reads at session start shapes everything it does after. The team
-repo is that setting, shared.
+Set and setting matter: the team repo is where every session starts.
 
 `init` creates it with this layout:
 
@@ -68,10 +67,11 @@ So the team gets one shared baseline, and each person can still add their own to
 Small commands the tools run at set moments: before a shell command, at session start and end, before
 compaction. They live in `.claude/settings.json`, which **both Claude Code and Copilot CLI read**.
 
-**Coming soon.** Each hook will run the pinned CLI: `node_modules/.bin/folkways hook <name>`. Planned: `git-guard` (commit format, review before push, no checkouts in your main
-clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time), `session-start`,
-`session-end`, `precompact` ([spec §7.1](../design/06-v1-spec.md)). Today `.claude/settings.json` holds
-one framework rule: `git push` asks first.
+**Coming soon.** Each hook will run the pinned CLI: `node_modules/.bin/folkways hook <name>`. Planned:
+`git-guard` (commit format, review before push, no checkouts in your main clone), `context-band`
+(announces 125K, 150K and 200K tokens so you hand off in time), `session-start`, `session-end`,
+`precompact` ([spec §7.1](../design/06-v1-spec.md)). Today `.claude/settings.json` holds one framework
+rule: `git push` asks first.
 
 ## Folkways and mores
 
@@ -82,19 +82,21 @@ A few things are **mores**: norms the team agrees are worth enforcing, so they'r
 hooks, not just instructions.
 
 - Ask before every push.
-- A fresh-process review covers the commit before a PR opens.
+- A fresh-process review covers the commit before a PR opens. The `pr` skill checks for one, and with
+  the `pre-push` trigger `git-guard` blocks the push until it exists.
 - Commits follow the team's format.
 - Agents never check out, pull or reset in your main clones. They use worktrees.
 
-The push rule is enforced today. The rest arrive with the hooks. The idea comes from the book the
+The push rule is enforced today in Claude Code (whether Copilot CLI honors `permissions.ask` is
+unverified). The rest arrive with the hooks. The idea comes from the book the
 project is named after; see [The name](the-name.md).
 
 ## Headless runs
 
-Sometimes nobody's watching: `folkways run` (coming soon) or a CI job, like the monthly knowledge audit (coming soon).
-Headless runs create things **for review only**: local files, draft PRs, an @mention. Never `main`,
-never destructive actions, never writes to external systems. Every judgement call is flagged in the
-output, so a person decides.
+Sometimes nobody's watching: `folkways run` (coming soon) or a CI job, like the monthly knowledge audit
+(coming soon). Headless runs create things **for review only**: local files, draft PRs, an @mention.
+Never `main`, never destructive actions, never writes to external systems. Every judgement call is
+flagged in the output, so a person decides.
 
 ## Sessions
 

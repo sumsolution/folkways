@@ -1,7 +1,7 @@
 # Voice
 
 How folkways docs sound. One page, so you can hold it in your head while you write. Summer owns this;
-tune it freely.
+tune it freely. The examples here break the emoji limits on purpose; the rules apply to every other page.
 
 ## In one breath
 
@@ -49,7 +49,8 @@ Nothing else, unless it earns its place. Never in reference tables, command bloc
 
 Easter eggs, not themes. They fit because they're true, not because they're decoration.
 
-- **Philosophy and sociology.** Sumner, folkways and mores are the name. Use them where they explain the design.
+- **Philosophy and sociology.** Sumner, folkways and mores are the name. Use them where they explain the
+  design.
 - **Set and setting.** Context shapes the experience. That's context engineering, and it fits once, where
   we talk about what an agent reads at session start.
 - **PLUR** (peace, love, unity, respect). A light touch where we talk about working together.
@@ -70,9 +71,9 @@ Easter eggs, not themes. They fit because they're true, not because they're deco
 > Before: Agents must never, under any circumstances, push code that has not been reviewed. Violations
 > will be blocked.
 
-> After: Before a PR opens, a fresh agent that never saw the work reviews it. The author can't frame
-> the review, so it catches what the author's context hides. We all do it; it's how we trust each
-> other's code. 🙌
+> After: Before a PR opens, a fresh agent that never saw the work reviews it (on the team's trigger).
+> The author can't frame the review, so it catches what the author's context hides. We all do it; it's
+> how we trust each other's code. 🙌
 
 **3. Unbuilt features**
 

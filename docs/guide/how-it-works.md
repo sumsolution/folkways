@@ -95,4 +95,4 @@ So the review runs in a **fresh process**:
 today the command says "not built yet". The gate is agent-side by design: no CI checks in project repos
 in v1.
 
-Fresh eyes and shared standards: that's how we get to trust each other's code. 🙌
+That's how we trust each other's code. 🙌

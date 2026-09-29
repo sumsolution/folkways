@@ -22,15 +22,17 @@ just files in a git repo your team already knows how to review.
   per team. Everyone runs their agent from the team repo.
 - **Pinned, not floating.** The team repo pins an exact `@folkways/cli` version in `package.json`, so
   the whole team runs the same one.
-- **Sync copies text in.** `folkways sync` copies framework instructions (skills and prompts coming soon) into the
-  team repo and writes a checksummed manifest. If someone edited a framework file, sync stops and names
-  it instead of overwriting it.
+- **Sync copies text in.** `folkways sync` copies framework instructions (skills and prompts coming soon)
+  into the team repo and writes a checksummed manifest. If someone edited a framework file, sync stops
+  and names it instead of overwriting it.
 - **Overlays, not forks.** Teams change framework skills through `overlays/<skill>/OVERLAY.md` (add or
   override a section). People add their own in `people/<handle>/overlays/`. Upgrades never touch them.
 - **Upgrades are PRs.** `folkways upgrade <version>` makes a branch, installs, syncs and commits. You
   read the diff like any other change.
-- **A few rules have teeth.** Pushing asks first (a permission rule, built). Commit format, the
-  fresh-process review gate and "don't touch my main clone" are enforced by hooks (coming soon).
+- **A few rules have teeth.** Pushing asks first (a permission rule, built; Copilot CLI support
+  unverified).
+  Commit format, the fresh-process review gate and "don't touch my main clone" are enforced by hooks
+  (coming soon).
 
 More: [How it works](docs/guide/how-it-works.md).
 
@@ -82,10 +84,11 @@ The design record is in [docs/design/](docs/design/00-STATUS.md). License: TBD.
 
 In 1906 the sociologist William Graham Sumner called a group's customary ways of doing things its
 **folkways**, and the few norms it actually enforces its **mores**. That's the design: a team shapes its
-folkways (skills, overlays, templates), and a handful of mores (ask before pushing, review before a PR)
+folkways (skills, overlays, templates), and a handful of mores (ask before pushing, a fresh review)
 are backed by settings and hooks. [More on the name](docs/guide/the-name.md).
 
 ## Working on folkways
 
 See [AGENTS.md](AGENTS.md) for layout, commands and rules. Short version: Node 24+, pnpm,
-`pnpm run check && pnpm test` before every commit. Issues and ideas are welcome; we build this together. 🙌
+`pnpm run check && pnpm test` before every commit. Issues and ideas are welcome; we build this
+together. 🙌

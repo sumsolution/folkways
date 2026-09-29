@@ -20,12 +20,12 @@ folkways the framework is built on that split:
 | | Folkways | Mores |
 |---|---|---|
 | What | Customs the team shapes freely | Norms the team enforces |
-| Examples | Skills, overlays, templates, `team.yaml` | Ask before push, fresh review before a PR, commit format, hands off your main clone |
+| Examples | Skills, overlays, templates, `team.yaml` | Ask before push, fresh review, commit format, hands off your main clone |
 | Backed by | Instructions and skills | Settings and hooks |
 | Changed by | An overlay or a PR | A team decision |
 
 Most of the framework is folkways, on purpose. Mores are few, and each one has a reason we'd defend in a
-review. A decision record (ADR 0001) formalizing the split is being written. Today one of them is enforced (push asks
+review. Today one of them is enforced (push asks
 first); the rest arrive with the hooks.
 
 We borrow Sumner's words, not his whole worldview: he was also a champion of laissez-faire and social
@@ -62,7 +62,5 @@ the idea, and it meant the name had to come from further afield. Sociology was f
 | `dogwatch` | Short split watches, built for crew rotation and handoffs | An observability DSL, confusing next to it |
 | `quire` | Bound pages; sounds like *choir* | A project management product |
 
-Peace, love, unity, respect, and a good name nobody else had.
-
-The full research, with checks and dates, is in [02-naming.md](../design/02-naming.md). The trademark
-check is still pending, so `folkways` is a working name.
+The full research, with checks and dates, is in [02-naming.md](../design/02-naming.md). For now
+`folkways` is a working name.

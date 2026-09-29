@@ -27,8 +27,9 @@ node src/cli.ts init ../example-team --no-install
 
 `init` refuses a non-empty directory. It then:
 
-1. Copies the scaffold: `team.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.claude/settings.json`,
-   and READMEs for `knowledge/`, `state/`, `efforts/`, `overlays/` and `people/`.
+1. Copies the scaffold: `README.md`, `team.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`,
+   `.claude/settings.json`, and READMEs for `knowledge/`, `state/`, `efforts/`, `overlays/` and
+   `people/`.
 2. Writes a private `package.json` that pins this exact `@folkways/cli` version.
 3. Runs `git init -b main`, installs (skipped with `--no-install`), and runs `sync`.
 4. Commits `chore(folkways): init at 0.1.0`.
