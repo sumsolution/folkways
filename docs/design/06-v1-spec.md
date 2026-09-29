@@ -30,7 +30,7 @@ folkways/
 ├── CHANGELOG.md
 ├── src/                     # TypeScript. Compiled to dist/ by tsc on publish
 │   ├── cli.ts               #   init, sync, upgrade, hook, review, run, doctor
-│   └── hooks/*.ts           #   run as `folkways hook <name>` (§7.1)
+│   └── hooks/*.ts           #   source of the `folkways-hook` Go binary (§7.1)
 ├── assets/                  # text files copied into team repos by `sync`
 │   ├── instructions.md      #   imported by the team AGENTS.md (§5)
 │   ├── skills/<name>/       #   SKILL.md + references/
@@ -98,7 +98,7 @@ Code and text are delivered differently (round 12):
 | `.folkways/**` | framework | replaced |
 | `.claude/skills/<name>/` listed in manifest | framework | replaced |
 | `.github/workflows/folkways-*.yml` | framework | replaced |
-| `.claude/settings.json` hook entries whose command contains `folkways hook ` | framework | those entries replaced; all other keys and entries untouched |
+| `.claude/settings.json` hook entries whose command contains `folkways-hook ` | framework | those entries replaced; all other keys and entries untouched |
 | `.claude/settings.json` `permissions.ask` rules from the framework | framework | added if missing; never removed |
 | `AGENTS.md` | team | never written after `init`; `sync` warns if the `@.folkways/instructions.md` line is missing |
 | Everything else (`overlays/`, `people/`, team skills, `team.yaml`, `package.json`, …) | team / person | never written |
@@ -283,7 +283,7 @@ and attaches personal additions (§3.2); writes only after approval; succinct ou
 ## 7. Hooks and scripts
 
 All hooks live in `.claude/settings.json`, which both Claude Code and Copilot CLI read ([04 §3](04-research-copilot-capabilities.md)).
-Each hook entry runs the pinned package: `node_modules/.bin/folkways hook <name>`. If the package isn't
+Each hook entry runs the pinned package: `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` (§7.1). If the package isn't
 installed, the command fails; `doctor` and `onboard` make sure dependencies are installed.
 Matchers work in both, so scripts still self-filter on command text only as a safety net.
 
@@ -313,7 +313,7 @@ the contract suite, [test/hooks/README.md](../../test/hooks/README.md) ([ADR 000
 | `init <path> [--package-manager npm\|pnpm]` | `npx @folkways/cli init <path>` or `pnpm dlx @folkways/cli init <path>`: scaffold a team repo from `templates/`, pin this version in `package.json`, install, sync, first commit |
 | `sync [--force]` | §3.1 |
 | `upgrade <version>` | §3.1 |
-| `hook <name>` | run a hook (§7.1); reads the hook payload on stdin |
+| `hook <name>` | run a hook by hand (§7.1); delegates to `folkways-hook <name>`, reads the payload on stdin |
 | `review [--repo <worktree>] [--effort <path>]` | §7.3 |
 | `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
 | `doctor` | checks config, tool access, hook install, version drift; prints fixes |

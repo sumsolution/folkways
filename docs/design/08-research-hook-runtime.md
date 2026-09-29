@@ -97,21 +97,21 @@ Rust 1.94.1, Bun 1.3.11, Deno 2.9.7. Full table: [results/linux-x64-2026-09-29.m
 
 | Candidate | Call path | p50 ms | p95 ms | Shipped size (MB, per platform) |
 |---|---|--:|--:|--:|
-| spawn floor (`true`) | direct | 2.5 | 3.4 | — |
-| Node, plain ESM + `yaml` | direct / npm `.bin` / pnpm `.bin` | 66.6 / 67.4 / 72.9 | 79.7 / 77.4 / 83.1 | 0.1 + `yaml` |
-| Node, bundled | direct / npm / pnpm | 53.9 / 55.4 / 57.8 | 63.1 / 66.8 / 70.7 | 0.3 |
-| Node, bundle + compile cache | direct / npm / pnpm | 50.4 / 51.0 / 55.2 | 64.4 / 75.2 / 67.4 | 0.3 |
-| Node, V8 startup snapshot | direct | 50.0 | 58.4 | 6.8 (blob) |
-| Node SEA (code cache) | direct / npm / pnpm | 47.6 / 50.6 / 52.6 | 59.1 / 60.6 / 59.3 | 126.9 (44.3 packed) |
-| Bun, `bun hook.ts` | direct | 81.6 | 108.6 | needs Bun installed |
-| Bun `--compile` | direct / npm / pnpm | 54.2 / 55.6 / 58.3 | 61.4 / 65.2 / 66.4 | 99.4 (39.1 packed) |
-| Deno `compile` | direct / npm / pnpm | 65.1 / 70.5 / 73.6 | 75.3 / 86.2 / 85.6 | 121.9 (41.3 packed) |
-| **Go** | direct / npm `.bin` / pnpm `.bin` | **3.9 / 3.7 / 7.6** | 4.9 / 4.5 / 8.6 | **2.5** (1.1 packed) |
-| Go, JS launcher (Biome pattern) | npm / pnpm | 35.3 / 39.0 | 42.1 / 47.1 | 2.5 |
-| **Go, proposed command via `sh -c`** | npm / pnpm | **4.3 / 8.3** | 5.1 / 10.2 | — |
-| Rust | direct / npm / pnpm | 3.7 / 3.7 / 7.7 | 4.5 / 5.0 / 9.8 | 2.0 (0.8 packed) |
-| Rust, JS launcher | npm / pnpm | 35.2 / 39.7 | 39.5 / 48.6 | 2.0 |
-| Rust, proposed command via `sh -c` | npm / pnpm | 4.7 / 9.1 | 6.1 / 11.3 | — |
+| spawn floor (`true`) | direct | 2.4 | 2.9 | — |
+| Node, plain ESM + `yaml` | direct / npm `.bin` / pnpm `.bin` | 65.1 / 65.8 / 72.0 | 81.0 / 75.4 / 81.2 | 0.1 + `yaml` |
+| Node, bundled | direct / npm / pnpm | 52.4 / 54.7 / 58.3 | 63.2 / 61.9 / 66.8 | 0.3 |
+| Node, bundle + compile cache | direct / npm / pnpm | 49.7 / 51.7 / 54.4 | 55.8 / 61.4 / 65.3 | 0.3 |
+| Node, V8 startup snapshot | direct | 50.1 | 57.3 | 6.8 (blob) |
+| Node SEA (code cache) | direct / npm / pnpm | 46.5 / 49.6 / 52.9 | 53.4 / 56.8 / 59.1 | 126.9 (44.3 packed) |
+| Bun, `bun hook.ts` | direct | 81.9 | 97.0 | needs Bun installed |
+| Bun `--compile` | direct / npm / pnpm | 53.5 / 54.8 / 57.0 | 61.1 / 61.0 / 66.7 | 99.4 (39.1 packed) |
+| Deno `compile` | direct / npm / pnpm | 64.7 / 65.1 / 71.1 | 75.8 / 77.2 / 81.1 | 121.9 (41.3 packed) |
+| **Go** | direct / npm `.bin` / pnpm `.bin` | **3.8 / 3.6 / 7.6** | 4.4 / 4.2 / 8.9 | **2.5** (1.1 packed) |
+| Go, JS launcher (Biome pattern) | npm / pnpm | 36.3 / 38.1 | 44.1 / 43.1 | 2.5 |
+| **Go, proposed command via `sh -c`** | npm / pnpm | **4.2 / 8.0** | 5.0 / 9.6 | — |
+| Rust | direct / npm / pnpm | 3.7 / 3.7 / 7.7 | 4.5 / 4.3 / 9.4 | 2.0 (0.8 packed) |
+| Rust, JS launcher | npm / pnpm | 34.5 / 37.8 | 42.3 / 45.5 | 2.0 |
+| Rust, proposed command via `sh -c` | npm / pnpm | 4.6 / 8.6 | 5.2 / 9.7 | — |
 
 **macOS arm64** (2026-09-29). Machine: Apple M5 Max, 18 CPUs, Node 24.21.0, npm 11.19.0, pnpm 12.4.1, Go 1.27.1.
 Rust, Bun and Deno are not installed there, so their candidates were skipped. Full table:
@@ -143,10 +143,10 @@ Also measured (Linux):
 
 **Reading** *(inferred)*:
 
-1. Compiled Go or Rust is about 13× faster than the best Node option on this machine: 4 ms against 48–55 ms.
-   Every JS runtime, compiled or not, sits at 48–82 ms, because runtime start-up dominates a job this small.
-2. Node optimizations recover 13–19 ms from 67 ms and no more. The floor is Node start-up itself.
-3. The call path matters as much as the language. A JS launcher in front of a native binary gives back ~31 ms,
+1. Compiled Go or Rust is about 13× faster than the best Node option on this machine: 4 ms against 47–55 ms.
+   Every JS runtime, compiled or not, sits at 46–82 ms, because runtime start-up dominates a job this small.
+2. Node optimizations recover 13–19 ms from 65 ms and no more. The floor is Node start-up itself.
+3. The call path matters as much as the language. A JS launcher in front of a native binary gives back ~31–33 ms,
    and a pnpm shim adds ~4 ms. A committed command through `sh -c` adds ~0.5 ms.
 4. Size rules out the compiled-runtime options: 100–127 MB per platform, against 2–2.5 MB.
 5. Per call the difference is ~45–65 ms. The hooks run on every Bash call (PreToolUse) and after every tool batch

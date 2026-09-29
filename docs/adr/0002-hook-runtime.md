@@ -23,20 +23,20 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
 
   | Candidate | direct | npm `.bin` | pnpm `.bin` | Size per platform |
   |---|--:|--:|--:|--:|
-  | Node, plain | 66.6 / 79.7 | 67.4 / 77.4 | 72.9 / 83.1 | 0.1 MB + `yaml` |
-  | Node, bundle + compile cache | 50.4 / 64.4 | 51.0 / 75.2 | 55.2 / 67.4 | 0.3 MB |
-  | Node, snapshot / SEA | 50.0 / 58.4; 47.6 / 59.1 | SEA 50.6 / 60.6 | SEA 52.6 / 59.3 | 6.8 MB / 127 MB |
-  | Bun `run` | 81.6 / 108.6 | — | — | needs Bun |
-  | Bun `--compile` | 54.2 / 61.4 | 55.6 / 65.2 | 58.3 / 66.4 | 99 MB |
-  | Deno `compile` | 65.1 / 75.3 | 70.5 / 86.2 | 73.6 / 85.6 | 122 MB |
-  | **Go** | **3.9 / 4.9** | **3.7 / 4.5** | **7.6 / 8.6** | **2.5 MB** |
-  | Go behind a JS launcher (Biome pattern) | — | 35.3 / 42.1 | 39.0 / 47.1 | 2.5 MB |
-  | Rust | 3.7 / 4.5 | 3.7 / 5.0 | 7.7 / 9.8 | 2.0 MB |
+  | Node, plain | 65.1 / 81.0 | 65.8 / 75.4 | 72.0 / 81.2 | 0.1 MB + `yaml` |
+  | Node, bundle + compile cache | 49.7 / 55.8 | 51.7 / 61.4 | 54.4 / 65.3 | 0.3 MB |
+  | Node, snapshot / SEA | 50.1 / 57.3; 46.5 / 53.4 | SEA 49.6 / 56.8 | SEA 52.9 / 59.1 | 6.8 MB / 127 MB |
+  | Bun `run` | 81.9 / 97.0 | — | — | needs Bun |
+  | Bun `--compile` | 53.5 / 61.1 | 54.8 / 61.0 | 57.0 / 66.7 | 99 MB |
+  | Deno `compile` | 64.7 / 75.8 | 65.1 / 77.2 | 71.1 / 81.1 | 122 MB |
+  | **Go** | **3.8 / 4.4** | **3.6 / 4.2** | **7.6 / 8.9** | **2.5 MB** |
+  | Go behind a JS launcher (Biome pattern) | — | 36.3 / 44.1 | 38.1 / 43.1 | 2.5 MB |
+  | Rust | 3.7 / 4.5 | 3.7 / 4.3 | 7.7 / 9.4 | 2.0 MB |
 
-  The proposed command, run through `sh -c` as both tools run it: Go 4.3 (npm) and 8.3 (pnpm) ms. A full Go
+  The proposed command, run through `sh -c` as both tools run it: Go 4.2 (npm) and 8.0 (pnpm) ms. A full Go
   `git-guard` prototype passes all 51 git-guard contract cases at 3.2 ms per commit check.
 - **Speed (macOS arm64, Apple M5 Max, 50 runs, p50/p95 ms).** Node is about twice as fast as on the Linux
-  box, and Go is still about 10× faster:
+  box, and Go is still about 4–13× faster (pnpm and npm paths):
 
   | Candidate | direct | npm `.bin` | pnpm `.bin` | Size per platform |
   |---|--:|--:|--:|--:|
@@ -50,9 +50,9 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
   The proposed command through `sh -c`: Go 4.5 (npm) and 11.3 (pnpm) ms. The spawn floor is 1.2 ms. Even the
   best Node path is 27.9 ms, over the 20 ms bar, so Go stays the choice. Rust, Bun and Deno were not measured on
   macOS (not installed). Full table: [bench/hooks/results/](../../bench/hooks/results).
-- **Every JS runtime lands at 48–82 ms**, compiled or not; start-up dominates. Node optimizations save 13–19 ms
-  of 67. Compiled Bun, Deno and Node SEA also cost 100–127 MB per platform.
-- **A JS launcher in front of a native binary gives back ~31 ms** (esbuild, Biome, Turborepo). esbuild avoids
+- **Every JS runtime lands at 46–82 ms on Linux** (25–41 ms on macOS), compiled or not; start-up dominates. Node
+  optimizations save 13–19 ms of 65 on Linux. Compiled Bun, Deno and Node SEA also cost 100–127 MB per platform.
+- **A JS launcher in front of a native binary gives back ~31–33 ms** (esbuild, Biome, Turborepo). esbuild avoids
   that with a postinstall, which pnpm ≥ 10 blocks by default and `--ignore-scripts` skips.
 - **npm links the bin of a hoisted transitive dependency; pnpm links only direct ones**, unless the team repo
   sets `publicHoistPattern`. Tested: a main package with platform packages as optional deps gave
@@ -71,7 +71,7 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
 **Option 4: hooks in Go, one binary `folkways-hook`, shipped as `@folkways/hooks-<os>-<cpu>` optional
 dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`.**
 
-- Go gives near-native speed (≈4 ms, ~13× the best Node option) in a 2.5 MB file, and it is the easiest
+- Go gives near-native speed (~2–4 ms direct or through npm, 9 ms through pnpm on macOS; ~13× the best Node option on Linux) in a 2.5–3 MB file, and it is the easiest
   compiled language for TypeScript contributors to read and change. It builds and signs all targets from one
   Linux job. Rust matches the speed but costs more to contribute to and to release. It would win only if
   binary size or the last millisecond mattered.
@@ -92,13 +92,13 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
-| 1 | Node: today's `folkways hook <name>`, with a bundled lean entry and compile cache | One language and one package; nothing new to release | 50–55 ms per call on Linux, 28–35 ms on macOS arm64; snapshots and SEA buy only 3–5 ms more | The simplest to own, paying 28–55 ms on every hook call forever |
+| 1 | Node: today's `folkways hook <name>`, with a bundled lean entry and compile cache | One language and one package; nothing new to release | 50–55 ms per call on Linux, 28–35 ms on macOS arm64; snapshots and SEA buy at most 3 ms more | The simplest to own, paying 28–55 ms on every hook call forever |
 | 2 | Bun (`bun run`) | Fast to write; TypeScript as is | 82 ms here; every member must install and update Bun; no npm pinning | Adds a runtime to every machine and is slower than Node for this job |
-| 3 | Bun `--compile` / Deno `compile` / Node SEA | No runtime to install; TypeScript source | 48–65 ms; 100–127 MB per platform; SEA needs `postject` and re-signing on macOS | Pays compiled-binary costs without compiled-binary speed |
-| **4** | **Go binary, per-platform optional deps with their own `bin`, `publicHoistPattern` for pnpm** | ≈4 ms; 2.5 MB; no postinstall or runtime; one committed command; one dependency line | A second language; a 4-package release; pnpm teams need one setting; relies on npm hoisting | Buys a ~13× faster hook with a Go toolchain and a release matrix |
+| 3 | Bun `--compile` / Deno `compile` / Node SEA | No runtime to install; TypeScript source | 46–71 ms on Linux; 100–127 MB per platform; SEA needs `postject` and re-signing on macOS | Pays compiled-binary costs without compiled-binary speed |
+| **4** | **Go binary, per-platform optional deps with their own `bin`, `publicHoistPattern` for pnpm** | ~2–4 ms; 2.5–3 MB; no postinstall or runtime; one committed command; one dependency line | A second language; a 4-package release; pnpm teams need one setting; relies on npm hoisting | Buys a ~13× faster hook with a Go toolchain and a release matrix |
 | 5 | Rust, same distribution | Fastest and smallest (3.7 ms, 2.0 MB) | Steepest language for the team; darwin builds need macOS runners; 18 s release builds | Same user experience as Go at a higher contributor and CI cost |
 | 6 | Go, team repo lists the platform packages directly | Needs no pnpm setting or reliance on hoisting | Five exact versions to keep in lockstep in every team repo; five Dependabot bumps | More robust linking, clumsier upgrades. The fallback if hoisting breaks |
-| 7 | Go behind a JS launcher (Biome/Turbo) | Works with any linker, no settings | 35–39 ms, most of the speed gone | Robust, but gives back ~31 ms of the ~46 ms gain over Node |
+| 7 | Go behind a JS launcher (Biome/Turbo) | Works with any linker, no settings | 36–38 ms on Linux, 24–30 on macOS, most of the speed gone | Robust, but gives back ~31–33 ms of the ~46 ms gain over Node |
 | 8 | Go, with `sync`/`onboard` writing the resolved path into gitignored `.claude/settings.local.json` | Fastest path, no `.bin` | No hooks until each member runs it; nothing fails loudly; per-machine drift | Trades a committed, reviewable config for a hidden per-machine one |
 
 ## Consequences
@@ -111,7 +111,7 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
   against `node_modules/.bin/folkways-hook`. Releases that already published cannot be half-undone: the job
   validates everything before the first publish.
 - **Hook command in `settings.json`:** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`,
-  replacing `node_modules/.bin/folkways hook <name>`. `src/settings.ts` must recognize it (`HOOK_MARK` today
+  replacing `node_modules/.bin/folkways hook <name>`. `src/settings.ts` must recognize it (`FRAMEWORK_HOOK_PREFIX` / `isFrameworkHook` today
   matches `folkways hook `). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd.
 - **`init` / `sync` / `onboard` / `doctor`:** `init` writes `publicHoistPattern: ["@folkways/hooks-*"]` into a pnpm
   team's `pnpm-workspace.yaml`. `sync` warns when that setting is missing or `.bin/folkways-hook` is absent.
