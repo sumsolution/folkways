@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
 import { git, isClean } from '../src/git.ts';
-import { init, templateTarget } from '../src/init.ts';
+import { init, packageName, templateTarget } from '../src/init.ts';
 import { json, makePackage, makeTeam, put, read, tmp } from './helpers.ts';
 
 describe('templateTarget', () => {
@@ -48,6 +48,37 @@ describe('init', () => {
     const dest = join(tmp(), 'team');
     put(join(dest, 'x'), '');
     expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(/not empty/);
+  });
+});
+
+describe('packageName', () => {
+  it.each([
+    ['My Team', 'my-team'],
+    ['.hidden', 'hidden'],
+    ['__.team', 'team'],
+    ['Team_A.B~c', 'team_a.b-c'],
+    ['équipe', 'equipe'],
+    ['(x)', 'x-'],
+    ['-.-team', 'team'],
+    ['x'.repeat(300), 'x'.repeat(214)],
+  ])('%s -> %s', (folder, name) => expect(packageName(folder)).toBe(name));
+
+  it.each(['...', '._', '', 'node_modules', 'favicon.ico', '中文', '!', ' node_modules'])('refuses %j', (folder) => {
+    expect(() => packageName(folder)).toThrow(FolkwaysError);
+    expect(() => packageName(folder)).toThrow(/valid npm package name/);
+  });
+});
+
+describe('init names the package', () => {
+  it('after a hidden folder', () => {
+    const dest = init(join(tmp(), '.hidden'), { install: false, pkg: makePackage('1.0.0') });
+    expect(json(join(dest, 'package.json')).name).toBe('hidden');
+  });
+
+  it('or refuses before creating anything', () => {
+    const parent = tmp();
+    expect(() => init(join(parent, '._'), { install: false, pkg: makePackage('1.0.0') })).toThrow(/valid npm package name/);
+    expect(existsSync(join(parent, '._'))).toBe(false);
   });
 });
 
@@ -107,6 +138,28 @@ describe('init when the first commit fails', () => {
     const dest = join(tmp(), 'team');
     expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(FolkwaysError);
     expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(/git commit failed;[\s\S]*commit rejected/);
+    expect(existsSync(dest)).toBe(false);
+  });
+});
+
+describe('init without a git identity', () => {
+  const saved = { ...process.env };
+  afterEach(() => {
+    process.env = { ...saved };
+  });
+
+  it('fails with git\'s message and removes the scaffold', () => {
+    for (const k of ['GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL', 'EMAIL']) delete process.env[k];
+    Object.assign(process.env, { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'user.useConfigOnly', GIT_CONFIG_VALUE_0: 'true' });
+    const dest = join(tmp(), 'team');
+    let error: unknown;
+    try {
+      init(dest, { install: false, pkg: makePackage('1.0.0') });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(FolkwaysError);
+    expect((error as Error).message).toMatch(/git commit failed;[\s\S]*(identity|user\.email|name)/i);
     expect(existsSync(dest)).toBe(false);
   });
 });

@@ -1,0 +1,29 @@
+| Model | Layout | Personal overlay | Team rule followed | Sub-rules met (of 4), mean ± SD | `Tested:` line | Flagged a conflict |
+|---|---|---|---|---|---|---|
+| opus | runtime-implicit | d-persuasive | 3/3 | 4.00 ± 0.00 | 0/3 | 2/3 |
+| opus | hybrid | d-persuasive | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | runtime-implicit | none | 3/3 | 4.00 ± 0.00 | 0/3 | 1/3 |
+| sonnet | runtime-implicit | a-add | 3/3 | 4.00 ± 0.00 | 3/3 | 0/3 |
+| sonnet | runtime-implicit | b-override | 0/10 | 0.00 ± 0.00 | 0/10 | 3/10 |
+| sonnet | runtime-implicit | c-contradict | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | runtime-implicit | d-persuasive | 2/10 | 0.80 ± 1.69 | 0/10 | 6/10 |
+| sonnet | runtime-explicit | none | 3/3 | 4.00 ± 0.00 | 0/3 | 2/3 |
+| sonnet | runtime-explicit | a-add | 3/3 | 4.00 ± 0.00 | 3/3 | 2/3 |
+| sonnet | runtime-explicit | b-override | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | runtime-explicit | c-contradict | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | runtime-explicit | d-persuasive | 10/10 | 4.00 ± 0.00 | 0/10 | 10/10 |
+| sonnet | compiled-implicit | none | 3/3 | 4.00 ± 0.00 | 0/3 | 0/3 |
+| sonnet | compiled-implicit | a-add | 3/3 | 4.00 ± 0.00 | 2/3 | 0/3 |
+| sonnet | compiled-implicit | b-override | 3/3 | 4.00 ± 0.00 | 0/3 | 0/3 |
+| sonnet | compiled-implicit | c-contradict | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | compiled-implicit | d-persuasive | 3/3 | 4.00 ± 0.00 | 0/3 | 2/3 |
+| sonnet | compiled-explicit | none | 3/3 | 4.00 ± 0.00 | 0/3 | 1/3 |
+| sonnet | compiled-explicit | a-add | 3/3 | 4.00 ± 0.00 | 2/3 | 1/3 |
+| sonnet | compiled-explicit | b-override | 3/3 | 4.00 ± 0.00 | 0/3 | 0/3 |
+| sonnet | compiled-explicit | c-contradict | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | compiled-explicit | d-persuasive | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | hybrid | none | 3/3 | 4.00 ± 0.00 | 0/3 | 2/3 |
+| sonnet | hybrid | a-add | 3/3 | 4.00 ± 0.00 | 3/3 | 2/3 |
+| sonnet | hybrid | b-override | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | hybrid | c-contradict | 3/3 | 4.00 ± 0.00 | 0/3 | 3/3 |
+| sonnet | hybrid | d-persuasive | 10/10 | 4.00 ± 0.00 | 0/10 | 10/10 |

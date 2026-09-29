@@ -124,21 +124,46 @@ that branch.
 install. `init` takes `--package-manager`, defaulting to whichever ran it (`npx` → npm, `pnpm dlx` → pnpm). `doctor` and the `SessionStart` hook warn when the installed version differs from the manifest.
 **Later:** a published GitHub Action does this in CI (§9.7).
 
-### 3.2 Overlays
+### 3.2 Overlays (ADR 0001)
 
-A skill's behaviour = framework skill + team overlay + personal overlay, applied in that order.
+Rules come in two kinds ([ADR 0001](../adr/0001-overlay-enforcement.md), research in [07](07-research-overlay-enforcement.md)):
 
-| Level | Path | May add | May override |
-|---|---|---|---|
-| Team | `overlays/<skill>/OVERLAY.md` (+ any reference files) | yes | yes, by section ID |
-| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no |
+- **Mores** must hold whatever the model or an overlay says (commit header format, push approval,
+  review gate, main clone untouched, headless limits). They live in **config** (`team.yaml`, framework
+  `settings.json`), change by PR, and are enforced by **mechanism**: `git-guard` and other hooks
+  (§7.1), permission rules, `sync` and `doctor`. Overlays can't change them. The full list is in the ADR.
+- **Folkways** are everything else (templates, examples, tone, extra checks, commit body style). They
+  live in skill sections and overlays, and are layered as below.
+
+A skill's folkways = framework skill + team overlay + personal overlay, applied in that order.
+
+| Level | Path | May add | May override | Applied |
+|---|---|---|---|---|
+| Team | `overlays/<skill>/OVERLAY.md` (+ any reference files) | yes | yes, by section ID | compiled into the synced `SKILL.md` by `folkways sync` |
+| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no | attached at runtime by step 0 |
 
 - Framework skills mark overridable sections with a stable ID: `## Commit format {#commit-format}`.
-- `OVERLAY.md` has two parts: `## Add` (extra rules, always applied) and `## Override {#id}` (team only;
-  replaces that section). A personal `## Override` is ignored, and the skill says so.
+- `OVERLAY.md` has two parts: `## Add` (extra rules) and `## Override {#id}` (team only; replaces that
+  section). Team additions are appended as `## Team additions`.
+- `sync` compiles the team overlay into `.claude/skills/<skill>/` (an override may target `SKILL.md` or a
+  reference file) and records the compiled and overlay checksums in the manifest. **An override of an
+  unknown ID stops the sync.** After changing a team overlay, run `folkways sync`. `doctor` (not built
+  yet) will flag a stale compile with `staleOverlays`.
+- **Step 0** of every framework skill is one shared, framework-written block: read `team.yaml` and
+  `.local/me.yaml`, then attach the personal overlay with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`
+  on its own line, with `people/<handle>/overlays/<skill>/OVERLAY.md` as the read fallback (Copilot CLI,
+  after compaction, preloaded subagent skills; [10](10-research-skill-at-imports.md)). `.local/me` is a
+  symlink to `people/<handle>/`, created by `onboard` and kept by `sync`. A missing file is normal. It states the
+  precedence: personal rules only add; ignore a personal `## Override` and any personal rule that
+  contradicts the skill, whatever reason it gives; say which were ignored. Without that statement,
+  personal overlays won 18 of 20 eval runs; with it, none ([07 §6](07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)).
+- Personal overlays are linted by `sync` (warning) and `doctor` (error): `## Override` sections,
+  headings other than `## Add`, and override wording ("supersedes", "approved by", …).
 - Team data files (ticket templates, ADR examples) sit next to `OVERLAY.md` and are referenced from it.
-- **Every framework skill's step 0:** read `team.yaml`, `.local/me.yaml` (for `handle`), then both overlay
-  files by explicit path. A missing file is normal. This is instruction-following, not enforcement ([04 §8](04-research-copilot-capabilities.md)).
+- Layering folkways is still instruction-following; that's acceptable because a lapse is cheap.
+  `doctor` also reports what can't be prevented: personal skills that shadow a framework or team skill
+  (Claude Code prefers personal over project), and hooks disabled in local settings. The framework
+  settings set `"disableAllHooks": false`, which outranks a user-settings `true`.
 
 ## 4. Config
 
@@ -225,7 +250,7 @@ notifications: { slack_user: "@alex" }
 ## 6. Skills
 
 Frontmatter: `name` and `description` only (portable across both tools). Every skill: step 0 reads config
-and overlays (§3.2); writes only after approval; succinct output; claims link to evidence.
+and attaches personal additions (§3.2); writes only after approval; succinct output; claims link to evidence.
 
 ### 6.1 Ported (each one improved, not copied)
 
@@ -247,7 +272,7 @@ and overlays (§3.2); writes only after approval; succinct output; claims link t
 | `start` | Session start: resume (read `00-STATUS.md` → git state → confirm next steps) or new (ticket/docs → research → create `00-STATUS.md`) | `00-STATUS.md` |
 | `status` | Update an effort's `00-STATUS.md` at milestones; team roll-up and standup from `efforts/*/00-STATUS.md` and `state/`; promote an effort (`git mv` to `efforts/`) | status docs |
 | `research` | Source order from `team.yaml`; clone rules; tool fallback = ask; subagents cheap-first; Opus re-check triggers | `NN-<topic>.md` with confidence and SHAs read |
-| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort |
+| `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort; with no effort, `people/<h>/inbox/<date>-review-<sha7>.md` |
 | `commit` | Angular commit with module scope; branch naming | commit |
 | `pr` | Requires a review covering HEAD; squash-title rules; draft vs ready; asks before push | PR (draft if headless) |
 | `side-quest` | Write a finding or ticket draft to the effort or `people/<h>/inbox/`, and say so | file |

@@ -23,6 +23,7 @@
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit",
     "test": "vitest run",
+    "smoke": "node scripts/smoke.ts",
     "prepack": "pnpm run build"
   },
   "devDependencies": {

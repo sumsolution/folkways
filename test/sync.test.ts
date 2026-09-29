@@ -1,9 +1,10 @@
-import { chmodSync, existsSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
-import { sync } from '../src/sync.ts';
-import { addFrameworkContent, commitAll, json, makePackage, makeTeam, put, read } from './helpers.ts';
+import { fsOps } from '../src/files.ts';
+import { staleOverlays, sync } from '../src/sync.ts';
+import { addFrameworkContent, commitAll, json, makePackage, makeTeam, put, read, snapshot } from './helpers.ts';
 
 let team: string;
 let next: string;
@@ -118,6 +119,10 @@ describe('sync refusals and warnings', () => {
     [{ skills: [], files: { '../../outside': 'a'.repeat(64) } }, /unsafe path "\.\.\/\.\.\/outside"/],
     [{ skills: ['start'], files: { '.claude/skills/other/x.md': 'a'.repeat(64) } }, /unsafe path/],
     [{ skills: [], files: { 'team.yaml': 'a'.repeat(64) } }, /unsafe path "team\.yaml"/],
+    [{ skills: [], files: {}, overlays: { '../x': 'a'.repeat(64) } }, /unsafe overlay path "\.\.\/x"/],
+    [{ skills: [], files: {}, overlays: { 'overlays/a/b/OVERLAY.md': 'a'.repeat(64) } }, /unsafe overlay path/],
+    [{ skills: [], files: {}, overlays: { 'overlays/a/OVERLAY.md': 'nope' } }, /bad checksum for overlays\/a\/OVERLAY\.md/],
+    [{ skills: [], files: {}, overlays: [] }, /bad overlays/],
   ])('rejects an unsafe manifest before forced deletion: %j', (changes, message) => {
     const outside = join(team, '..', 'outside');
     put(outside, 'keep\n');
@@ -134,5 +139,289 @@ describe('sync refusals and warnings', () => {
   it('rejects a manifest that is not JSON', () => {
     put(join(team, '.folkways/manifest.json'), '{ nope');
     expect(() => sync(team, next)).toThrow(/manifest\.json: not a JSON object/);
+  });
+});
+
+describe('sync without a manifest (adopting a repo)', () => {
+  beforeEach(() => {
+    rmSync(join(team, '.folkways/manifest.json'));
+    commitAll(team, 'drop manifest');
+  });
+
+  it('keeps files that already match', () => {
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.2.0');
+  });
+
+  it('refuses to overwrite files that differ, and lists them', () => {
+    put(join(team, '.folkways/instructions.md'), 'ours\n');
+    put(join(team, '.github/workflows/folkways-knowledge-audit.yml'), 'name: ours\n');
+    const before = snapshot(team);
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next)).toThrow(
+      /replaced  \.folkways\/instructions\.md\n.*replaced  \.github\/workflows\/folkways-knowledge-audit\.yml[\s\S]*--force/,
+    );
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('refuses a folder where a file goes, without crashing', () => {
+    mkdirSync(join(team, '.folkways/prompts/review.md'), { recursive: true });
+    put(join(team, '.folkways/prompts/review.md/x'), 'x');
+    expect(() => sync(team, next)).toThrow(/replaced  \.folkways\/prompts\/review\.md/);
+  });
+
+  it.each(['.folkways', '.claude'])('refuses a file where the %s folder goes', (dir) => {
+    rmSync(join(team, dir), { recursive: true });
+    put(join(team, dir), 'x\n');
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next)).toThrow(`replaced  ${dir}\n`);
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toContain(`replaced  ${dir}`);
+    expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.2.0');
+  });
+
+  it('--force overwrites them and reports them', () => {
+    put(join(team, '.folkways/instructions.md'), 'ours\n');
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toEqual(['replaced  .folkways/instructions.md']);
+    expect(read(join(team, '.folkways/instructions.md'))).toBe(read(join(next, 'assets/instructions.md')));
+  });
+});
+
+describe('sync without a manifest, with framework skills in place', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  beforeEach(() => {
+    sync(team, next);
+    rmSync(join(team, '.folkways/manifest.json'));
+    commitAll(team, 'drop manifest');
+  });
+
+  it('keeps the adopted files when the swap fails', () => {
+    const before = snapshot(team);
+    let calls = 0;
+    const real = fsOps.rename;
+    vi.spyOn(fsOps, 'rename').mockImplementation((from, to) => {
+      if (++calls === 5) throw new Error('injected rename failure');
+      real(from, to);
+    });
+    expect(() => sync(team, next)).toThrow(/injected/);
+    vi.restoreAllMocks();
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('adopts identical skills', () => {
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(json(join(team, '.folkways/manifest.json')).skills).toEqual(['start']);
+  });
+
+  it('refuses differing or extra skill files, and --force replaces them', () => {
+    put(join(team, '.claude/skills/start/SKILL.md'), 'ours\n');
+    put(join(team, '.claude/skills/start/extra.md'), 'extra\n');
+    expect(() => sync(team, next)).toThrow(/replaced  \.claude\/skills\/start\/SKILL\.md\n.*replaced  \.claude\/skills\/start\/extra\.md/);
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toEqual(['replaced  .claude/skills/start/SKILL.md', 'replaced  .claude/skills/start/extra.md']);
+    expect(existsSync(join(team, '.claude/skills/start/extra.md'))).toBe(false);
+    expect(sync(team, next).discarded).toEqual([]);
+  });
+});
+
+describe('sync compiles team overlays (ADR 0001)', () => {
+  const skill = '---\nname: start\ndescription: test\n---\n\n## Format {#format}\n\nframework format\n';
+  const overlay = '## Add\n\n- team rule\n\n## Override {#format}\n\nteam format\n';
+
+  beforeEach(() => {
+    put(join(next, 'assets/skills/start/SKILL.md'), skill);
+    put(join(next, 'assets/skills/start/references/a.md'), '## Template {#template}\n\nframework template\n');
+  });
+
+  it('writes the compiled skill and records both checksums', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    expect(sync(team, next).warnings).toEqual([]);
+    const text = read(join(team, '.claude/skills/start/SKILL.md'));
+    expect(text).toContain('team format');
+    expect(text).not.toContain('framework format');
+    expect(text).toMatch(/## Team additions\n\n- team rule\n$/);
+    const manifest = json(join(team, '.folkways/manifest.json'));
+    expect(manifest.overlays).toEqual({ 'overlays/start/OVERLAY.md': expect.stringMatching(/^[a-f0-9]{64}$/) });
+    expect(staleOverlays(team, manifest)).toEqual([]);
+  });
+
+  it('overrides a section in a reference file', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), '## Override {#template}\n\nteam template\n');
+    sync(team, next);
+    expect(read(join(team, '.claude/skills/start/references/a.md'))).toContain('team template');
+    expect(read(join(team, '.claude/skills/start/SKILL.md'))).toBe(skill);
+  });
+
+  it('stops before writing anything on an unknown section ID', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), '## Override {#nope}\n\nx\n');
+    commitAll(team);
+    const before = snapshot(team);
+    expect(() => sync(team, next)).toThrow(/overlays\/start\/OVERLAY\.md: .*#nope/);
+    expect(snapshot(team)).toEqual(before);
+  });
+
+  it('recompiles after the overlay changes, without reporting an edit', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    sync(team, next);
+    commitAll(team);
+    put(join(team, 'overlays/start/OVERLAY.md'), '## Add\n\n- newer rule\n');
+    expect(staleOverlays(team, json(join(team, '.folkways/manifest.json')))).toEqual(['overlays/start/OVERLAY.md']);
+    expect(sync(team, next).discarded).toEqual([]);
+    expect(read(join(team, '.claude/skills/start/SKILL.md'))).toContain('- newer rule');
+    expect(read(join(team, '.claude/skills/start/SKILL.md'))).toContain('framework format');
+  });
+
+  it('reports a compiled skill edited by hand like any framework edit', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    sync(team, next);
+    put(join(team, '.claude/skills/start/SKILL.md'), 'hand edit\n');
+    expect(() => sync(team, next)).toThrow(/modified  \.claude\/skills\/start\/SKILL\.md/);
+  });
+
+  it('adopts a repo whose skills are already compiled', () => {
+    put(join(team, 'overlays/start/OVERLAY.md'), overlay);
+    sync(team, next);
+    rmSync(join(team, '.folkways/manifest.json'));
+    expect(sync(team, next).discarded).toEqual([]);
+  });
+
+  it('warns about an overlay for a skill the framework does not ship', () => {
+    put(join(team, 'overlays/nope/OVERLAY.md'), '## Add\n\n- x\n');
+    expect(sync(team, next).warnings).toEqual([
+      'overlays/nope/OVERLAY.md: no framework skill named nope; the overlay is not applied',
+    ]);
+  });
+
+  it('warns about personal overlays that try to override', () => {
+    put(join(team, 'people/alex/overlays/start/OVERLAY.md'), '## Override {#format}\n\nmine\n');
+    expect(sync(team, next).warnings).toEqual([
+      'people/alex/overlays/start/OVERLAY.md: personal overlays may only add; remove ## Override {#format}',
+    ]);
+  });
+});
+
+describe('sync links .local/me to the person\'s folder', () => {
+  const link = () => join(team, '.local/me');
+
+  it('links people/<handle> from .local/me.yaml', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex # me\nprojects_dir: /tmp\n');
+    mkdirSync(join(team, 'people/alex/overlays'), { recursive: true });
+    sync(team, next);
+    expect(lstatSync(link()).isSymbolicLink()).toBe(true);
+    expect(readlinkSync(link())).toBe('../people/alex');
+  });
+
+  it('repoints a link to another handle', () => {
+    put(join(team, '.local/me.yaml'), 'handle: "sam"\n');
+    mkdirSync(join(team, 'people/sam'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    sync(team, next);
+    expect(readlinkSync(link())).toBe('../people/sam');
+  });
+
+  it('leaves a correct link alone', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    const before = lstatSync(link()).ino;
+    sync(team, next);
+    expect(lstatSync(link()).ino).toBe(before);
+  });
+
+  it('removes a link to another person when this handle has no folder, and warns', () => {
+    put(join(team, '.local/me.yaml'), 'handle: sam\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    symlinkSync('../people/alex', link());
+    expect(sync(team, next).warnings).toEqual([
+      "people/sam/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.",
+    ]);
+    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
+  });
+
+  it('does nothing without a handle or a people folder', () => {
+    sync(team, next);
+    expect(existsSync(link())).toBe(false);
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    sync(team, next);
+    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
+  });
+
+  it('warns and leaves a real folder at .local/me', () => {
+    put(join(team, '.local/me.yaml'), 'handle: alex\n');
+    mkdirSync(join(team, 'people/alex'), { recursive: true });
+    put(join(team, '.local/me/keep.md'), 'mine\n');
+    expect(sync(team, next).warnings).toEqual([
+      '.local/me is not a symlink; skills attach personal overlays through it. Move it and rerun sync.',
+    ]);
+    expect(read(join(team, '.local/me/keep.md'))).toBe('mine\n');
+  });
+});
+
+describe('sync after an interrupted sync', () => {
+  it('refuses and says how to recover', () => {
+    put(join(team, '.folkways-sync-abc123/old/.folkways/manifest.json'), '{}');
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next, { force: true })).toThrow(/interrupted[\s\S]*\.folkways-sync-abc123/);
+  });
+});
+
+describe('sync with a manifest', () => {
+  it('refuses to overwrite a team file at a new framework path', () => {
+    put(join(team, '.folkways/prompts/review.md'), 'team prompt\n');
+    expect(() => sync(team, next)).toThrow(/replaced  \.folkways\/prompts\/review\.md/);
+    expect(read(join(team, '.folkways/prompts/review.md'))).toBe('team prompt\n');
+  });
+});
+
+describe('sync is atomic', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  beforeEach(() => {
+    sync(team, next);
+    commitAll(team);
+    // The next version drops the skill's reference file and changes a prompt.
+    next = makePackage('0.3.0');
+    addFrameworkContent(next);
+    rmSync(join(next, 'assets/skills/start/references'), { recursive: true });
+    put(join(next, 'assets/prompts/review.md'), 'review prompt v3\n');
+    put(join(next, 'assets/prompts/new.md'), 'new prompt\n');
+  });
+
+  const failOnCall = (op: 'copy' | 'rename', n: number) => {
+    let calls = 0;
+    const real = fsOps[op];
+    vi.spyOn(fsOps, op).mockImplementation(((...args: [string, string]) => {
+      if (++calls === n) throw new Error(`injected ${op} failure`);
+      return real(...args);
+    }) as any);
+  };
+
+  const expectUntouched = (before: Record<string, string>) => {
+    expect(snapshot(team)).toEqual(before);
+    expect(readdirSync(team).filter((f) => f.startsWith('.folkways-'))).toEqual([]);
+    vi.restoreAllMocks();
+    expect(sync(team, next)).toMatchObject({ version: '0.3.0', previous: '0.2.0', discarded: [] });
+    expect(read(join(team, '.folkways/prompts/review.md'))).toBe('review prompt v3\n');
+    expect(existsSync(join(team, '.claude/skills/start/references'))).toBe(false);
+  };
+
+  it.each([1, 3, 5])('leaves the old files when copy %i fails', (n) => {
+    const before = snapshot(team);
+    failOnCall('copy', n);
+    expect(() => sync(team, next)).toThrow(/injected copy failure/);
+    expectUntouched(before);
+  });
+
+  it.each([1, 4, 8, 12])('leaves the old files when rename %i fails', (n) => {
+    const before = snapshot(team);
+    failOnCall('rename', n);
+    expect(() => sync(team, next)).toThrow(/injected rename failure/);
+    expectUntouched(before);
   });
 });

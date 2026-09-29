@@ -1,0 +1,7 @@
+team: { name: Example Team, slug: example }
+members:
+  - { handle: alex, github: alex-gh, name: Alex Doe }
+tracker: { type: jira, base_url: https://example.atlassian.net, project_key: EX }
+git:
+  scopes: [web, auth, ci]
+  merge: squash
