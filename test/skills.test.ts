@@ -32,9 +32,14 @@ function frontmatter(text: string): Record<string, string> {
   return out;
 }
 
+/** The text with fenced code blocks removed. Headings in examples aren't sections. */
+function stripFences(text: string): string {
+  return text.replace(/^(```|~~~)[\s\S]*?^\1/gm, '');
+}
+
 /** The text with fenced code blocks and inline code spans removed. */
 function prose(text: string): string {
-  return text.replace(/^(```|~~~)[\s\S]*?^\1/gm, '').replace(/`[^`\n]*`/g, '');
+  return stripFences(text).replace(/`[^`\n]*`/g, '');
 }
 
 /** Body of the `## Step 0...` section, up to the next `## ` heading. */
@@ -89,7 +94,7 @@ describe('framework skills', () => {
 
     it('has unique section IDs', () => {
       const ids = markdownFiles(skill).flatMap((f) =>
-        [...read(join(SKILLS_DIR, skill, f)).matchAll(/^#{2,6} .*\{#([a-z0-9-]+)\}\s*$/gm)].map((m) => m[1]),
+        [...stripFences(read(join(SKILLS_DIR, skill, f))).matchAll(/^#{2,6} .*\{#([a-z0-9-]+)\}\s*$/gm)].map((m) => m[1]),
       );
       expect(ids.length - new Set(ids).size, `duplicate IDs in ${ids.join(', ')}`).toBe(0);
     });
@@ -124,6 +129,20 @@ describe('framework skills', () => {
       );
       expect(found).toEqual([]);
     });
+  });
+});
+
+describe('assets/instructions.md', () => {
+  const text = read(join(REPO, 'assets/instructions.md'));
+  const listed = [...(/^Framework skills: ([\s\S]*?)\n\n/m.exec(text)?.[1] ?? '').matchAll(/`([a-z-]+)`/g)].map((m) => m[1]);
+
+  it('lists exactly the framework skills', () => {
+    expect([...listed].sort()).toEqual(skills);
+  });
+
+  it('names only skills that exist', () => {
+    const named = [...text.matchAll(/`([a-z-]+)` skill/g)].map((m) => m[1]!);
+    expect(named.filter((n) => !skills.includes(n))).toEqual([]);
   });
 });
 

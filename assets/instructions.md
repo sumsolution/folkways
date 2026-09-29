@@ -2,6 +2,9 @@
 
 Rules for every agent session in this repo. Skills in `.claude/skills/` hold the detail.
 
+Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `side-quest`, `ticket`, `adr`,
+`tests`, `commit`, `review`, `pr`, `qa`, `knowledge-audit`, `onboard`, `setup`.
+
 ## Session start
 
 - Read `team.yaml` and `.local/me.yaml`. If `me.yaml` is missing, run the `onboard` skill first.
