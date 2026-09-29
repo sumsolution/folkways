@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
 import { git, isClean } from '../src/git.ts';
-import { init, templateTarget } from '../src/init.ts';
+import { init, packageName, templateTarget } from '../src/init.ts';
 import { json, makePackage, makeTeam, put, read, tmp } from './helpers.ts';
 
 describe('templateTarget', () => {
@@ -48,6 +48,34 @@ describe('init', () => {
     const dest = join(tmp(), 'team');
     put(join(dest, 'x'), '');
     expect(() => init(dest, { install: false, pkg: makePackage('1.0.0') })).toThrow(/not empty/);
+  });
+});
+
+describe('packageName', () => {
+  it.each([
+    ['My Team', 'my-team'],
+    ['.hidden', 'hidden'],
+    ['__.team', 'team'],
+    ['Team_A.B~c', 'team_a.b-c'],
+    ['x'.repeat(300), 'x'.repeat(214)],
+  ])('%s -> %s', (folder, name) => expect(packageName(folder)).toBe(name));
+
+  it.each(['...', '._', '', 'node_modules', 'favicon.ico'])('refuses %j', (folder) => {
+    expect(() => packageName(folder)).toThrow(FolkwaysError);
+    expect(() => packageName(folder)).toThrow(/valid npm package name/);
+  });
+});
+
+describe('init names the package', () => {
+  it('after a hidden folder', () => {
+    const dest = init(join(tmp(), '.hidden'), { install: false, pkg: makePackage('1.0.0') });
+    expect(json(join(dest, 'package.json')).name).toBe('hidden');
+  });
+
+  it('or refuses before creating anything', () => {
+    const parent = tmp();
+    expect(() => init(join(parent, '._'), { install: false, pkg: makePackage('1.0.0') })).toThrow(/valid npm package name/);
+    expect(existsSync(join(parent, '._'))).toBe(false);
   });
 });
 
