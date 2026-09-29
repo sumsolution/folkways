@@ -66,6 +66,18 @@ export function editsMessage(edits: string[], fix: string): string {
   ].join('\n');
 }
 
+/** The first existing parent of `dest` that isn't a folder, e.g. a `.folkways` file. */
+function blockingParent(team: string, dest: string): string | undefined {
+  const parts = dest.split('/');
+  for (let i = 1; i < parts.length; i++) {
+    const path = parts.slice(0, i).join('/');
+    const stat = lstatSync(join(team, path), { throwIfNoEntry: false });
+    if (!stat) return undefined;
+    if (!stat.isDirectory()) return path;
+  }
+  return undefined;
+}
+
 /**
  * Team files this version would overwrite that the manifest doesn't track, e.g. `replaced  .folkways/x.md`.
  * Without a manifest (adopting a repo) that is every destination. Files that already match are fine.
@@ -73,14 +85,18 @@ export function editsMessage(edits: string[], fix: string): string {
 function findOverwrites(team: string, manifest: Manifest | undefined, copies: FileCopy[]): string[] {
   const tracked = new Set(Object.keys(manifest?.files ?? {}));
   const ownedSkills = (manifest?.skills ?? []).map((s) => `.claude/skills/${s}/`);
-  const out: string[] = [];
+  const out = new Set<string>();
+  for (const dest of [...copies.map((c) => c.dest), '.claude/settings.json', MANIFEST]) {
+    const parent = blockingParent(team, dest);
+    if (parent) out.add(`replaced  ${parent}`);
+  }
   for (const { src, dest } of copies) {
-    if (tracked.has(dest) || ownedSkills.some((dir) => dest.startsWith(dir))) continue;
+    if (tracked.has(dest) || ownedSkills.some((dir) => dest.startsWith(dir)) || blockingParent(team, dest)) continue;
     const full = join(team, dest);
     const stat = lstatSync(full, { throwIfNoEntry: false });
-    if (stat && (!stat.isFile() || sha256(full) !== sha256(src))) out.push(`replaced  ${dest}`);
+    if (stat && (!stat.isFile() || sha256(full) !== sha256(src))) out.add(`replaced  ${dest}`);
   }
-  return out;
+  return [...out];
 }
 
 /** Paths this sync replaces or removes: the last sync's files, edits in its skills, and forced overwrites. */
@@ -92,7 +108,7 @@ function replacedPaths(team: string, manifest: Manifest | undefined, overwrites:
   for (const line of overwrites) paths.add(line.slice('replaced  '.length));
   paths.add('.claude/settings.json');
   paths.add(MANIFEST);
-  return [...paths].filter((p) => lstatSync(join(team, p), { throwIfNoEntry: false }));
+  return [...paths].filter((p) => !blockingParent(team, p) && lstatSync(join(team, p), { throwIfNoEntry: false }));
 }
 
 /** A failed sync whose undo failed too: the staging folder holds the old files, so it stays. */

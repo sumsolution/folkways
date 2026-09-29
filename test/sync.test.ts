@@ -166,6 +166,16 @@ describe('sync without a manifest (adopting a repo)', () => {
     expect(() => sync(team, next)).toThrow(/replaced  \.folkways\/prompts\/review\.md/);
   });
 
+  it.each(['.folkways', '.claude'])('refuses a file where the %s folder goes', (dir) => {
+    rmSync(join(team, dir), { recursive: true });
+    put(join(team, dir), 'x\n');
+    expect(() => sync(team, next)).toThrow(FolkwaysError);
+    expect(() => sync(team, next)).toThrow(`replaced  ${dir}\n`);
+    const result = sync(team, next, { force: true });
+    expect(result.discarded).toContain(`replaced  ${dir}`);
+    expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.2.0');
+  });
+
   it('--force overwrites them and reports them', () => {
     put(join(team, '.folkways/instructions.md'), 'ours\n');
     const result = sync(team, next, { force: true });
