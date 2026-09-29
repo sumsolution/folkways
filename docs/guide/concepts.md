@@ -66,10 +66,9 @@ So the team gets one shared baseline, and each person can still add their own to
 ## Hooks
 
 Small commands the tools run at set moments: before a shell command, at session start and end, before
-compaction. They live in `.claude/settings.json`, which **both Claude Code and Copilot CLI read**. Each
-runs the pinned CLI: `node_modules/.bin/folkways hook <name>`.
+compaction. They live in `.claude/settings.json`, which **both Claude Code and Copilot CLI read**.
 
-**Coming soon.** Planned: `git-guard` (commit format, review before push, no checkouts in your main
+**Coming soon.** Each hook will run the pinned CLI: `node_modules/.bin/folkways hook <name>`. Planned: `git-guard` (commit format, review before push, no checkouts in your main
 clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time), `session-start`,
 `session-end`, `precompact` ([spec §7.1](../design/06-v1-spec.md)). Today `.claude/settings.json` holds
 one framework rule: `git push` asks first.
@@ -92,7 +91,7 @@ project is named after; see [The name](the-name.md).
 
 ## Headless runs
 
-Sometimes nobody's watching: `folkways run` (coming soon) or a CI job, like the monthly knowledge audit.
+Sometimes nobody's watching: `folkways run` (coming soon) or a CI job, like the monthly knowledge audit (coming soon).
 Headless runs create things **for review only**: local files, draft PRs, an @mention. Never `main`,
 never destructive actions, never writes to external systems. Every judgement call is flagged in the
 output, so a person decides.

@@ -22,7 +22,7 @@ just files in a git repo your team already knows how to review.
   per team. Everyone runs their agent from the team repo.
 - **Pinned, not floating.** The team repo pins an exact `@folkways/cli` version in `package.json`, so
   the whole team runs the same one.
-- **Sync copies text in.** `folkways sync` copies framework instructions, skills and prompts into the
+- **Sync copies text in.** `folkways sync` copies framework instructions (skills and prompts coming soon) into the
   team repo and writes a checksummed manifest. If someone edited a framework file, sync stops and names
   it instead of overwriting it.
 - **Overlays, not forks.** Teams change framework skills through `overlays/<skill>/OVERLAY.md` (add or

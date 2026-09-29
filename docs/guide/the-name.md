@@ -25,7 +25,7 @@ folkways the framework is built on that split:
 | Changed by | An overlay or a PR | A team decision |
 
 Most of the framework is folkways, on purpose. Mores are few, and each one has a reason we'd defend in a
-review. A decision record formalizing the split is in progress. Today one of them is enforced (push asks
+review. A decision record (ADR 0001) formalizing the split is being written. Today one of them is enforced (push asks
 first); the rest arrive with the hooks.
 
 We borrow Sumner's words, not his whole worldview: he was also a champion of laissez-faire and social
@@ -57,7 +57,7 @@ the idea, and it meant the name had to come from further afield. Sociology was f
 | `stigmergy` | Coordination through traces left in a shared space, like ants | An agent coordination MCP server |
 | `waggle` | The bee dance that tells the hive where the flowers are | An agent handoff project |
 | `commonplace` | Commonplace books, where you collect what's worth keeping | An agent-operated knowledge framework |
-| `brigade` | A kitchen brigade: head chef orchestrates, the pass is the review gate | A well-known dev tools org |
+| `brigade` | A kitchen brigade: head chef orchestrates, the pass is the review gate | brigadecore, a 2.4k-star project |
 | `mise` | *Mise en place*: everything in its place before service | A popular dev tool |
 | `dogwatch` | Short split watches, built for crew rotation and handoffs | An observability DSL, confusing next to it |
 | `quire` | Bound pages; sounds like *choir* | A project management product |

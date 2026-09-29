@@ -12,8 +12,11 @@ folkways delivers two kinds of thing, two ways:
   repo's `package.json` and lockfile set the version, so everyone runs the same one.
 - **Text** (instructions, skills, prompts, workflows) has to be real files in the repo, because the
   tools read skills from `.claude/skills/`. `folkways sync` copies them in from the installed package.
+  Today that's `instructions.md` only; skills, prompts and workflows are coming soon.
 
 A nice side effect: every framework change shows up in an upgrade PR's diff, readable like any change.
+
+The design, end to end (today the package isn't on npm and only `instructions.md` and settings sync):
 
 ```mermaid
 flowchart LR
@@ -31,7 +34,7 @@ flowchart LR
 | `.folkways/**` | framework | replaces |
 | `.claude/skills/<name>/` listed in the manifest | framework | replaces |
 | `.github/workflows/folkways-*.yml` | framework | replaces |
-| `.claude/settings.json` hook entries whose command contains `folkways hook ` | framework | replaces those entries; leaves every other key and entry alone |
+| `.claude/settings.json` hook entries whose command contains `folkways hook ` | framework | replaces those entries; leaves every other key and entry alone (no hooks ship yet) |
 | `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; never removes |
 | `AGENTS.md` | team | never writes after `init`; warns if the `@.folkways/instructions.md` line is missing |
 | everything else: `team.yaml`, `overlays/`, `people/`, team skills, `package.json` | team or person | never writes |

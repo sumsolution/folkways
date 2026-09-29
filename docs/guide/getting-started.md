@@ -97,11 +97,11 @@ tool: claude                           # claude | copilot
 
 Start a session in the team repo. The agent reads `AGENTS.md`, which imports
 `.folkways/instructions.md`: session start, where things go, status docs, handoff bands, git rules and
-what needs your approval. That part works today.
+what needs your approval. That part works today, though it names skills that aren't built yet.
 
 ## Staying current
 
-When a new version ships, the lead (or anyone) runs:
+Once the package is on npm and a newer version ships (**coming soon**), the lead (or anyone) runs:
 
 ```bash
 npx folkways upgrade 0.2.0             # or: pnpm exec folkways upgrade 0.2.0
@@ -114,7 +114,7 @@ Review the branch, push, open a PR. After it merges, everyone pulls and reinstal
 
 | Message | Meaning |
 |---|---|
-| `folkways: framework files were edited` | Someone changed a synced file. Move the change into `overlays/`, or rerun with `--force` to discard it |
-| `folkways: team skills clash with new framework skills` | A team skill has a framework skill's name. Rename yours |
-| `warning: AGENTS.md has no '@.folkways/instructions.md' line` | Agents won't see the framework rules. Put the line back |
-| `folkways: 'doctor' is not built yet` | Expected in v0.1.0; same for `hook`, `review`, `run` |
+| `folkways: framework files were edited:` | Someone changed a synced file. Move the change into `overlays/`, or rerun with `--force` to discard it |
+| `folkways: team skills clash with new framework skills: ...` | A team skill has a framework skill's name. Rename yours |
+| `warning: AGENTS.md has no '@.folkways/instructions.md' line; agents won't see the framework instructions.` | Agents won't see the framework rules. Put the line back |
+| `folkways: 'doctor' is not built yet (spec §7.2)` | Expected in v0.1.0; same for `hook`, `review`, `run` |
