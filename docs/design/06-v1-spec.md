@@ -274,6 +274,13 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 
 Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.
 
+**Hook command (proposed, ADR 0002):** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`. It runs a Go
+binary from a `@folkways/hooks-<os>-<cpu>` optional dependency of `@folkways/cli`; pnpm teams set
+`publicHoistPattern: ["@folkways/hooks-*"]`. The relative form breaks in Claude Code, whose hook cwd follows the Bash
+tool's `cd` ([08 §1](08-research-hook-runtime.md)). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd, and
+always exit 0: Copilot CLI denies the tool call when a `preToolUse` hook exits nonzero. Behavior details and output shapes:
+the contract suite, [test/hooks/README.md](../../test/hooks/README.md) (proposed, ADR 0002).
+
 ### 7.2 `folkways` CLI (`@folkways/cli`, run with `npx folkways` in a team repo)
 
 | Command | Does |
@@ -341,9 +348,16 @@ Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates 
 
 1. **When to lift findings to `knowledge/`:** session close vs immediately. Decide from beta evidence.
 2. **Architecture knowledge for `adr`:** dedicated session.
-3. **Verify before building:** `PostToolBatch` exists in the installed Claude Code; the last-assistant
-   `usage` matches the statusline within a few percent; Copilot CLI honors `SessionEnd`/`sessionEnd`
-   and `PreToolUse` from `.claude/settings.json` as documented; Copilot CLI subagent `model:`.
+3. **Verify before building** (checked 2026-09-29, [08 §1](08-research-hook-runtime.md)):
+   - `PostToolBatch`: **exists** in Claude Code 2.1.284 (tested). Payload `tool_calls[]` with `tool_response` (a string, or a content-block array);
+     `additionalContext` reaches the model. Copilot CLI has no `PostToolBatch`.
+   - Transcript `usage` vs Claude Code's own count: **matches** `/context` (29,121 vs "29.1k", tested). The statusline
+     doesn't run under `-p`, so it was not compared.
+   - Copilot CLI honors `SessionEnd`/`sessionEnd` and `PreToolUse` from `.claude/settings.json`: **documented, not tested**.
+     Differences: `SessionEnd.reason` and `SessionStart.source` values differ (no `compact`), no transcript path on these
+     events, `tool_input` may be a JSON string, output fields are top-level, and `preToolUse` fails closed on a nonzero exit.
+   - Hook cwd: Claude Code follows the Bash tool's `cd` (tested); Copilot CLI uses the project root. See §7.1.
+   - Copilot CLI subagent `model:`: still open.
 4. **Personal skills:** out of v1 (install to `~/.claude/skills/` and `~/.agents/skills/` by hand).
 5. **Real git hooks** (`commit-msg`, `pre-push`) as a tool-independent backstop: deferred; round 7 chose agent-side only.
 6. **Trademark and domain** for `folkways` (Summer). npm scope `@folkways` claimed by Summer (2026-09-28).

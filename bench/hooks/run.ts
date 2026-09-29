@@ -115,7 +115,8 @@ const JS = join(BUILD, 'js');
 const jsWanted = ['node', 'node-bundle', 'node-cache', 'node-snapshot', 'node-sea', 'bun', 'bun-compile', 'deno-compile'].some(want);
 if (jsWanted) {
   cpSync(join(HERE, 'js'), JS, { recursive: true, filter: (p) => !p.includes('node_modules') });
-  sh('npm', ['ci', '--no-audit', '--no-fund', '--loglevel=error'], JS);
+  // No install scripts: esbuild and postject work without theirs (esbuild falls back to its JS launcher).
+  sh('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund', '--loglevel=error'], JS);
   for (const f of ['hook-lib', 'hook']) {
     const src = readFileSync(join(JS, `${f}.ts`), 'utf8').replace(/\.ts'/g, ".mjs'");
     writeFileSync(join(JS, `${f}.mjs`), stripTypeScriptTypes(src));
@@ -321,7 +322,7 @@ for (const c of [...(tarballs['bench-hook-node'] ? [{ id: 'node (JS)', pkg: 'ben
 // ---------- call paths ----------
 
 interface Path {
-  candidate: string; path: string; cmd: string[]; cwd: string; env?: NodeJS.ProcessEnv; times: number[]; first?: number; error?: string;
+  candidate: string; path: string; cmd: string[]; cwd: string; extraEnv?: Record<string, string>; times: number[]; first?: number; error?: string;
 }
 const paths: Path[] = [];
 const benchCwd = teams.find((t) => !t.error)?.dir ?? FIXTURE;
@@ -338,7 +339,7 @@ for (const c of candidates) {
       const command = `"\${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/bench-hook-${c.id} hook git-guard`;
       paths.push({
         candidate: c.id, path: `${t.pm}-bin, sh -c`, cmd: ['/bin/sh', '-c', command], cwd: t.dir,
-        env: { ...process.env, CLAUDE_PROJECT_DIR: t.dir }, times: [],
+        extraEnv: { CLAUDE_PROJECT_DIR: t.dir }, times: [],
       });
     }
   }
@@ -346,7 +347,7 @@ for (const c of candidates) {
 
 function once(p: Path): number {
   const [cmd, ...args] = p.cmd;
-  const [r, t] = timed(() => spawnSync(cmd!, args, { cwd: p.cwd, env: p.env, input: PAYLOAD, encoding: 'utf8' }));
+  const [r, t] = timed(() => spawnSync(cmd!, args, { cwd: p.cwd, env: { ...process.env, ...p.extraEnv }, input: PAYLOAD, encoding: 'utf8' }));
   if (p.candidate !== 'floor') {
     if (r.error || r.status !== 0) throw new Error(r.error?.message ?? `exit ${r.status}: ${r.stderr.trim().split('\n')[0]}`);
     let got: unknown;
@@ -405,9 +406,19 @@ const report = lines.join('\n') + '\n';
 process.stdout.write(report);
 const outDir = join(HERE, 'results');
 mkdirSync(outDir, { recursive: true });
-const base = join(outDir, `${PLATFORM}-${date}`);
+// A subset or short run never overwrites a full run's results.
+const partial = ONLY !== undefined || RUNS < 50 ? '-partial' : '';
+const base = join(outDir, `${PLATFORM}-${date}${partial}`);
 writeFileSync(`${base}.md`, report);
-writeFileSync(`${base}.json`, JSON.stringify({ platform: PLATFORM, date, cpu, runs: RUNS, tools, notes, teams, installs, candidates, paths }, null, 2) + '\n');
+// Only numbers and names: no environment, no local paths (they would leak into a committed file).
+const summary = {
+  platform: PLATFORM, date, cpu, runs: RUNS, tools, notes,
+  teams: teams.map(({ pm, installMs, binKind, error }) => ({ pm, installMs, binKind, error })),
+  installs,
+  candidates: candidates.map(({ id, size, buildMs }) => ({ id, size, buildMs })),
+  paths: paths.map(({ candidate, path, times, first, error }) => ({ candidate, path, times, first, error })),
+};
+writeFileSync(`${base}.json`, JSON.stringify(summary, null, 2) + '\n');
 console.error(`wrote ${resolve(base)}.md and .json`);
 if (opts.keep) console.error(`kept team repos in ${TEAMS}`);
 else rmSync(TEAMS, { recursive: true, force: true });

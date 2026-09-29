@@ -14,7 +14,7 @@ node bench/hooks/run.ts --only go,node  # a subset (candidate ids, see the table
 
 Needs Node 24+ and npm. Optional: pnpm, Go, Rust (cargo), Bun, Deno. A missing toolchain skips its
 candidates and says so. Builds go to `bench/hooks/.build/` (gitignored). Results print as Markdown and are
-written to `bench/hooks/results/<os>-<arch>-<date>.md` and `.json`. Commit the result files you want to keep.
+written to `bench/hooks/results/<os>-<arch>-<date>.md` and `.json` (`-partial` for `--only` or fewer than 50 runs). The files hold numbers, tool versions and the CPU model, no environment or local paths. Commit the full-run files.
 
 ## The bench hook
 
