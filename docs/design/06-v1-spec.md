@@ -11,6 +11,7 @@
 | One team per person | A person on several teams |
 | Agent-side enforcement (skills + hooks) | CI checks in project repos |
 | Manual QA (local, dev) | E2E test writing |
+| macOS and Linux | Windows (round 12) |
 
 **Hard rule:** the framework repo holds no company-specific content. Company and team values live in the
 team repo (`team.yaml`, `overlays/`, team `skills/`). Examples in the framework are synthetic.

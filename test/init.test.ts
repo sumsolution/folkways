@@ -1,6 +1,7 @@
-import { existsSync, statSync } from 'node:fs';
+import { chmodSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { FolkwaysError } from '../src/errors.ts';
 import { git, isClean } from '../src/git.ts';
 import { init, templateTarget } from '../src/init.ts';
 import { json, makePackage, makeTeam, put, read, tmp } from './helpers.ts';
@@ -58,5 +59,34 @@ describe('init with pnpm', () => {
   it('leaves packageManager unset for npm', () => {
     const dest = init(join(tmp(), 'team'), { install: false, pkg: makePackage('1.0.0'), packageManager: 'npm' });
     expect(json(join(dest, 'package.json')).packageManager).toBeUndefined();
+  });
+});
+
+describe('init when the install fails', () => {
+  const path = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = path;
+  });
+
+  function failingNpm(): void {
+    const bin = join(tmp(), 'bin');
+    put(join(bin, 'npm'), '#!/bin/sh\necho "npm error network" >&2\nexit 1\n');
+    chmodSync(join(bin, 'npm'), 0o755);
+    process.env.PATH = `${bin}:${path}`;
+  }
+
+  it('removes the folder it created and says why', () => {
+    failingNpm();
+    const dest = join(tmp(), 'team');
+    expect(() => init(dest, { pkg: makePackage('1.0.0') })).toThrow(FolkwaysError);
+    expect(() => init(dest, { pkg: makePackage('1.0.0') })).toThrow(/npm install failed/);
+    expect(existsSync(dest)).toBe(false);
+  });
+
+  it('empties a folder that already existed, and keeps it', () => {
+    failingNpm();
+    const dest = tmp();
+    expect(() => init(dest, { pkg: makePackage('1.0.0') })).toThrow(/npm install failed/);
+    expect(readdirSync(dest)).toEqual([]);
   });
 });

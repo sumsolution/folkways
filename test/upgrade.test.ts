@@ -76,6 +76,38 @@ describe('upgrade', () => {
     expect(read(join(team, 'package.json'))).toContain('"0.1.0"');
   });
 
+  it('removes files a failed sync left behind', () => {
+    const failing: Installer = (t, v) => {
+      install(t, v);
+      put(join(t, 'node_modules/.bin/folkways'), '#!/bin/sh\nmkdir -p .claude/skills/half\necho x > .claude/skills/half/SKILL.md\necho boom >&2\nexit 1\n');
+      chmodSync(join(t, 'node_modules/.bin/folkways'), 0o755);
+    };
+    expect(() => upgrade(team, '0.2.0', failing)).toThrow(/failed; back on main:\nboom/);
+    expect(git(team, 'branch', '--show-current')).toBe('main');
+    expect(isClean(team)).toBe(true);
+    expect(existsSync(join(team, '.claude/skills/half'))).toBe(false);
+    expect(upgrade(team, '0.2.0', install).branch).toBe('chore/folkways-0.2.0');
+  });
+
+  it('refuses a detached HEAD', () => {
+    git(team, 'checkout', '-q', '--detach');
+    expect(() => upgrade(team, '0.2.0', install)).toThrow(/detached HEAD/);
+    expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
+  });
+
+  it.each(['bad name', 'latest', '^1.0.0', '1.0', ''])('refuses the version %j', (version) => {
+    expect(() => upgrade(team, version, install)).toThrow(/not a version/);
+    expect(git(team, 'branch', '--list', 'chore/*')).toBe('');
+  });
+
+  it.each(['v0.2.0', '0.2.0'])('accepts %s', (version) => {
+    expect(upgrade(team, version, install).to).toBe('0.2.0');
+  });
+
+  it('accepts a prerelease', () => {
+    expect(() => upgrade(team, '1.0.0-beta.1', install)).toThrow(/upgrade to 1\.0\.0-beta\.1 failed/);
+  });
+
   it('refuses outside a team repo', () => {
     expect(() => upgrade('/', '0.2.0', install)).toThrow(/inside the team repo/);
   });

@@ -12,4 +12,6 @@
 - Team repos use npm or pnpm, detected from `packageManager` or the lockfile. `init --package-manager`
   defaults to the one that ran it.
 - Team `AGENTS.md` imports the framework instructions with `@.folkways/instructions.md`.
+- `upgrade` refuses non-exact versions and a detached HEAD, and cleans up fully when install or sync fails.
+  `init` removes what it created when the install fails, so a rerun works.
 - Settings ask before `git push`. No hooks yet.

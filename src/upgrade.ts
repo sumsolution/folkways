@@ -15,6 +15,8 @@ export const packageInstall: Installer = (team, version) => {
   execFileSync(cmd, args, { cwd: team, stdio: ['ignore', 'pipe', 'pipe'] });
 };
 
+const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
+
 export interface UpgradeResult {
   branch: string | undefined;
   from: string;
@@ -27,6 +29,7 @@ export interface UpgradeResult {
  */
 export function upgrade(cwd: string, versionArg: string, install: Installer = packageInstall): UpgradeResult {
   const version = versionArg.replace(/^v/, '');
+  if (!SEMVER.test(version)) throw new FolkwaysError(`'${versionArg}' is not a version; use an exact one, e.g. 1.2.0`);
   let team: string;
   try {
     team = git(cwd, 'rev-parse', '--show-toplevel');
@@ -44,8 +47,12 @@ export function upgrade(cwd: string, versionArg: string, install: Installer = pa
   if (branchExists(team, branch)) throw new FolkwaysError(`branch ${branch} already exists`);
 
   const start = git(team, 'rev-parse', '--abbrev-ref', 'HEAD');
+  if (start === 'HEAD') throw new FolkwaysError('detached HEAD; check out a branch first');
+  // The tree was clean before we started, so every untracked file is ours. Ignored files
+  // (node_modules) stay.
   const abandon = (): void => {
     git(team, 'checkout', '-q', '-f', start);
+    git(team, 'clean', '-q', '-f', '-d');
     git(team, 'branch', '-q', '-D', branch);
   };
 

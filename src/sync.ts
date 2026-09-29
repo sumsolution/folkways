@@ -73,7 +73,8 @@ function removeSynced(team: string, manifest: Manifest): void {
   pruneEmptyDirs(join(team, '.github'));
 }
 
-function syncSettings(team: string, pkg: string): void {
+/** The merged .claude/settings.json content. Reads only, so sync can fail before writing anything. */
+function mergedSettings(team: string, pkg: string): string {
   const path = join(team, '.claude/settings.json');
   let current: Settings = {};
   if (existsSync(path)) {
@@ -84,8 +85,7 @@ function syncSettings(team: string, pkg: string): void {
     }
   }
   const fragment = JSON.parse(readFileSync(join(pkg, 'assets/settings.json'), 'utf8')) as Settings;
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(mergeSettings(current, fragment), null, 2)}\n`);
+  return `${JSON.stringify(mergeSettings(current, fragment), null, 2)}\n`;
 }
 
 export interface SyncOptions {
@@ -118,6 +118,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
     );
   }
 
+  const settings = mergedSettings(team, pkg);
   if (manifest) removeSynced(team, manifest);
   const files: Record<string, string> = {};
   for (const { src, dest } of assetMap(pkg)) {
@@ -126,7 +127,8 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
     copyFileSync(src, full);
     files[dest] = sha256(full);
   }
-  syncSettings(team, pkg);
+  mkdirSync(join(team, '.claude'), { recursive: true });
+  writeFileSync(join(team, '.claude/settings.json'), settings);
   const version = packageVersion(pkg);
   writeManifest(team, { version, skills, files });
 

@@ -100,6 +100,13 @@ describe('sync refusals and warnings', () => {
     expect(read(join(team, '.claude/skills/start/SKILL.md'))).toBe('mine\n');
   });
 
+  it('rejects invalid settings before writing anything', () => {
+    put(join(team, '.claude/settings.json'), '{ not json');
+    expect(() => sync(team, next)).toThrow(/settings\.json is not valid JSON/);
+    expect(existsSync(join(team, '.claude/skills/start'))).toBe(false);
+    expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.1.0');
+  });
+
   it('warns when AGENTS.md lost the import line', () => {
     put(join(team, 'AGENTS.md'), '# Team\n');
     expect(sync(team, next).warnings[0]).toMatch(/@\.folkways\/instructions\.md/);

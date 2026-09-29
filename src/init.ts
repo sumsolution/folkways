@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { FolkwaysError } from './errors.ts';
 import { listFiles } from './files.ts';
@@ -25,9 +25,21 @@ export interface InitOptions {
 export function init(path: string, options: InitOptions = {}): string {
   const pkg = options.pkg ?? PACKAGE_ROOT;
   const dest = resolve(path);
-  if (existsSync(dest) && readdirSync(dest).length > 0) throw new FolkwaysError(`${dest} exists and is not empty`);
+  const existed = existsSync(dest);
+  if (existed && readdirSync(dest).length > 0) throw new FolkwaysError(`${dest} exists and is not empty`);
   mkdirSync(dest, { recursive: true });
+  try {
+    scaffold(dest, pkg, options);
+  } catch (e) {
+    // Leave nothing half-built, so a rerun works.
+    if (existed) for (const entry of readdirSync(dest)) rmSync(join(dest, entry), { recursive: true, force: true });
+    else rmSync(dest, { recursive: true, force: true });
+    throw e;
+  }
+  return dest;
+}
 
+function scaffold(dest: string, pkg: string, options: InitOptions): void {
   for (const rel of listFiles(join(pkg, 'templates'))) {
     const out = join(dest, templateTarget(rel));
     mkdirSync(dirname(out), { recursive: true });
@@ -49,10 +61,14 @@ export function init(path: string, options: InitOptions = {}): string {
   git(dest, 'init', '-q', '-b', 'main');
   if (options.install ?? true) {
     const [cmd, args] = installCommand(pm);
-    execFileSync(cmd, args, { cwd: dest, stdio: 'inherit' });
+    try {
+      execFileSync(cmd, args, { cwd: dest, stdio: ['ignore', 'inherit', 'pipe'] });
+    } catch (e) {
+      const detail = (e as { stderr?: Buffer }).stderr?.toString().trim() || (e as Error).message;
+      throw new FolkwaysError(`${cmd} ${args.join(' ')} failed; removed what init created:\n${detail}`);
+    }
   }
   sync(dest, pkg);
   git(dest, 'add', '-A');
   git(dest, 'commit', '-q', '-m', `chore(folkways): init at ${version}`);
-  return dest;
 }

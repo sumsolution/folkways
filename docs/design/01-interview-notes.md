@@ -437,4 +437,5 @@ generic ticket skill; its team templates move into team config.
   framework repo itself uses pnpm with supply-chain settings (7-day minimum release age, no provenance
   downgrades, registry-only subdependencies, no unapproved build scripts) and a matching Dependabot cooldown.
 - **CI actions stay pinned to commit SHAs** (tags can be moved; SHAs can't). The repo requires SHA pinning.
+- **Platforms:** macOS and Linux. **Windows is not supported.**
 - **GitHub org:** `sumsolution` for now; a dedicated `folkways` org may come later.
