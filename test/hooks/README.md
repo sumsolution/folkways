@@ -72,7 +72,8 @@ change them here and in the fixtures together.
   `.local/me.yaml` (`on-demand` < `after-commit` < `pre-push`); a person can tighten it, not loosen it.
   A review is either a file under `efforts/**` or `people/<handle>/work/**` with frontmatter
   `sha: <full HEAD>`, or `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md` with `<sha7>` the first 7
-  characters of HEAD.
+  characters of HEAD. Only the target person's own folder counts (`handle` in `.local/me.yaml`);
+  another person's `people/<other>/` is ignored, and with no handle only `efforts/**` counts.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.

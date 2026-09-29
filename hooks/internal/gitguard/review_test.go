@@ -35,6 +35,8 @@ func TestHasReview(t *testing.T) {
 		{"inbox stale sha", map[string]string{"people/alex/inbox/2026-09-29-review-abc1235.md": "x"}, false},
 		{"inbox wrong suffix", map[string]string{"people/alex/inbox/2026-09-29-review-abc1234.txt": "x"}, false},
 		{"inbox not a review", map[string]string{"people/alex/inbox/2026-09-29-note-abc1234.md": "x"}, false},
+		{"other person work review", map[string]string{"people/sam/work/r.md": "---\nsha: " + head + "\n---\n"}, false},
+		{"other person inbox review", map[string]string{"people/sam/inbox/2026-09-29-review-abc1234.md": "x"}, false},
 		{"inbox in wrong place", map[string]string{"efforts/e1/2026-09-29-review-abc1234.md": "x"}, false},
 	}
 	for _, c := range cases {
@@ -42,11 +44,11 @@ func TestHasReview(t *testing.T) {
 		for rel, body := range c.files {
 			write(t, dir, rel, body)
 		}
-		if got := hasReview(dir, head); got != c.want {
+		if got := hasReview(dir, "alex", head); got != c.want {
 			t.Errorf("%s: hasReview = %v, want %v", c.name, got, c.want)
 		}
 	}
-	if hasReview(t.TempDir(), "abc") {
+	if hasReview(t.TempDir(), "alex", "abc") {
 		t.Error("short head must not match")
 	}
 }
@@ -63,5 +65,18 @@ func TestFrontmatterSHA(t *testing.T) {
 		if got := frontmatterSHA(filepath.Join(dir, f)); got != "" {
 			t.Errorf("%s = %q, want empty", f, got)
 		}
+	}
+}
+
+func TestHasReviewNoHandle(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "people/alex/work/r.md", "---\nsha: "+head+"\n---\n")
+	write(t, dir, "people/alex/inbox/2026-09-29-review-abc1234.md", "x")
+	if hasReview(dir, "", head) {
+		t.Error("with no handle, people/** must not count")
+	}
+	write(t, dir, "efforts/e1/r.md", "---\nsha: "+head+"\n---\n")
+	if !hasReview(dir, "", head) {
+		t.Error("with no handle, efforts/** must still count")
 	}
 }

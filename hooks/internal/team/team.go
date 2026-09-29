@@ -4,6 +4,7 @@ package team
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -23,6 +24,7 @@ type TeamYAML struct {
 
 // MeYAML is the part of .local/me.yaml the hooks read.
 type MeYAML struct {
+	Handle      string `yaml:"handle"`
 	ProjectsDir string `yaml:"projects_dir"`
 	Review      Review `yaml:"review"`
 }
@@ -56,6 +58,16 @@ func readYAML(path string, out any) {
 	if raw, err := os.ReadFile(path); err == nil {
 		_ = yaml.Unmarshal(raw, out)
 	}
+}
+
+// SafeHandle returns the person's handle, or "" when there is none or it is not a plain directory name
+// (a separator or ".." would let it point outside people/<handle>/).
+func (c Config) SafeHandle() string {
+	h := c.Me.Handle
+	if h == "" || h == "." || strings.Contains(h, "..") || strings.ContainsAny(h, `/\`) {
+		return ""
+	}
+	return h
 }
 
 // Triggers in increasing strictness. Unknown values have no rank.

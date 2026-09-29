@@ -163,7 +163,7 @@ func checkPush(dir string, cfg team.Config) string {
 	if err != nil || head == "" {
 		return "" // not a repo we can read: fail open
 	}
-	if hasReview(cfg.Dir, head) {
+	if hasReview(cfg.Dir, cfg.SafeHandle(), head) {
 		return ""
 	}
 	return fmt.Sprintf("Push blocked: review.trigger is pre-push and no review of HEAD %s exists. Run the review first (a file under efforts/ or people/<handle>/work/ with frontmatter sha: %s, or people/<handle>/inbox/<date>-review-%s.md).", head[:min(7, len(head))], head, head[:min(7, len(head))])

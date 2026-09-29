@@ -55,3 +55,14 @@ func TestLoadDir(t *testing.T) {
 		t.Errorf("empty dir should give the zero config, got %+v", c)
 	}
 }
+
+func TestSafeHandle(t *testing.T) {
+	cases := map[string]string{"alex": "alex", "": "", "..": "", "a/b": "", `a\b`: "", "../x": "", ".": "", "a..b": ""}
+	for in, want := range cases {
+		var c Config
+		c.Me.Handle = in
+		if got := c.SafeHandle(); got != want {
+			t.Errorf("SafeHandle(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

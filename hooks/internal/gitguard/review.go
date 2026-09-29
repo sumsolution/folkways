@@ -10,15 +10,18 @@ import (
 )
 
 // hasReview reports whether the team repo holds a review of head: a file under efforts/** or
-// people/*/work/** with frontmatter `sha: <head>`, or an inbox file people/*/inbox/*-review-<sha7>.md
-// where <sha7> is the first 7 characters of head.
-func hasReview(team, head string) bool {
-	return hasFrontmatterReview(team, head) || hasInboxReview(team, head)
+// people/<handle>/work/** with frontmatter `sha: <head>`, or an inbox file people/<handle>/inbox/*-review-<sha7>.md
+// where <sha7> is the first 7 characters of head. Only the person's own folder counts; with no handle
+// only efforts/** does.
+func hasReview(dir, handle, head string) bool {
+	return hasFrontmatterReview(dir, handle, head) || hasInboxReview(dir, handle, head)
 }
 
-func hasFrontmatterReview(team, head string) bool {
-	roots, _ := filepath.Glob(filepath.Join(team, "people", "*", "work"))
-	roots = append(roots, filepath.Join(team, "efforts"))
+func hasFrontmatterReview(dir, handle, head string) bool {
+	roots := []string{filepath.Join(dir, "efforts")}
+	if handle != "" {
+		roots = append(roots, filepath.Join(dir, "people", handle, "work"))
+	}
 	found := false
 	for _, root := range roots {
 		_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
@@ -33,11 +36,11 @@ func hasFrontmatterReview(team, head string) bool {
 }
 
 // hasInboxReview matches by file name only: the date part is not validated.
-func hasInboxReview(team, head string) bool {
-	if len(head) < 7 {
+func hasInboxReview(dir, handle, head string) bool {
+	if handle == "" || len(head) < 7 {
 		return false
 	}
-	matches, _ := filepath.Glob(filepath.Join(team, "people", "*", "inbox", "*-review-"+head[:7]+".md"))
+	matches, _ := filepath.Glob(filepath.Join(dir, "people", handle, "inbox", "*-review-"+head[:7]+".md"))
 	for _, m := range matches {
 		if info, err := os.Stat(m); err == nil && info.Mode().IsRegular() {
 			return true
