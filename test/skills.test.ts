@@ -129,7 +129,7 @@ describe('framework skills', () => {
 
 describe('shared reference files', () => {
   // Skills can't link outside their own folder, so a file two skills need is copied. Keep copies equal.
-  it.each([['references/status-template.md', ['start', 'handoff']]] as const)('%s is identical in %j', (file, owners) => {
+  it.each([['references/status-template.md', ['start', 'handoff', 'status']]] as const)('%s is identical in %j', (file, owners) => {
     const [first, ...rest] = owners.map((s) => read(join(SKILLS_DIR, s, file)));
     for (const other of rest) expect(other).toBe(first);
   });
