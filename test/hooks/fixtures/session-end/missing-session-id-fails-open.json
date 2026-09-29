@@ -1,0 +1,17 @@
+{
+  "description": "No session id: exit 0, nothing written",
+  "steps": [
+    {
+      "payload": {
+        "hook_event_name": "SessionEnd",
+        "cwd": "${TEAM}"
+      },
+      "expect": {
+        "stdout": null,
+        "absent": [
+          "${TEAM}/.local/sessions/undefined.unclosed"
+        ]
+      }
+    }
+  ]
+}

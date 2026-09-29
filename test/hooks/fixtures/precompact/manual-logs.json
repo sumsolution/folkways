@@ -1,0 +1,22 @@
+{
+  "description": "Manual /compact is logged too",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "PreCompact",
+        "trigger": "manual",
+        "custom_instructions": null
+      },
+      "expect": {
+        "stdout": null,
+        "contains": {
+          "${TEAM}/.local/precompact.log": "11111111-1111-4111-8111-111111111111.*manual"
+        }
+      }
+    }
+  ]
+}

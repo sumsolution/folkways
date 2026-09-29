@@ -30,7 +30,7 @@ folkways/
 ├── CHANGELOG.md
 ├── src/                     # TypeScript. Compiled to dist/ by tsc on publish
 │   ├── cli.ts               #   init, sync, upgrade, hook, review, run, doctor
-│   └── hooks/*.ts           #   run as `folkways hook <name>` (§7.1)
+│   └── hooks/*.ts           #   source of the `folkways-hook` Go binary (§7.1)
 ├── assets/                  # text files copied into team repos by `sync`
 │   ├── instructions.md      #   imported by the team AGENTS.md (§5)
 │   ├── skills/<name>/       #   SKILL.md + references/
@@ -98,7 +98,7 @@ Code and text are delivered differently (round 12):
 | `.folkways/**` | framework | replaced |
 | `.claude/skills/<name>/` listed in manifest | framework | replaced |
 | `.github/workflows/folkways-*.yml` | framework | replaced |
-| `.claude/settings.json` hook entries whose command contains `folkways hook ` | framework | those entries replaced; all other keys and entries untouched |
+| `.claude/settings.json` hook entries whose command contains `folkways-hook ` | framework | those entries replaced; all other keys and entries untouched |
 | `.claude/settings.json` `permissions.ask` rules from the framework | framework | added if missing; never removed |
 | `AGENTS.md` | team | never written after `init`; `sync` warns if the `@.folkways/instructions.md` line is missing |
 | Everything else (`overlays/`, `people/`, team skills, `team.yaml`, `package.json`, …) | team / person | never written |
@@ -283,7 +283,7 @@ and attaches personal additions (§3.2); writes only after approval; succinct ou
 ## 7. Hooks and scripts
 
 All hooks live in `.claude/settings.json`, which both Claude Code and Copilot CLI read ([04 §3](04-research-copilot-capabilities.md)).
-Each hook entry runs the pinned package: `node_modules/.bin/folkways hook <name>`. If the package isn't
+Each hook entry runs the pinned package: `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` (§7.1). If the package isn't
 installed, the command fails; `doctor` and `onboard` make sure dependencies are installed.
 Matchers work in both, so scripts still self-filter on command text only as a safety net.
 
@@ -299,6 +299,13 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 
 Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.
 
+**Hook command ([ADR 0002](../adr/0002-hook-runtime.md)):** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`. It runs a Go
+binary from a `@folkways/hooks-<os>-<cpu>` optional dependency of `@folkways/cli`; pnpm teams set
+`publicHoistPattern: ["@folkways/hooks-*"]`. The relative form breaks in Claude Code, whose hook cwd follows the Bash
+tool's `cd` ([08 §1](08-research-hook-runtime.md)). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd, and
+always exit 0: Copilot CLI denies the tool call when a `preToolUse` hook exits nonzero. Behavior details and output shapes:
+the contract suite, [test/hooks/README.md](../../test/hooks/README.md) ([ADR 0002](../adr/0002-hook-runtime.md)).
+
 ### 7.2 `folkways` CLI (`@folkways/cli`, run with `npx folkways` in a team repo)
 
 | Command | Does |
@@ -306,7 +313,7 @@ Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]`
 | `init <path> [--package-manager npm\|pnpm]` | `npx @folkways/cli init <path>` or `pnpm dlx @folkways/cli init <path>`: scaffold a team repo from `templates/`, pin this version in `package.json`, install, sync, first commit |
 | `sync [--force]` | §3.1 |
 | `upgrade <version>` | §3.1 |
-| `hook <name>` | run a hook (§7.1); reads the hook payload on stdin |
+| `hook <name>` | run a hook by hand (§7.1); delegates to `folkways-hook <name>`, reads the payload on stdin |
 | `review [--repo <worktree>] [--effort <path>]` | §7.3 |
 | `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
 | `doctor` | checks config, tool access, hook install, version drift; prints fixes |
@@ -366,9 +373,16 @@ Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates 
 
 1. **When to lift findings to `knowledge/`:** session close vs immediately. Decide from beta evidence.
 2. **Architecture knowledge for `adr`:** dedicated session.
-3. **Verify before building:** `PostToolBatch` exists in the installed Claude Code; the last-assistant
-   `usage` matches the statusline within a few percent; Copilot CLI honors `SessionEnd`/`sessionEnd`
-   and `PreToolUse` from `.claude/settings.json` as documented; Copilot CLI subagent `model:`.
+3. **Verify before building** (checked 2026-09-29, [08 §1](08-research-hook-runtime.md)):
+   - `PostToolBatch`: **exists** in Claude Code 2.1.284 (tested). Payload `tool_calls[]` with `tool_response` (a string, or a content-block array);
+     `additionalContext` reaches the model. Copilot CLI has no `PostToolBatch`.
+   - Transcript `usage` vs Claude Code's own count: **matches** `/context` (29,121 vs "29.1k", tested). The statusline
+     doesn't run under `-p`, so it was not compared.
+   - Copilot CLI honors `SessionEnd`/`sessionEnd` and `PreToolUse` from `.claude/settings.json`: **documented, not tested**.
+     Differences: `SessionEnd.reason` and `SessionStart.source` values differ (no `compact`), no transcript path on these
+     events, `tool_input` may be a JSON string, output fields are top-level, and `preToolUse` fails closed on a nonzero exit.
+   - Hook cwd: Claude Code follows the Bash tool's `cd` (tested); Copilot CLI uses the project root. See §7.1.
+   - Copilot CLI subagent `model:`: still open.
 4. **Personal skills:** out of v1 (install to `~/.claude/skills/` and `~/.agents/skills/` by hand).
 5. **Real git hooks** (`commit-msg`, `pre-push`) as a tool-independent backstop: deferred; round 7 chose agent-side only.
 6. **Trademark and domain** for `folkways` (Summer). npm scope `@folkways` claimed by Summer (2026-09-28).
