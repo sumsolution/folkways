@@ -1,9 +1,14 @@
 {
-  "description": ".local/me.yaml review.trigger overrides team.yaml",
+  "description": "A personal pre-push trigger tightens a team on-demand trigger",
   "env": {
-    "me": {
+    "team": {
       "review": {
         "trigger": "on-demand"
+      }
+    },
+    "me": {
+      "review": {
+        "trigger": "pre-push"
       }
     }
   },
@@ -23,7 +28,15 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": "re:review"
+          },
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "re:review"
+        }
       }
     }
   ]

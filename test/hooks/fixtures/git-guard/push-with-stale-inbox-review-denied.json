@@ -1,15 +1,8 @@
 {
-  "description": "A personal pre-push trigger applies when the team uses on-demand",
+  "description": "An inbox review named for an older commit does not count",
   "env": {
-    "team": {
-      "review": {
-        "trigger": "on-demand"
-      }
-    },
-    "me": {
-      "review": {
-        "trigger": "pre-push"
-      }
+    "files": {
+      "people/alex/inbox/2026-01-14-review-${OLD_HEAD7}.md": "# Review\n\nVerdict: approve\n"
     }
   },
   "steps": [
