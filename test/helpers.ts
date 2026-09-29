@@ -2,6 +2,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, wri
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach } from 'vitest';
+import { listFiles } from '../src/files.ts';
 import { git } from '../src/git.ts';
 import { init } from '../src/init.ts';
 
@@ -61,4 +62,9 @@ export function makeTeam(pkg: string): string {
 export function commitAll(team: string, message = 'team change'): void {
   git(team, 'add', '-A');
   git(team, 'commit', '-q', '-m', message);
+}
+
+/** Every file in a team repo outside .git, with its content. */
+export function snapshot(team: string): Record<string, string> {
+  return Object.fromEntries(listFiles(team).filter((f) => !f.startsWith('.git/')).map((f) => [f, read(join(team, f))]));
 }
