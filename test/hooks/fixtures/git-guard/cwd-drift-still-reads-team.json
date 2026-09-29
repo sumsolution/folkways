@@ -1,0 +1,32 @@
+{
+  "description": "Hook process cwd follows the Bash cd; config still comes from CLAUDE_PROJECT_DIR",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${WORKTREE}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git commit -m \"feat(api): x\"",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "cwd": "${WORKTREE}",
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": "re:scope.*api"
+          },
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "re:scope.*api"
+        }
+      }
+    }
+  ]
+}

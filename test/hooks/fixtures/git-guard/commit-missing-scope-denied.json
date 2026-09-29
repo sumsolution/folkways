@@ -1,0 +1,31 @@
+{
+  "description": "A scope is required when git.scopes is set",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git commit -m \"feat: add orders\"",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": "re:scope"
+          },
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "re:scope"
+        }
+      }
+    }
+  ]
+}

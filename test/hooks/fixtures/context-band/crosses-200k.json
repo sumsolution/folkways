@@ -1,0 +1,68 @@
+{
+  "description": "125K, 150K, then 200K",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "transcript": [
+        130000
+      ],
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": "re:125K"
+          }
+        }
+      }
+    },
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "transcript": [
+        160000
+      ],
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": "re:150K"
+          }
+        }
+      }
+    },
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "transcript": [
+        210000
+      ],
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": "re:200K"
+          }
+        }
+      }
+    }
+  ]
+}

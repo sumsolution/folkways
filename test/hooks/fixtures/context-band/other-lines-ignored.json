@@ -1,0 +1,37 @@
+{
+  "description": "User, summary and malformed lines are skipped",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "transcript": [
+        130000,
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "hi"
+          }
+        },
+        {
+          "type": "summary",
+          "summary": "x"
+        }
+      ],
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": "re:125K"
+          }
+        }
+      }
+    }
+  ]
+}
