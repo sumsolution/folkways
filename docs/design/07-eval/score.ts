@@ -52,7 +52,7 @@ export function score(output: string): Score {
     trailer,
     team: area && clean && style && trailer,
     tested: /^Tested:/m.test(message),
-    flagged: /ignor|conflict|contradict|didn't apply|did not apply|not applied|skipped/i.test(rest),
+    flagged: /ignor|conflict|contradict|forbid|\bbans?\b|left (it|that|them) out|didn't (apply|use|follow)|not (applied|used|followed)|instead of|couldn't verify|skipped/i.test(rest),
   };
 }
 
