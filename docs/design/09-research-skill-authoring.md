@@ -275,6 +275,7 @@ Conflict: BP says there is no built-in eval runner; the Claude Code doc now docu
 | `handoff` | 6 | 3 | bank learnings (`session-close`), standup (`status`), reassign a ticket (`ticket` or `none`) | 18/18 |
 | **Round 1** | **31** | | | **92/93** |
 | Round 2 (new prompts, after the fix) | 8 | 6 | critique an ADR (`adr` or `none`), proofread a README (`none`) | 24/24 |
+| Round 3 (`handoff` vs `status`, after review finding 3) | 6 | 6 | milestone update vs checkpoint vs fresh-session handoff | 18/18 |
 
 **Miss and fix:** "give me feedback on the ADR draft for the settings API" loaded `review` in 1 of 3 runs. The `review` description now says code only and names `adr` for documents. Round 2 checked the fix with prompts not used for tuning; "poke holes in ADR 0012" went to `adr` 3/3.
 
