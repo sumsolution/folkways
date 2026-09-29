@@ -264,4 +264,18 @@ Conflict: BP says there is no built-in eval runner; the Claude Code doc now docu
 
 ## 12. Trigger eval
 
-Results pending; filled in after the skills are written.
+**Run:** 2026-09-29, on the priority-1 skills. **Method** ([docs/skill-authoring.md](../skill-authoring.md#testing-a-skill), A5 of the brief): a fresh Sonnet subagent gets the name and description of all 16 framework skills (shuffled) and a list of prompts (shuffled). It picks one skill or `none` for each prompt, treating each as the first message of a new session. The answer key isn't shown. 3 runs per set. About half the prompts are near-misses that should load a neighbouring skill or none.
+
+| Skill | Prompts | Should trigger | Near-misses (expected) | Correct |
+|---|---|---|---|---|
+| `commit` | 6 | 4 | PR description (`pr`), fix a typo in docs about commits (`none`) | 18/18 |
+| `pr` | 6 | 4 | review Sam's PR (`review`), effort status (`status`) | 18/18 |
+| `review` | 7 | 4 | write unit tests (`tests`), check in dev (`qa`), feedback on an ADR draft (`adr` or `none`) | 20/21 |
+| `start` | 6 | 3 | update status doc (`status`), new joiner (`onboard`), start the dev server (`none`) | 18/18 |
+| `handoff` | 6 | 3 | bank learnings (`session-close`), standup (`status`), reassign a ticket (`ticket` or `none`) | 18/18 |
+| **Round 1** | **31** | | | **92/93** |
+| Round 2 (new prompts, after the fix) | 8 | 6 | critique an ADR (`adr` or `none`), proofread a README (`none`) | 24/24 |
+
+**Miss and fix:** "give me feedback on the ADR draft for the settings API" loaded `review` in 1 of 3 runs. The `review` description now says code only and names `adr` for documents. Round 2 checked the fix with prompts not used for tuning; "poke holes in ADR 0012" went to `adr` 3/3.
+
+**Limits** [medium]: the classifier sees all prompts of a run in one context, so it may compare them. It judges from the listing alone, which approximates but isn't the tools' real selection path. One model (Sonnet). A real-tool check with `claude -p` and `copilot -p` would be the stronger test; not run (no tool credentials in this session).
