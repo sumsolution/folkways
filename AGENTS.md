@@ -18,9 +18,10 @@ Published to npm as `@folkways/cli` (spec §3). Team repos pin an exact version.
 
 | Command | Does |
 |---|---|
-| `npm test` | vitest |
-| `npm run check` | `tsc --noEmit` |
-| `npm run build` | compile `src/` to `dist/` (runs on `npm pack` / `npm publish`) |
+| `pnpm install` | install dev dependencies (pnpm version pinned in `packageManager`) |
+| `pnpm test` | vitest |
+| `pnpm run check` | `tsc --noEmit` |
+| `pnpm run build` | compile `src/` to `dist/` (runs on `pnpm pack` / `pnpm publish`) |
 | `node src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
 
 ## Rules
@@ -30,7 +31,10 @@ Published to npm as `@folkways/cli` (spec §3). Team repos pin an exact version.
 - **TypeScript:** Node 24+, ESM. Only erasable syntax (no `enum`, `namespace`, parameter properties); import
   relative files with `.ts` extensions; `import type` for types. `tsconfig.json` enforces these.
 - **Dependencies:** runtime deps are fine when they earn their place; they install into team repos.
-- **TDD:** write a failing test first, then fix. Run `npm run check && npm test` before every commit.
+  `pnpm-workspace.yaml` blocks versions younger than 7 days, provenance downgrades, non-registry
+  subdependencies and unapproved build scripts. Don't relax these to make an install pass; wait or ask.
+- **Package manager:** pnpm for this repo. Team repos still use npm (`init`, `upgrade`, spec §8).
+- **TDD:** write a failing test first, then fix. Run `pnpm run check && pnpm test` before every commit.
 - **Expected failures** throw `FolkwaysError`; the CLI prints `folkways: <message>` with no stack trace.
 - **Skills:** frontmatter is `name` and `description` only. Overridable sections carry an ID:
   `## Commit format {#commit-format}`. Step 0 reads `team.yaml`, `.local/me.yaml` and both overlays.
