@@ -11,7 +11,11 @@ export const fsOps = {
 const IGNORED = new Set(['.gitkeep', '.DS_Store']);
 
 export function sha256(file: string): string {
-  return createHash('sha256').update(readFileSync(file)).digest('hex');
+  return sha256Text(readFileSync(file));
+}
+
+export function sha256Text(content: string | Buffer): string {
+  return createHash('sha256').update(content).digest('hex');
 }
 
 /** Files under `dir`, as sorted POSIX paths relative to it. Empty if `dir` is missing. */

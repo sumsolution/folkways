@@ -1,5 +1,6 @@
 /**
- * Overlay compiler and personal-overlay lint. Prototype for ADR 0001; not wired into `sync` yet.
+ * Overlay compiler and personal-overlay lint (ADR 0001). `sync` compiles team overlays with
+ * `compileSkillFiles` and lints personal overlays; personal additions are read at runtime (step 0).
  *
  * An OVERLAY.md holds `## Add` (extra rules) and `## Override {#id}` (team only: replaces the
  * skill section with that ID). See spec §3.2.
@@ -120,9 +121,7 @@ export function compileSkill(skill: string, input: CompileInput = {}): { text: s
   if (input.team !== undefined) {
     const team = parseOverlay(input.team);
     for (const [id, body] of Object.entries(team.overrides)) text = replaceSection(text, id, body);
-    for (const title of team.other) {
-      warnings.push(`overlays: ignored ## ${title}; team overlays hold ## Add and ## Override {#id} only`);
-    }
+    warnings.push(...unappliedWarnings(team));
     if (team.add) appended.push(`## Team additions\n\n${team.add}`);
   }
 
@@ -145,6 +144,43 @@ export function compileSkill(skill: string, input: CompileInput = {}): { text: s
 
   if (appended.length === 0) return { text, warnings };
   return { text: `${text.trimEnd()}\n\n${appended.join('\n\n')}\n`, warnings };
+}
+
+/** Headings (outside fences) that carry section `id`. */
+function countId(text: string, id: string): number {
+  return scan(text.split('\n')).headings.filter((h) => ID.exec(h.title)?.[1] === id).length;
+}
+
+function unappliedWarnings(overlay: ParsedOverlay): string[] {
+  return overlay.other.map((title) => `overlays: ignored ## ${title}; team overlays hold ## Add and ## Override {#id} only`);
+}
+
+/**
+ * A framework skill folder + a team overlay → the files that change (spec §3.2, run by `sync`).
+ * `files` maps paths relative to the skill folder to content. An override replaces the section with
+ * that ID in whichever markdown file has it (SKILL.md or a reference); team additions go at the end
+ * of SKILL.md. An ID no file has, or that more than one heading has, throws.
+ */
+export function compileSkillFiles(
+  files: Record<string, string>,
+  team: string,
+): { files: Record<string, string>; warnings: string[] } {
+  const overlay = parseOverlay(team);
+  const out: Record<string, string> = {};
+  const current = (path: string): string => out[path] ?? files[path]!;
+  const markdown = Object.keys(files).filter((f) => f.endsWith('.md')).sort();
+
+  for (const [id, body] of Object.entries(overlay.overrides)) {
+    const holders = markdown.filter((f) => countId(current(f), id) > 0);
+    if (holders.length === 0) throw new FolkwaysError(`team overlay overrides #${id}, but the skill has no section with that ID`);
+    if (holders.length > 1) throw new FolkwaysError(`the skill has #${id} in more than one file: ${holders.join(', ')}`);
+    out[holders[0]!] = replaceSection(current(holders[0]!), id, body);
+  }
+  if (overlay.add) {
+    if (files['SKILL.md'] === undefined) throw new FolkwaysError('team overlay adds rules, but the skill has no SKILL.md');
+    out['SKILL.md'] = `${current('SKILL.md').trimEnd()}\n\n## Team additions\n\n${overlay.add}\n`;
+  }
+  return { files: out, warnings: unappliedWarnings(overlay) };
 }
 
 /** Structural check of a personal OVERLAY.md, plus a wording heuristic. For `sync` and `doctor`. */
