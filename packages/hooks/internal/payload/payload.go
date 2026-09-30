@@ -4,6 +4,7 @@ package payload
 import (
 	"encoding/json"
 	"io"
+	"regexp"
 	"strings"
 )
 
@@ -14,6 +15,27 @@ type Payload struct {
 	ToolInput json.RawMessage `json:"tool_input"`
 	ToolArgs  json.RawMessage `json:"toolArgs"`
 	Cwd       string          `json:"cwd"`
+
+	SessionIDS     string `json:"session_id"`
+	SessionIDC     string `json:"sessionId"`
+	HookEventName  string `json:"hook_event_name"`
+	TranscriptPath string `json:"transcript_path"`
+	Source         string `json:"source"`  // SessionStart: startup, resume, compact, new, ...
+	Trigger        string `json:"trigger"` // PreCompact: auto or manual
+}
+
+var safeID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+
+// SessionID returns the session id, or "" when there is none or it is not safe as a file name.
+func (p Payload) SessionID() string {
+	id := p.SessionIDS
+	if id == "" {
+		id = p.SessionIDC
+	}
+	if !safeID.MatchString(id) {
+		return ""
+	}
+	return id
 }
 
 // Read parses a payload from r.

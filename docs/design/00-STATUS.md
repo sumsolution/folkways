@@ -96,11 +96,11 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule only; no hooks yet |
 | Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
 | Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `session-end`, `precompact`; the Go binary is built against it |
-| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; `git-guard` done (with the trigger floor and inbox review lookup), four hooks to go. CI runs the git-guard contract cases ([plan](11-plan-hooks-build.md)) |
+| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all five hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `session-end`, `precompact`. CI runs the full contract suite. Not yet wired into team repos ([plan](11-plan-hooks-build.md), PR 4) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 324 pass; hooks 15 pass, 119 skipped until a binary exists (git-guard 85 pass against it) |
+| Tests | per package | vitest: CLI 324 pass; hooks 15 pass, 119 contract cases skipped until a binary exists (all 119 pass against it) |
 
 ## Review follow-ups (PR #1, not blocking)
 
