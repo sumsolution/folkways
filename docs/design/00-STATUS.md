@@ -96,12 +96,12 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Framework instructions | [assets/instructions.md](../../packages/cli/assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
 | Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule only; no hooks yet |
 | Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
-| Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `session-end`, `precompact`; the Go binary is built against it |
-| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all five hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `session-end`, `precompact`. CI runs the full contract suite. Not yet wired into team repos ([plan](11-plan-hooks-build.md), PR 4) |
+| Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `precompact`; the Go binary is built against it |
+| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Not yet wired into team repos ([plan](11-plan-hooks-build.md), PR 4) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 324 pass; hooks 15 pass, 119 contract cases skipped until a binary exists (all 119 pass against it) |
+| Tests | per package | vitest: CLI 324 pass; hooks 14 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -119,7 +119,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
-1. Hooks PRs 3–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md): the other four hooks (PR 3, open),
+1. Hooks PRs 3–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md): the other hooks (PR 3, open),
    wiring into team repos, packaging, smoke and release. Repo layout (ADR 0003) and hooks PR 2 (`git-guard`) are merged.
 2. **Skills from the retro:** make the changes in [13](13-retro-git-guard-review-rounds.md) and run its behavior eval.
 3. `review` / `run` / `doctor`.

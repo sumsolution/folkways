@@ -76,7 +76,7 @@ compaction. They live in `.claude/settings.json`, which **both Claude Code and C
 
 **Coming soon.** Each hook will run the pinned framework binary from `node_modules/`. Planned:
 `git-guard` (commit format, review before push, no checkouts in your main clone), `context-band`
-(announces 125K, 150K and 200K tokens so you hand off in time), `session-start`, `session-end`,
+(announces 125K, 150K and 200K tokens so you hand off in time), `session-start` and
 `precompact` ([spec §7.1](../design/06-v1-spec.md)). Today `.claude/settings.json` holds one framework
 rule: `git push` asks first.
 

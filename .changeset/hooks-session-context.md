@@ -2,4 +2,4 @@
 "@folkways/hooks": minor
 ---
 
-Add the `session-start`, `session-end`, `precompact` and `context-band` hooks.
+Add the `session-start`, `precompact` and `context-band` hooks.

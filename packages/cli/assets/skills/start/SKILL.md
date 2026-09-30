@@ -27,8 +27,6 @@ Read these first. A missing file is normal; skip it.
 
 ## Before anything else
 
-- **Unclosed session:** if `.local/sessions/` holds an `*.unclosed` marker, say so and offer to run
-  `session-close` for it first. The user may decline.
 - **Compacted context:** if this session was just compacted, update the effort's `00-STATUS.md` before
   anything else (the `handoff` skill).
 - **Team repo freshness:** `git fetch` and say if the team repo's default branch is ahead of the local

@@ -10,7 +10,6 @@ import (
 	"github.com/sumsolution/folkways/packages/hooks/internal/gitguard"
 	"github.com/sumsolution/folkways/packages/hooks/internal/payload"
 	"github.com/sumsolution/folkways/packages/hooks/internal/precompact"
-	"github.com/sumsolution/folkways/packages/hooks/internal/sessionend"
 	"github.com/sumsolution/folkways/packages/hooks/internal/sessionstart"
 	"github.com/sumsolution/folkways/packages/hooks/internal/team"
 )
@@ -24,7 +23,6 @@ var hooks = map[string]func(p payload.Payload, cfg team.Config){
 	"context-band":  contextband.Run,
 	"precompact":    precompact.Run,
 	"session-start": sessionstart.Run,
-	"session-end":   sessionend.Run,
 }
 
 func main() {
