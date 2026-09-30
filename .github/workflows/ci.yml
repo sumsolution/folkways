@@ -106,9 +106,17 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: packages/hooks/go.mod
+          cache-dependency-path: packages/hooks/go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/hooks run check
-      - run: pnpm --filter @folkways/hooks test
+      - name: Build the hook binary
+        working-directory: packages/hooks
+        run: go build -o bin/folkways-hook .
+      - name: Go tests and contract suite
+        run: FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test
 
   smoke:
     name: smoke (${{ matrix.os }})

@@ -121,9 +121,9 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
   and Copilot CLI then denies the tool call.
   A missing binary is loud: Claude Code shows a hook error on every call, and Copilot CLI denies every Bash call.
 - **CLI:** `folkways hook <name>` in TypeScript goes away, or delegates to the binary for manual runs. The
-  contract suite ([test/hooks/](../../packages/hooks/contract)) stays in TypeScript and tests the Go binary as a black box.
-- **Contributor cost:** hook changes need Go 1.24+. Everything else stays TypeScript. The Go code is small (the
-  prototype is ~560 lines with a shell-command lexer) and uses one dependency (`gopkg.in/yaml.v3`). The repo
+  contract suite ([packages/hooks/contract/](../../packages/hooks/contract)) stays in TypeScript and tests the Go binary as a black box.
+- **Contributor cost:** hook changes need Go 1.26+. Everything else stays TypeScript. The Go code is small (the
+  prototype is ~560 lines with a shell-command lexer) and uses two dependencies (`gopkg.in/yaml.v3`, `mvdan.cc/sh/v3` for parsing shell commands). The repo
   gains a Go module (e.g. `hooks/`) and `AGENTS.md` gains its commands.
 - **Company mirrors:** members need the mirror to proxy the `@folkways/hooks-*` packages. No known mirror strips
   `os`/`cpu`, but this is untested. The beta team smoke-tests `npm ci` through its mirror before rollout.

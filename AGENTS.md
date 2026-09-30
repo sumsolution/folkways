@@ -33,6 +33,8 @@ From the repo root:
 | `pnpm run build` | build every package (the CLI's `src/` to `dist/`; also runs on `pnpm pack` / `pnpm publish`) |
 | `pnpm --filter @folkways/cli test` | one package only (same for `check`, `build`, `@folkways/hooks`) |
 | `pnpm run smoke` | pack the CLI, install the tarball, drive `init` and `sync` |
+| `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
+| `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |
 | `node packages/cli/src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
 | `pnpm changeset` | record a change for the next release of the packages it touches |
 

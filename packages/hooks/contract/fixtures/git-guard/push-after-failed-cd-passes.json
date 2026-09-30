@@ -1,0 +1,23 @@
+{
+  "description": "A `cd` in `||` may or may not have run, so the directory is unknown: fail open",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${WORKTREE}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "cd /nonexistent-dir || git push",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "expect": {
+        "stdout": null
+      }
+    }
+  ]
+}

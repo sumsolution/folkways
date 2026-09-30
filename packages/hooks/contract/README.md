@@ -70,7 +70,7 @@ change them here and in the fixtures together.
 
 **`git-guard`** (`PreToolUse`, Bash)
 
-- Target repo: the last `cd <dir>` before the git command, else `git -C <dir>`, else the payload `cwd`.
+- Target repo: the current directory (see the model below), moved by `git -C <dir>`; it starts at the payload `cwd`.
 - `git commit` with `-m`/`-am`/`--message` (double, single quotes, or the `$(cat <<'EOF' … EOF)` heredoc):
   the first line must be Angular `type(scope)!?: subject`. When `git.scopes` is non-empty the scope is
   **required** and must be listed. No message flag (`--no-edit`, `-F`): pass.
@@ -79,11 +79,27 @@ change them here and in the fixtures together.
   `.local/me.yaml` (`on-demand` < `after-commit` < `pre-push`); a person can tighten it, not loosen it.
   A review is either a file under `efforts/**` or `people/<handle>/work/**` with frontmatter
   `sha: <full HEAD>`, or `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md` with `<sha7>` the first 7
-  characters of HEAD.
+  characters of HEAD. Only the target person's own folder counts (`handle` in `.local/me.yaml`);
+  another person's `people/<other>/` is ignored, and with no handle only `efforts/**` counts.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.
-- Every git command in a chain (`&&`, `;`, `||`) is checked.
+- The command line is parsed as bash (`mvdan.cc/sh/v3/syntax`); a line that does not parse is allowed. Every
+  simple command is walked in source order, also inside `&&`, `||`, `;`, pipelines, `( )`, `{ }`, `if`/`while`/
+  `for`/`case` and substitutions (`$( )`, backticks, `<( )`, unquoted heredoc bodies). Quoted heredoc bodies and
+  comments are data. Words resolve quotes, escapes, `~`, `$HOME` and `${HOME}`; any other expansion is unknown.
+- **One current directory.** Only a top-level `cd <resolvable dir>` in an `&&` or `;` chain (also inside `( )`,
+  `{ }` or a substitution) moves it, and an absolute one always makes it known. Any other `cd`, `pushd` or `popd`
+  (`cd "$X"`, `cd` in `||`, `if`, a pipeline or the background) makes it unknown; a `( )` subshell never
+  changes the outer directory. Git options: `-C <resolvable>` moves it; `-c`, `--no-pager`, `-p`, `-P`, ... are
+  skipped; any other option before the subcommand, or a `GIT_DIR=`/`GIT_WORK_TREE=` prefix, makes it unknown.
+- **Unknown means skip:** no push or main-clone check (fail open). The commit message check always runs.
+- A commit message is read from `-m`, `-am`, `-m<msg>`, `--message <msg>`, `--message=<msg>` or
+  `-m "$(cat <<'EOF' ... EOF)"`. A short-option cluster is read left to right: an `m` ends it with the
+  message; an option with an operand (`-F`, `-c`, `-C`, `-t`, and `-S`/`-u` with an attached one) ends it
+  without one, so `-Skeyname -m "..."` and `-Cmain` are not misread. Any other expansion in a message is not
+  evaluated (pass).
+- git-guard catches agent mistakes, not a determined bypass: `bash -c`, `eval`, aliases and scripts are out of scope.
 
 **`session-start`** (`SessionStart`): always remind the `start` procedure. `source: compact`: say to update
 `00-STATUS.md` now. Any `.local/sessions/*.unclosed`: offer `session-close`.
