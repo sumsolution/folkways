@@ -1,14 +1,14 @@
 // Overlay-enforcement eval: builds one throwaway team repo per run and asks a fresh headless
 // `claude -p` process to write a commit message. See README.md.
 //
-//   node docs/design/07-eval/run.ts [--model sonnet] [--n 3] [--cells runtime-implicit/d,...] [--jobs 6]
+//   node research/evals/overlay-enforcement/run.ts [--model sonnet] [--n 3] [--cells runtime-implicit/d,...] [--jobs 6]
 import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { compileSkill } from '../../../src/overlays.ts';
+import { compileSkill } from '../../../packages/cli/src/overlays.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fx = (name: string): string => readFileSync(join(here, 'fixtures', name), 'utf8');

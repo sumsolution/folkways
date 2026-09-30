@@ -1,20 +1,20 @@
 # Hook runtime benchmark
 
-Evidence for [ADR 0002](../../docs/adr/0002-hook-runtime.md). Results and method:
-[08-research-hook-runtime.md](../../docs/design/08-research-hook-runtime.md). These are prototypes, not
+Evidence for [ADR 0002](../../../docs/adr/0002-hook-runtime.md). Results and method:
+[08-research-hook-runtime.md](../../../docs/design/08-research-hook-runtime.md). These are prototypes, not
 production hooks.
 
 ## Run it
 
 ```
-node bench/hooks/run.ts                 # all candidates whose toolchain is installed, 50 runs each
-node bench/hooks/run.ts --runs 100      # more runs
-node bench/hooks/run.ts --only go,node  # a subset (candidate ids, see the table below)
+node research/bench/hooks/run.ts                 # all candidates whose toolchain is installed, 50 runs each
+node research/bench/hooks/run.ts --runs 100      # more runs
+node research/bench/hooks/run.ts --only go,node  # a subset (candidate ids, see the table below)
 ```
 
 Needs Node 24+ and npm. Optional: pnpm, Go, Rust (cargo), Bun, Deno. A missing toolchain skips its
-candidates and says so. Builds go to `bench/hooks/.build/` (gitignored). Results print as Markdown and are
-written to `bench/hooks/results/<os>-<arch>-<date>.md` and `.json` (`-partial` for `--only` or fewer than 50 runs). The files hold numbers, tool versions and the CPU model, no environment or local paths. Commit the full-run files.
+candidates and says so. Builds go to `research/bench/hooks/.build/` (gitignored). Results print as Markdown and are
+written to `research/bench/hooks/results/<os>-<arch>-<date>.md` and `.json` (`-partial` for `--only` or fewer than 50 runs). The files hold numbers, tool versions and the CPU model, no environment or local paths. Commit the full-run files.
 
 ## The bench hook
 
@@ -78,11 +78,11 @@ Local tarballs and a warm cache understate real downloads; package size is the b
 
 | Dir | What |
 |---|---|
-| [go-git-guard/](go-git-guard) | Full `git-guard` in Go, passes the git-guard cases of the [contract suite](../../test/hooks/README.md) |
+| [go-git-guard/](go-git-guard) | Full `git-guard` in Go, passes the git-guard cases of the [contract suite](../../../packages/hooks/contract/README.md) |
 | [reference/](reference) | Node reference of the other four hooks, to check the contract fixtures |
 
 ```
-cd bench/hooks/go-git-guard && go build -o folkways-hook . && cd ../../..
-FOLKWAYS_HOOK_CMD="$PWD/bench/hooks/go-git-guard/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm test test/hooks
-FOLKWAYS_HOOK_CMD="node $PWD/bench/hooks/reference/hooks.mjs" FOLKWAYS_HOOKS=session-start,session-end,precompact,context-band pnpm test test/hooks
+cd research/bench/hooks/go-git-guard && go build -o folkways-hook . && cd ../../../..
+FOLKWAYS_HOOK_CMD="$PWD/research/bench/hooks/go-git-guard/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test
+FOLKWAYS_HOOK_CMD="node $PWD/research/bench/hooks/reference/hooks.mjs" FOLKWAYS_HOOKS=session-start,session-end,precompact,context-band pnpm --filter @folkways/hooks test
 ```

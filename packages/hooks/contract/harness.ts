@@ -3,8 +3,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { git } from '../../src/git.ts';
-import { tmp } from '../helpers.ts';
+import { git, tmp } from './util.ts';
 
 export const FIXTURES = resolve(import.meta.dirname, 'fixtures');
 export const HOOKS = ['context-band', 'precompact', 'session-start', 'session-end', 'git-guard'] as const;
