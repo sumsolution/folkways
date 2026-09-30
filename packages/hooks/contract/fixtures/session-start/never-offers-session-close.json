@@ -1,10 +1,5 @@
 {
-  "description": "Both messages when both apply",
-  "env": {
-    "files": {
-      ".local/sessions/22222222-2222-4222-8222-222222222222.unclosed": ""
-    }
-  },
+  "description": "session-start never offers session-close",
   "steps": [
     {
       "payload": {
@@ -13,13 +8,13 @@
         "cwd": "${TEAM}",
         "permission_mode": "default",
         "hook_event_name": "SessionStart",
-        "source": "compact"
+        "source": "startup"
       },
       "expect": {
         "stdout": {
           "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": "re:(00-STATUS\\.md.*session-close|session-close.*00-STATUS\\.md)"
+            "additionalContext": "re:^(?!.*session-close).*start"
           }
         }
       }

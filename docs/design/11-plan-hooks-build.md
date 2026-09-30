@@ -9,16 +9,16 @@
 
 ## Goal
 
-Ship the five hooks of [spec §7.1](06-v1-spec.md) as one Go binary, `folkways-hook`, delivered as the
+Ship the four hooks of [spec §7.1](06-v1-spec.md) as one Go binary, `folkways-hook`, delivered as the
 per-platform optional dependencies `@folkways/hooks-<os>-<cpu>` of `@folkways/cli`, and wired into team
-repos by `sync`. Done when the [contract suite](../../packages/hooks/contract) passes all 119 cases against the binary
+repos by `sync`. Done when the [contract suite](../../packages/hooks/contract) passes all 111 cases against the binary
 installed from packed tarballs, with npm and pnpm, on all four platforms.
 
 ## Starting point
 
 | Have | Where |
 |---|---|
-| Contract: 119 fixtures (git-guard 85, context-band 17, session-start 8, session-end 5, precompact 4), skipped until `FOLKWAYS_HOOK_CMD` is set | [packages/hooks/contract/](../../packages/hooks/contract) (`contract.test.ts:7-11`, `harness.ts`) |
+| Contract: 111 fixtures (git-guard 85, context-band 17, session-start 5, precompact 4), skipped until `FOLKWAYS_HOOK_CMD` is set | [packages/hooks/contract/](../../packages/hooks/contract) (`contract.test.ts:7-11`, `harness.ts`) |
 | Go `git-guard` prototype that passes the 51 original git-guard cases: payload parsing (Claude, Pascal, camel; string `tool_input`), shell lexer, deny shape, panic recovery | [research/bench/hooks/go-git-guard/](../../research/bench/hooks/go-git-guard) |
 | Distribution design: package names, hoisting, command string, release order, failure handling | [ADR 0002](../adr/0002-hook-runtime.md) Decision and Consequences; [08 §2](08-research-hook-runtime.md) |
 | Settings merge that owns hook entries by prefix | `packages/cli/src/settings.ts:7-11` (`FRAMEWORK_HOOK_PREFIX`, `isFrameworkHook`), `mergeSettings` |
@@ -72,12 +72,15 @@ diff, squash with a `(#N)` title, Summer approves push and merge.
 - `AGENTS.md`: Go commands; `packages/hooks` `test` script runs `go vet`, `go test`, then the contract; `gomod` entry in Dependabot; scope `hooks` already exists.
 - Leave `research/bench/hooks/go-git-guard/` as it is (it's evidence for ADR 0002).
 
-### 3. `feat(hooks)`: `session-end`, `session-start`, `precompact`, `context-band`
+### 3. `feat(hooks)`: `session-start`, `precompact`, `context-band`
+
+- `session-end` and the unclosed-session marker are dropped: `SessionEnd` fires on `/clear`, `-p` runs and quick
+  sessions, so the `session-close` offer would be noise. People run `session-close` when a session is worth it.
 
 - One PR or one per hook; all four are small. Behaviour per spec §7.1 and the contract README.
 - `context-band`: last main-chain assistant line with non-zero usage; bands from `team.yaml`
   `handoff.bands`; per-session state; re-announce after compaction; silent on Copilot (no transcript).
-- CI job drops `FOLKWAYS_HOOKS`: all 119 run.
+- CI job drops `FOLKWAYS_HOOKS`: all 111 run.
 
 ### 4. `feat(cli)`: wire hooks into team repos
 

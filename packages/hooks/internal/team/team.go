@@ -19,7 +19,10 @@ type TeamYAML struct {
 	Git struct {
 		Scopes []string `yaml:"scopes"`
 	} `yaml:"git"`
-	Review Review `yaml:"review"`
+	Review  Review `yaml:"review"`
+	Handoff struct {
+		Bands []int `yaml:"bands"` // token thresholds for context-band
+	} `yaml:"handoff"`
 }
 
 // MeYAML is the part of .local/me.yaml the hooks read.
