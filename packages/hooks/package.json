@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "folkways-hook: the hooks binary, its contract suite and its build. Published as @folkways/hooks-<os>-<cpu>",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=24"

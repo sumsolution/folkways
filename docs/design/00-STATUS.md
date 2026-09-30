@@ -31,7 +31,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [12-plan-repo-layout.md](12-plan-repo-layout.md) | The pnpm workspace move (ADR 0003): done on `claude/project-architecture-structure-700d4f`, before hooks PR 2 merged |
 | [13-retro-git-guard-review-rounds.md](13-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes, the skill changes (made) and their eval results |
 | [14-research-eval-harness.md](14-research-eval-harness.md) | Eval harness: build or adopt (`claude plugin eval`, promptfoo, Inspect, …). Built `packages/evals`, no new dependencies |
-| [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout (all accepted) |
+| [15-research-license.md](15-research-license.md) | License options; basis of ADR 0004 |
+| [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout, 0004 license (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
 | [../../research/](../../research) | Evidence: hook runtime benchmark ([bench/hooks/](../../research/bench/hooks)) and the overlay-enforcement eval ([evals/overlay-enforcement/](../../research/evals/overlay-enforcement)) |
@@ -79,7 +80,10 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 
 ## Pending
 
-- [ ] Choose a license (open source; owner's call). `package.json` says `UNLICENSED` until then.
+- [x] License: Apache-2.0 ([ADR 0004](../adr/0004-license.md), [15](15-research-license.md)).
+- [ ] Before going public: check the employment agreement and the employer's open-source policy ([15 §4](15-research-license.md)).
+- [ ] Publish `folkways@0.0.2` (the unscoped npm placeholder) under Apache-2.0.
+- [ ] Decide DCO sign-off before the first outside PR.
 - [x] npm scope `@folkways` (Summer, 2026-09-28). Maybe a dedicated `folkways` GitHub org later.
 - [ ] Later: publish a GitHub Action that runs `folkways sync` on dependency-update PRs (spec §9.7).
 - [ ] Later: solo projects and a Claude Code plugin; other harnesses after that (ADR 0003, Future direction). Not scoped.

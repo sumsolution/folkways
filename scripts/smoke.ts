@@ -1,7 +1,7 @@
 // Smoke test: pack @folkways/cli, install the tarball into a scratch project, and drive it end to end.
 // Usage: pnpm run smoke   (KEEP=1 keeps the temp dir)
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -48,6 +48,10 @@ try {
   run('npm', ['init', '-y'], project);
   run('npm', ['install', '--no-audit', '--no-fund', tarball], project);
   const bin = join(project, 'node_modules', '.bin', 'folkways');
+  const installed = join(project, 'node_modules', '@folkways', 'cli');
+  assert(existsSync(join(installed, 'LICENSE')), `the tarball has no LICENSE (${installed})`);
+  const license = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8')).license;
+  assert(license === 'Apache-2.0', `package.json license is ${license}, expected Apache-2.0`);
 
   step('init');
   const team = join(root, 'team');
