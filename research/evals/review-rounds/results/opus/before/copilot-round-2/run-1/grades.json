@@ -1,0 +1,41 @@
+{
+  "score": 0.3333333333333333,
+  "results": [
+    {
+      "name": "names-pattern",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: The response handles the findings one by one and never names the recurring shell-modelling cause, the second-round pattern, or the growth of the guard. | FAIL: The response handles the findings one by one and never names a pattern such as it being round two, a shared shell-modelling cause, findings landing in round-1 code, or the guard outgrowing its plan. | FAIL: The response only triages the findings individually and never names the shared shell-modelling cause, the second-round pattern, or the growth of the guard beyond its plan.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    },
+    {
+      "name": "offers-do-less",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: It asks before editing and offers less-work options: decline finding #2 with a reason, and keep fail-open for unresolved cd targets instead of modelling more, so it doesn't just push fixing all seven. | PASS: It asks for decisions before editing and offers less-invasive options, namely keeping fail-open for unknown cd targets and declining finding #2 with a reason, rather than recommending fixing all seven. | PASS: It asks for decisions before editing and offers less-doing options, namely keeping fail-open for unresolved cd targets and declining finding #2 with a reason, rather than recommending fixes for all seven.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "sorts-findings",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: Only one finding (#2) is questioned, and on factual grounds rather than the guard's non-goal; the other six are accepted as real, so fewer than two are declined as out of scope or unrealistic. | FAIL: Only one finding (#2) is questioned, and on factual grounds rather than the guard's non-goal; the other six are accepted as real and slated for fixes, with the non-goal used only to narrow the #1 fix. | FAIL: Only one finding (#2) is questioned, and on technical grounds rather than the guard's intent; the other six are accepted as real and to be fixed, so the response never declines two as out of scope.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "score": 0,
+  "results": [
+    {
+      "name": "names-pattern",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: The response treats each finding individually and only groups them for edit-conflict reasons, without naming the shared shell-modelling cause, the second-round pattern, or the risk of more rounds. | FAIL: It only handles the findings individually, grouping them by file for edit ordering, and never names the recurring shell-modelling cause, the second round, or the growth of the guard as a pattern. | FAIL: The response treats the findings individually and never raises a pattern or proportion concern such as a second round, a shared shell-modelling cause, findings in round-1 code, or endless edge cases.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    },
+    {
+      "name": "offers-do-less",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: The response recommends fixing all seven findings as valid and offers no less-work or change-of-direction alternative, such as declining findings or simplifying the guard. | FAIL: The response recommends fixing all seven findings and offers no option that does less or changes direction; the only choice it raises (finding 1) makes the guard stricter. | FAIL: The response recommends fixing all seven findings and offers no option that does less or changes direction; it only asks for tool access.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    },
+    {
+      "name": "sorts-findings",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: The response accepts all seven findings as valid and plans to fix every one, using the non-goal only to justify a stricter fix for one finding rather than to decline any. | FAIL: The response accepts all seven findings as valid and proposes fixes for each, and never marks any as out of scope or unrealistic given the guard's non-goal. | FAIL: It accepted all seven findings as valid and proposed fixes for each, using the guard's non-goal only to justify a stricter fix on one finding rather than to mark any as out of scope.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    }
+  ]
+}

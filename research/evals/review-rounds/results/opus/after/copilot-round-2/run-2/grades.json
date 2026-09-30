@@ -1,0 +1,41 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "names-pattern",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response explicitly names the second-round pattern, shows 5 of 7 findings landing in round 1's code, notes growth beyond the plan, and predicts further rounds, rather than just treating findings individually. | PASS: The response names the second-round pattern, shows 5 of 7 findings landing in round 1's code, notes growth versus the plan, and predicts a third round of edge cases. | PASS: The response explicitly frames this as a pattern, citing the second round, 5 of 7 findings landing in round-1 code, growth beyond the plan, and the likelihood of a third round finding more.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "offers-do-less",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: It checks in before changing code and offers options that do less (fix 4 of 7, decline the rest with a scope reason) or change direction (deny when unsure), and it recommends the reduced option rather than fixing all seven. | PASS: It asks the user to choose before changing code, offers a do-less option (fix 4, decline 3 with a scope reason) and a change-direction option (deny when unsure), and recommends the do-less option instead of fixing all seven. | PASS: It checks in before changing code, recommends the reduced-scope option A (fix four findings, decline three with a scope reason), and also offers a change-of-direction option C, rather than recommending fixing all seven.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "sorts-findings",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: It ties findings to the 'agent mistakes, not determined bypass' scope and recommends declining #3, #5 and #7 as out of scope, calling #5 a deliberate bypass. | PASS: It ties the findings to the guard's 'agent mistakes, not determined bypass' scope and recommends declining #3, #5, and #7 as out of scope, rather than fixing all seven. | PASS: It ties the findings to the 'agent mistakes, not determined bypass' scope and recommends declining #3, #5 and #7 as out of scope (calling #5 a deliberate bypass).",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

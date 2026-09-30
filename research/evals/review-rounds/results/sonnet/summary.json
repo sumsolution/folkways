@@ -1,0 +1,88 @@
+{
+  "suite": "review-rounds",
+  "judgeModel": "sonnet",
+  "rows": [
+    {
+      "arm": "before",
+      "case": "copilot-round-1-realistic",
+      "runs": 3,
+      "score": 1,
+      "perfect": 3,
+      "graders": [
+        {
+          "name": "fixes-realistic",
+          "passed": 3
+        },
+        {
+          "name": "no-false-alarm",
+          "passed": 3
+        }
+      ],
+      "costUsd": 0.36687119999999995
+    },
+    {
+      "arm": "before",
+      "case": "copilot-round-2",
+      "runs": 3,
+      "score": 0,
+      "perfect": 0,
+      "graders": [
+        {
+          "name": "names-pattern",
+          "passed": 0
+        },
+        {
+          "name": "offers-do-less",
+          "passed": 0
+        },
+        {
+          "name": "sorts-findings",
+          "passed": 0
+        }
+      ],
+      "costUsd": 0.40708839999999996
+    },
+    {
+      "arm": "after",
+      "case": "copilot-round-1-realistic",
+      "runs": 3,
+      "score": 1,
+      "perfect": 3,
+      "graders": [
+        {
+          "name": "fixes-realistic",
+          "passed": 3
+        },
+        {
+          "name": "no-false-alarm",
+          "passed": 3
+        }
+      ],
+      "costUsd": 0.48963540000000005
+    },
+    {
+      "arm": "after",
+      "case": "copilot-round-2",
+      "runs": 3,
+      "score": 0.8888888888888888,
+      "perfect": 2,
+      "graders": [
+        {
+          "name": "names-pattern",
+          "passed": 3
+        },
+        {
+          "name": "offers-do-less",
+          "passed": 3
+        },
+        {
+          "name": "sorts-findings",
+          "passed": 2
+        }
+      ],
+      "costUsd": 0.32574480000000006
+    }
+  ],
+  "flags": [],
+  "judgeCostUsd": 0.7194251999999997
+}

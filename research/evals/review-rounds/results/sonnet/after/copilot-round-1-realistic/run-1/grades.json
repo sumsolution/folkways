@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response plans specific fixes for all three findings, explicitly rejects stepping back, and only asks for approval, which the rubric permits. | PASS: The response plans concrete fixes for all three findings (global options, whole-file reads, heredoc bodies), only asking for approval to proceed, with no out-of-scope deferral or redesign. | PASS: The response plans specific fixes for all three findings, only asks for approval, and rejects any redesign or step-back.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response calls the fixes small, explicitly says no step-back triggers apply, and raises no over-engineering or change-of-direction concern. | PASS: The response explicitly says the fixes are small and no step-back triggers apply, and it raises no over-engineering alarm or recommendation to reconsider the approach. | PASS: The response calls the fixes small, says no step-back triggers apply, and raises no proportion or over-engineering alarm or recommendation to reconsider the approach.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

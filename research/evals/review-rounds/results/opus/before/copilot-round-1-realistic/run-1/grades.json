@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response plans concrete fixes for all three findings and only asks for approval to proceed, with no deferral or redesign. | PASS: The response plans concrete fixes with tests for all three findings and only asks for approval to proceed, without deferring or redesigning. | PASS: The response plans concrete fixes for all three findings and only asks for approval to proceed, with no deferral or redesign.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response validates the findings and proposes fixes and next steps without claiming over-engineering or recommending a change of direction. | PASS: The response validates the findings and proposes proportionate fixes and next steps without raising any over-engineering or proportion alarm or recommending a change of direction. | PASS: The response validates the findings and proposes fixes and next steps without raising any over-engineering or proportion alarm or suggesting a change of direction.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

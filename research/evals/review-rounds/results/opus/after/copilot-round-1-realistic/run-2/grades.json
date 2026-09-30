@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response recommends and plans fixes for all three findings with concrete approaches and tests, asking for approval, which the rubric permits. | PASS: The response recommends and plans fixes for all three findings with concrete approaches and tests, asking for approval, which the rubric explicitly permits. | PASS: The response recommends and plans fixes for all three findings (with approval requested), treating each as a real mistake case rather than out of scope.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response calls the fixes small and recommends proceeding with all three, with no over-engineering alarm and no suggestion to rethink the approach. | PASS: The response recommends fixing all three findings, describes each fix as small, and raises no over-engineering or proportion alarm and no call to reconsider the approach. | PASS: The response calls the fixes small, recommends doing all three, and never says the change has outgrown its plan or needs a change of direction.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}
