@@ -12,7 +12,7 @@ Sources, pinned:
 | GHR | Copilot hooks reference, [github/docs@f4e8afc `content/copilot/reference/hooks-reference.md`](https://github.com/github/docs/blob/f4e8afc6979acd8de6b5da035066281b9a5f4025/content/copilot/reference/hooks-reference.md) |
 | CL | Copilot CLI changelog, [github/copilot-cli@8dfa600 `changelog.md`](https://github.com/github/copilot-cli/blob/8dfa6009c4a04b3a22a5ca4a7c36a056edd718dd/changelog.md) (latest entry 1.0.89) |
 | EXP | Our runs: `claude -p` 2.1.284, Haiku, a Node capture hook on every event in a scratch repo. Commands and payloads are summarized below; rerun with any capture script that logs stdin, `process.cwd()` and `CLAUDE_PROJECT_DIR` |
-| BENCH | [bench/hooks/](../../bench/hooks), results in [bench/hooks/results/](../../bench/hooks/results) |
+| BENCH | [bench/hooks/](../../research/bench/hooks), results in [bench/hooks/results/](../../research/bench/hooks/results) |
 
 ## 1. Spec §9.3 answers
 
@@ -87,13 +87,13 @@ falls back to `.`, its project root. Hooks must also find the team repo from `CL
 
 ## 3. Benchmark
 
-**Method.** Every candidate runs the same program, roughly `git-guard`'s real work ([bench/hooks/README.md](../../bench/hooks/README.md)):
+**Method.** Every candidate runs the same program, roughly `git-guard`'s real work ([bench/hooks/README.md](../../research/bench/hooks/README.md)):
 read the stdin JSON, match the Bash command against a regex, parse `team.yaml` with a real YAML parser, check the
 Angular header and scope, and write a deny JSON. `run.ts` checks every call path's output against the expected
 JSON before timing it. Then it times 50 fresh processes per path, interleaved, as wall clock around
 `spawnSync`, from a warm OS file cache. npm and pnpm paths install local tarballs into throwaway team repos in
 layout D. Machine: Linux x64, Intel Xeon 2.1 GHz, 4 CPUs, Node 24.21.0, npm 11.19.0, pnpm 12.4.1, Go 1.24.7,
-Rust 1.94.1, Bun 1.3.11, Deno 2.9.7. Full table: [results/linux-x64-2026-09-29.md](../../bench/hooks/results/linux-x64-2026-09-29.md).
+Rust 1.94.1, Bun 1.3.11, Deno 2.9.7. Full table: [results/linux-x64-2026-09-29.md](../../research/bench/hooks/results/linux-x64-2026-09-29.md).
 
 | Candidate | Call path | p50 ms | p95 ms | Shipped size (MB, per platform) |
 |---|---|--:|--:|--:|
@@ -115,7 +115,7 @@ Rust 1.94.1, Bun 1.3.11, Deno 2.9.7. Full table: [results/linux-x64-2026-09-29.m
 
 **macOS arm64** (2026-09-29). Machine: Apple M5 Max, 18 CPUs, Node 24.21.0, npm 11.19.0, pnpm 12.4.1, Go 1.27.1.
 Rust, Bun and Deno are not installed there, so their candidates were skipped. Full table:
-[results/darwin-arm64-2026-09-29.md](../../bench/hooks/results/darwin-arm64-2026-09-29.md).
+[results/darwin-arm64-2026-09-29.md](../../research/bench/hooks/results/darwin-arm64-2026-09-29.md).
 
 | Candidate | Call path | p50 ms | p95 ms | Shipped size (MB, per platform) |
 |---|---|--:|--:|--:|

@@ -52,7 +52,7 @@ Today, from a clone of this repo (Node 24+):
 
 ```bash
 pnpm install
-node src/cli.ts init ../my-team --no-install
+node packages/cli/src/cli.ts init ../my-team --no-install
 ```
 
 That scaffolds the team repo, syncs the framework files and makes the first commit. Full walkthrough:

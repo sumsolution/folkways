@@ -1,11 +1,11 @@
-// Smoke test: pack the CLI, install the tarball into a scratch project, and drive it end to end.
+// Smoke test: pack @folkways/cli, install the tarball into a scratch project, and drive it end to end.
 // Usage: pnpm run smoke   (KEEP=1 keeps the temp dir)
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const repo = resolve(import.meta.dirname, '..');
+const cli = resolve(import.meta.dirname, '..', 'packages', 'cli');
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'folkways-smoke-')));
 const env = {
   ...process.env,
@@ -37,7 +37,7 @@ function assert(ok: boolean, message: string): void {
 try {
   step('pack');
   const packDir = join(root, 'pack');
-  run('pnpm', ['pack', '--pack-destination', packDir], repo);
+  run('pnpm', ['pack', '--pack-destination', packDir], cli);
   const tarballs = readdirSync(packDir).filter((f) => f.endsWith('.tgz'));
   assert(tarballs.length === 1, `expected one .tgz in ${packDir}, found ${tarballs.length}`);
   const tarball = join(packDir, tarballs[0]!);
@@ -69,7 +69,7 @@ try {
   assert(manifest() === manifestBefore, '.folkways/manifest.json changed after second sync');
 
   step('version');
-  const expected = (JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8')) as { version: string }).version;
+  const expected = (JSON.parse(readFileSync(join(cli, 'package.json'), 'utf8')) as { version: string }).version;
   const actual = run(bin, ['version'], team).trim();
   assert(actual === expected, `version is ${actual}, expected ${expected}`);
 

@@ -17,7 +17,7 @@ distribution, so that one committed `.claude/settings.json` works on macOS arm64
 ## Context
 
 Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-runtime.md). Benchmark:
-[bench/hooks/](../../bench/hooks).
+[bench/hooks/](../../research/bench/hooks).
 
 - **Speed (Linux x64, 50 runs, p50/p95 ms).** The same git-guard-like hook in each candidate, through each call path:
 
@@ -49,7 +49,7 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
 
   The proposed command through `sh -c`: Go 4.5 (npm) and 11.3 (pnpm) ms. The spawn floor is 1.2 ms. Even the
   best Node path is 27.9 ms, over the 20 ms bar, so Go stays the choice. Rust, Bun and Deno were not measured on
-  macOS (not installed). Full table: [bench/hooks/results/](../../bench/hooks/results).
+  macOS (not installed). Full table: [bench/hooks/results/](../../research/bench/hooks/results).
 - **Every JS runtime lands at 46–82 ms on Linux** (25–41 ms on macOS), compiled or not; start-up dominates. Node
   optimizations save 13–19 ms of 65 on Linux. Compiled Bun, Deno and Node SEA also cost 100–127 MB per platform.
 - **A JS launcher in front of a native binary gives back ~31–33 ms** (esbuild, Biome, Turborepo). esbuild avoids
@@ -121,7 +121,7 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
   and Copilot CLI then denies the tool call.
   A missing binary is loud: Claude Code shows a hook error on every call, and Copilot CLI denies every Bash call.
 - **CLI:** `folkways hook <name>` in TypeScript goes away, or delegates to the binary for manual runs. The
-  contract suite ([test/hooks/](../../test/hooks)) stays in TypeScript and tests the Go binary as a black box.
+  contract suite ([packages/hooks/contract/](../../packages/hooks/contract)) stays in TypeScript and tests the Go binary as a black box.
 - **Contributor cost:** hook changes need Go 1.26+. Everything else stays TypeScript. The Go code is small (the
   prototype is ~560 lines with a shell-command lexer) and uses two dependencies (`gopkg.in/yaml.v3`, `mvdan.cc/sh/v3` for parsing shell commands). The repo
   gains a Go module (e.g. `hooks/`) and `AGENTS.md` gains its commands.

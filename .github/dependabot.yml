@@ -31,3 +31,13 @@ updates:
     commit-message:
       prefix: build
       include: scope
+
+  - package-ecosystem: gomod
+    directory: /packages/hooks
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
