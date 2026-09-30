@@ -119,7 +119,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
 1. Merge the **repo layout** move ([12-plan-repo-layout.md](12-plan-repo-layout.md), ADR 0003). Then hooks PR 2
-   (`feat/hooks-go-git-guard`) rebases onto it: `hooks/` → `packages/hooks/`, Go steps in the `hooks` CI job, `go.work`,
+   (`feat/hooks-go-git-guard`) merges `main` (no rebase): `hooks/` → `packages/hooks/`, Go steps in the `hooks` CI job, `go.work`,
    Dependabot `gomod`. Then hooks PRs 3–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md).
    Hooks PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
    repos → packaging, smoke and release.
