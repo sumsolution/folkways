@@ -105,7 +105,7 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
 
 - **Release pipeline:** a new CI workflow cross-compiles `folkways-hook` for darwin-arm64, darwin-x64,
   linux-x64 and linux-arm64 (`CGO_ENABLED=0`). It generates each platform `package.json` (`os`, `cpu`, `bin`,
-  version = root version), publishes the four platform packages first, each with provenance, then
+  version = the `@folkways/hooks` version, per [ADR 0003](0003-repo-layout.md)), publishes the four platform packages first, each with provenance, then
   `@folkways/cli`, whose `optionalDependencies` pin them exactly. A smoke job per OS (macOS arm64 and x64
   runners, Linux x64 and arm64) installs the packed tarballs with npm and with pnpm and runs the contract suite
   against `node_modules/.bin/folkways-hook`. Releases that already published cannot be half-undone: the job

@@ -1,6 +1,6 @@
 # Plan: build the Go hooks
 
-**Written:** 2026-09-29 (end of session 4) · **Status:** not started · **Decision:** [ADR 0002](../adr/0002-hook-runtime.md)
+**Written:** 2026-09-29 (end of session 4) · **Status:** PRs 1–5 done; step 6 (real machines) open · **Decision:** [ADR 0002](../adr/0002-hook-runtime.md)
 
 > **Layout change after PR 2 ([ADR 0003](../adr/0003-repo-layout.md), [12](12-plan-repo-layout.md)).** PRs 3–5 use
 > `packages/hooks/` (contract in `packages/hooks/contract/`, CLI in `packages/cli/`). Decision 3 reads the pinned
@@ -94,20 +94,28 @@ diff, squash with a `(#N)` title, Summer approves push and merge.
 - `sync`: warn when the pnpm setting or `node_modules/.bin/folkways-hook` is missing (ADR 0002).
 - `folkways hook <name>`: delegate (decision 5).
 
-### 5. `build`: packaging, smoke and release
+### 5. `build`: packaging, smoke and release (done)
 
-- `scripts/build-hooks.ts`: cross-compile the four targets (`CGO_ENABLED=0`, `-trimpath -ldflags="-s -w"`)
-  from one Linux job and generate each `npm/hooks-<os>-<cpu>/package.json` (`name`, `version` = root,
-  `os`, `cpu`, `bin: {"folkways-hook": ...}`, `license`, `repository`).
-- Pack step adds exact `optionalDependencies` to the CLI's packed `package.json` (decision 3).
-- `scripts/smoke.ts`: pack the CLI and the host platform package, install both with npm **and** with pnpm
-  (with `publicHoistPattern`), assert `.bin/folkways-hook` exists, run the contract suite through it.
-  Relax the "exactly one .tgz" assert.
-- CI smoke matrix: macOS arm64 and x64, Linux x64 and arm64 (check current GitHub-hosted runner labels
-  for macOS Intel and Linux arm64 at the time).
-- `.github/workflows/release.yml` on tag `v*`: build, validate all five packages, publish the four platform
-  packages then the CLI, each with provenance; environment approval; pinned SHAs;
-  `permissions: id-token: write` for that job only.
+- `packages/hooks/scripts/build.ts` (`pnpm --filter @folkways/hooks run build`): cross-compiles the four
+  targets (`CGO_ENABLED=0`, `-trimpath -ldflags "-s -w -X main.version=<v>"`) into `packages/hooks/npm/<os>-<cpu>/`,
+  each with `package.json` (`os`, `cpu`, `bin`, `license`, `repository`, `publishConfig.access`), `LICENSE`
+  and `README.md`. The version is `@folkways/hooks`'s, not the root's (ADR 0003).
+- Decision 3: a root `.pnpmfile.mjs` `beforePacking` hook adds the exact `optionalDependencies` (from
+  `folkways.hooks`) to the CLI's packed `package.json`, for `pnpm pack` and `pnpm publish` alike. It adds a
+  `pnpmfileChecksum` to the lockfile.
+- `scripts/pack.ts`: packs both and checks the CLI pins exactly the built platforms, at `folkways.hooks`.
+  Smoke and release share it.
+- `scripts/smoke.ts`: installs the CLI tarball into a team repo made by `init`, with npm and with pnpm.
+  `overrides` point each platform package at its tarball, so nothing comes from the registry and the
+  binary arrives the way it will from npm: as the CLI's hoisted optional dependency. Asserts
+  `.bin/folkways-hook --version`, all four platforms in the lockfile (the npm/cli#8320 check), `sync` with
+  no warnings, and the full contract suite through the installed binary.
+- CI smoke matrix: `ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest` (arm64), `macos-26-intel`.
+- `.github/workflows/release.yml`, on `@folkways/hooks@*` and `@folkways/cli@*` tags: `build` runs check and
+  tests, then `scripts/release.ts` (hooks: four tarballs plus the contract suite against the release binary;
+  CLI: the tarball, and fails unless every pinned platform package is already on npm). `publish` needs the
+  `npm` environment's approval, holds `id-token: write` alone, and runs `npm publish --provenance` on those
+  exact tarballs, skipping versions already on npm so a rerun finishes a partial release.
 
 ### 6. Verify on real machines (before 0.1.0)
 

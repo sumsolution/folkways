@@ -9,6 +9,7 @@
     "node": ">=24"
   },
   "scripts": {
+    "build": "node scripts/build.ts",
     "check": "tsc --noEmit",
     "test": "go vet ./... && go test ./... && vitest run"
   },

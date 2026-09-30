@@ -1,0 +1,81 @@
+name: release
+
+# One package per tag, as `pnpm changeset tag` names them (ADR 0003):
+#   @folkways/hooks@x.y.z → the four @folkways/hooks-<os>-<cpu> packages (ADR 0002)
+#   @folkways/cli@x.y.z   → @folkways/cli, which pins the hooks version in `folkways.hooks`; that hooks
+#                           release must be on npm first, or the build job fails
+# `build` makes and checks every tarball (scripts/release.ts). `publish` waits for approval in the `npm`
+# environment, then publishes those exact tarballs with npm trusted publishing (OIDC) and provenance.
+# GitHub skips workflows when more than three tags are pushed at once: push release tags one or two at a time.
+on:
+  push:
+    tags:
+      - '@folkways/hooks@*'
+      - '@folkways/cli@*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: packages/hooks/go.mod
+          cache-dependency-path: packages/hooks/go.sum
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - run: pnpm test # the contract suite skips here; release.ts runs it against the release binary
+      - name: Build and check the tarballs
+        run: node scripts/release.ts "$GITHUB_REF_NAME" release
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: packages
+          path: release/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing and provenance; this job only
+    steps:
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: packages
+          path: release
+      # Skips versions already on npm, so a rerun after a partial publish finishes the rest.
+      - name: Publish
+        run: |
+          for tgz in release/*.tgz; do
+            spec=$(tar -xzOf "$tgz" package/package.json | node -p 'const p = JSON.parse(require("fs").readFileSync(0, "utf8")); `${p.name}@${p.version}`')
+            if [ -n "$(npm view "$spec" version 2>/dev/null)" ]; then
+              echo "$spec is already on npm; skipping"
+              continue
+            fi
+            npm publish "$tgz" --access public --provenance
+          done

@@ -1,3 +1,4 @@
 folkways-hook
 *.exe
 /bin/
+/npm/

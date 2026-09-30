@@ -45,6 +45,7 @@ jobs:
               - 'package.json'
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
+              - '.pnpmfile.mjs'
               - 'tsconfig.base.json'
               - 'go.work'
               - '.github/workflows/**'
@@ -142,6 +143,8 @@ jobs:
       - name: Unit tests (no model calls)
         run: pnpm --filter @folkways/evals test
 
+  # Packs the CLI and the four platform packages, installs them with npm and pnpm, and runs the hook
+  # contract suite against the installed binary, on each platform folkways-hook ships for (ADR 0002).
   smoke:
     name: smoke (${{ matrix.os }})
     needs: changes
@@ -151,7 +154,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-26-intel]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -161,6 +164,10 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: packages/hooks/go.mod
+          cache-dependency-path: packages/hooks/go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm run smoke
 

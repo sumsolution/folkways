@@ -1,10 +1,10 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-09-30 (session 5: hooks wired into team repos)
+**Last updated:** 2026-09-30 (session 6: hooks packaging and release)
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built and wired into `settings.json`; packaging and release next.
+**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow; nothing published yet.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -27,7 +27,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [08-research-hook-runtime.md](08-research-hook-runtime.md) | Spec §9.3 answers, hook runtime options and benchmarks; basis of ADR 0002 |
 | [09-research-skill-authoring.md](09-research-skill-authoring.md) | Skill structure, triggering and headless rules; basis of the authoring guide |
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
-| [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
+| [11-plan-hooks-build.md](11-plan-hooks-build.md) | Plan for the Go hooks: five PRs (done) and the checks on real machines (step 6, open) |
 | [12-plan-repo-layout.md](12-plan-repo-layout.md) | The pnpm workspace move (ADR 0003): done on `claude/project-architecture-structure-700d4f`, before hooks PR 2 merged |
 | [13-retro-git-guard-review-rounds.md](13-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes, the skill changes (made) and their eval results |
 | [14-research-eval-harness.md](14-research-eval-harness.md) | Eval harness: build or adopt (`claude plugin eval`, promptfoo, Inspect, …). Built `packages/evals`, no new dependencies |
@@ -102,12 +102,13 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule, `disableAllHooks: false`, one entry per hook and event, run as `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` |
 | Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
 | Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `precompact`; the Go binary is built against it |
-| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Wired into team repos by `sync`; `init` sets pnpm's `publicHoistPattern`; `sync` warns when the binary or that setting is missing; `folkways hook <name>` runs it by hand. Not yet packaged ([plan](11-plan-hooks-build.md), PR 5) |
+| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Wired into team repos by `sync`; `init` sets pnpm's `publicHoistPattern`; `sync` warns when the binary or that setting is missing; `folkways hook <name>` runs it by hand. Packaged as `@folkways/hooks-<os>-<cpu>` ([build.ts](../../packages/hooks/scripts/build.ts)); the packed CLI pins them via [.pnpmfile.mjs](../../.pnpmfile.mjs) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
-| CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
+| CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS. Smoke ([scripts/smoke.ts](../../scripts/smoke.ts)) on all four hook platforms: packed CLI and hook tarballs, npm and pnpm, contract suite through the installed binary |
+| Release | [.github/workflows/release.yml](../../.github/workflows/release.yml) | One package per changeset tag. Builds and checks the tarballs ([scripts/release.ts](../../scripts/release.ts)), then publishes after approval in the `npm` environment, with trusted publishing and provenance. Never run yet |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 343 pass; evals 26 pass (no model calls); hooks 14 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
+| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -123,14 +124,18 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 ## Next step
 
-**Branch:** `main`, all work merged through #17, plus hooks PR 4 (wiring).
+**Branch:** `claude/kind-cori-762vho`: hooks PR 5 (packaging, smoke, release). `main` has everything through #19.
 
-1. Hooks PR 5 per [11-plan-hooks-build.md](11-plan-hooks-build.md): packaging, smoke and release. Until it lands,
-   a team repo's hooks point at a binary nothing installs (`sync` warns). Needs a license for the platform packages.
-2. **Skills from the retro:** done, with the eval ([13](13-retro-git-guard-review-rounds.md), "Eval results"). Next evals: overlay precedence ported to `packages/evals`, trigger evals.
-3. `review` / `run` / `doctor`.
-4. Publish 0.1.0.
-5. Set up the beta team repo.
+1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli` and the four
+   `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
+   `npm`). A package that doesn't exist yet may need a first manual publish, or npm's pending-publisher
+   setup, if npm offers it. In GitHub, create the `npm` environment with Summer as required reviewer.
+2. Plan 11 step 6 on real machines: Gatekeeper on an npm-installed darwin binary, Copilot CLI (ADR 0002
+   "Still open"), a lockfile made on macOS and installed on Linux.
+3. Next evals: overlay precedence ported to `packages/evals`, trigger evals.
+4. `review` / `run` / `doctor`.
+5. Publish: `@folkways/hooks@0.1.0`, then `@folkways/cli@0.1.0`.
+6. Set up the beta team repo.
 
 ## Follow-ups (not ticketed)
 
