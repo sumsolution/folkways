@@ -107,7 +107,7 @@ where side quests go.
 - `lintPersonalOverlay` over `people/*/overlays/*/OVERLAY.md`: done in `sync` (warnings); `doctor` not built.
 - Done: framework skills: step 0 is one shared block: read `team.yaml` and `.local/me.yaml`, then the
   personal overlay, under the precedence text tested as `hybrid`
-  ([07-eval/fixtures/step0-hybrid.md](../design/07-eval/fixtures/step0-hybrid.md)). A framework-repo test
+  ([07-eval/fixtures/step0-hybrid.md](../../research/evals/overlay-enforcement/fixtures/step0-hybrid.md)). A framework-repo test
   checks every `assets/skills/*/SKILL.md` contains it.
 - `compileSkill`'s personal branch exists for the eval (Option 4); production doesn't use it.
 

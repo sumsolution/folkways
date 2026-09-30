@@ -1,8 +1,8 @@
 # Writing folkways skills
 
-How to write a framework skill in `assets/skills/<name>/`. It is based on
+How to write a framework skill in `packages/cli/assets/skills/<name>/`. It is based on
 [09-research-skill-authoring.md](design/09-research-skill-authoring.md) (the evidence) and the spec
-([06 §3.2, §6, §7.5](design/06-v1-spec.md)). `test/skills.test.ts` checks the mechanical rules.
+([06 §3.2, §6, §7.5](design/06-v1-spec.md)). `packages/cli/test/skills.test.ts` checks the mechanical rules.
 
 > **Overlays follow [ADR 0001](adr/0001-overlay-enforcement.md).** `folkways sync` compiles team
 > overlays into the synced skill; the skill attaches the person's additions in step 0. Rules that must
@@ -28,7 +28,7 @@ How to write a framework skill in `assets/skills/<name>/`. It is based on
 ## Anatomy of a skill folder
 
 ```
-assets/skills/ticket/
+packages/cli/assets/skills/ticket/
 ├── SKILL.md              # always loaded when the skill triggers; the method
 └── references/           # loaded only when a step says to read one
     ├── templates.md      #   one file per concern
@@ -42,7 +42,7 @@ assets/skills/ticket/
   from the step that needs it. Keep them one level deep: a reference doesn't send the agent to another
   reference.
 - A file two skills need is copied into both, because a skill can't link outside its folder. The test
-  keeps copies identical (see `shared reference files` in `test/skills.test.ts`).
+  keeps copies identical (see `shared reference files` in `packages/cli/test/skills.test.ts`).
 - No scripts yet. Add one only when agents keep rewriting the same logic, and make it non-interactive
   with clear errors ([09 §6](design/09-research-skill-authoring.md#6-scripts-in-skills)). Deterministic
   checks belong in the `folkways` CLI or a hook, not a skill script.
@@ -154,7 +154,7 @@ everything else behind IDs or reference files.
 | Tracker mechanics | `references/jira.md`, `github.md`, `linear.md`, chosen by `tracker.type` | teams add rules via `## Add` |
 
 A team overlay then stays small. From
-[`assets/skills/ticket/references/example-overlay.md`](../assets/skills/ticket/references/example-overlay.md):
+[`assets/skills/ticket/references/example-overlay.md`](../packages/cli/assets/skills/ticket/references/example-overlay.md):
 
 ```markdown
 ## Add
@@ -177,7 +177,7 @@ Lessons that apply to any skill:
 
 - **Interactive:** propose, show, then write on an explicit yes. Invoking a skill for an action ("commit
   this") approves that action as shown; a side effect the user didn't ask for needs its own yes. The
-  approval list is in `assets/instructions.md`: tracker and wiki writes, posts, `knowledge/` and
+  approval list is in `packages/cli/assets/instructions.md`: tracker and wiki writes, posts, `knowledge/` and
   `state/` writes, deletes, non-local environments, pushes.
 - **Headless** (`folkways run`, CI): no questions are possible. The skill writes local files or a draft
   PR, never touches `main` or external systems, and flags every judgment call with what a reviewer needs
@@ -185,7 +185,7 @@ Lessons that apply to any skill:
 
 ## Testing a skill
 
-1. **Automated:** `pnpm test` runs `test/skills.test.ts` over every skill.
+1. **Automated:** `pnpm test` runs `packages/cli/test/skills.test.ts` over every skill.
 2. **Trigger eval:** give a fresh subagent the list of all skill names and descriptions and one
    realistic prompt; ask which skill it would load, or none. Use 5 to 10 prompts per skill, half of
    them near-misses that should load a neighbouring skill or none. Run each prompt 3 times. Fix a

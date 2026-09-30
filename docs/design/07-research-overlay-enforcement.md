@@ -99,7 +99,7 @@ can only detect it (inferred, medium).
 
 ### 4.1 Empirical: hooks and rules under bypass mode
 
-[`07-eval/hook-bypass.sh`](07-eval/hook-bypass.sh) builds a repo with a `PreToolUse` hook that exits 2 on
+[`07-eval/hook-bypass.sh`](../../research/evals/overlay-enforcement/hook-bypass.sh) builds a repo with a `PreToolUse` hook that exits 2 on
 `touch hooked-file`, an `ask` rule and a `deny` rule, then asks `claude -p` to run all three commands.
 
 | Run (Claude Code 2.1.284, `claude -p`) | `hooked-file` | `asked-file` | `denied-file` |
@@ -108,8 +108,8 @@ can only detect it (inferred, medium).
 | `--dangerously-skip-permissions` | blocked | blocked | blocked |
 | same + `--settings '{"disableAllHooks": true}'` | **created** | blocked | blocked |
 
-Raw: [results/hook-bypass.txt](07-eval/results/hook-bypass.txt), with each run's own report in
-[results/hook-bypass/](07-eval/results/hook-bypass/). In `-p` mode an `ask` becomes a denial; an `ask`
+Raw: [results/hook-bypass.txt](../../research/evals/overlay-enforcement/results/hook-bypass.txt), with each run's own report in
+[results/hook-bypass/](../../research/evals/overlay-enforcement/results/hook-bypass/). In `-p` mode an `ask` becomes a denial; an `ask`
 is never auto-approved in any mode ([permission-modes](https://code.claude.com/docs/en/permission-modes#actions-no-mode-auto-approves)).
 Hooks in interactive bypass mode were not tested. **Reading:** hooks hold against the model and against bypass mode; they
 fall to one deliberate flag. Deny rules held in every run.
@@ -126,7 +126,7 @@ fall to one deliberate flag. Deny rules held in every run.
 
 ## 6. Eval: does the model keep the team rule?
 
-Fixtures, runner, scorer and raw outputs: [07-eval/](07-eval/README.md).
+Fixtures, runner, scorer and raw outputs: [07-eval/](../../research/evals/overlay-enforcement/README.md).
 
 **Setup.** A synthetic framework `commit` skill with a `## Commit format {#commit-format}` section
 (Angular). A team overlay overrides it: `<area>: <Summary>`, area in `web|auth|ci`, no type or ticket key,
@@ -147,7 +147,7 @@ instructions; the host's user-level instructions still loaded, see threats), rea
 automatically (four sub-rules; "team rule followed" = all four). N = 3 per cell, N = 10 for the four
 deciding cells. Subject: `sonnet`; `opus` on two cells.
 
-**Results** (from [results/summary.md](07-eval/results/summary.md); the rough "flagged a conflict" column is omitted here, it has false positives in control cells):
+**Results** (from [results/summary.md](../../research/evals/overlay-enforcement/results/summary.md); the rough "flagged a conflict" column is omitted here, it has false positives in control cells):
 
 | Layout | none | a: add | b: override | c: contradict | d: persuasive |
 |---|---|---|---|---|---|
@@ -186,7 +186,7 @@ runtime 3/3 and 3/3, hybrid 3/3, compiled-implicit 2/3, compiled-explicit 2/3.
    A human reading the output would usually catch it; a headless run would not.
 6. **Mechanism catches all of it.** Every failing message had an Angular header, which a `git-guard`
    format check against `team.yaml` rejects by construction. The lint prototype
-   ([results/lint.txt](07-eval/results/lint.txt)) errors on (b), warns on (d) and **misses (c)**: wording
+   ([results/lint.txt](../../research/evals/overlay-enforcement/results/lint.txt)) errors on (b), warns on (d) and **misses (c)**: wording
    heuristics can't find a quiet contradiction.
 
 **Threats to validity.** One task, one easily checked rule, one team format. N = 3 separates 0/3 from

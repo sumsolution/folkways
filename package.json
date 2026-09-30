@@ -1,0 +1,20 @@
+{
+  "name": "folkways-repo",
+  "private": true,
+  "description": "Workspace root for the folkways packages. Ships nothing; see packages/*.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "check": "pnpm -r run check",
+    "test": "pnpm -r run test",
+    "smoke": "node scripts/smoke.ts",
+    "changeset": "changeset"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.0"
+  },
+  "packageManager": "pnpm@12.4.1"
+}

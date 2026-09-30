@@ -1,6 +1,6 @@
 # Plan: move to a pnpm workspace
 
-**Written:** 2026-09-29 (session 5) · **Status:** not started · **Decision:** [ADR 0003](../adr/0003-repo-layout.md)
+**Written:** 2026-09-29 (session 5) · **Status:** done, before hooks PR 2 merged (Summer paused the hooks work for it) · **Decision:** [ADR 0003](../adr/0003-repo-layout.md)
 
 ## Goal
 
@@ -15,14 +15,21 @@ produces the same file list as before.
 |---|---|
 | CLI package at the root: `package.json`, `src/`, `test/`, `assets/`, `templates/`, `tsconfig*.json`, `vitest.config.ts` | root |
 | Go hooks module with `git-guard` (hooks PR 2) | `hooks/`, module `github.com/sumsolution/folkways/hooks` |
-| Hook contract suite: fixtures, harness, runner | [test/hooks/](../../test/hooks) |
-| Research code | [bench/hooks/](../../bench/hooks), [07-eval/](07-eval) |
+| Hook contract suite: fixtures, harness, runner | [test/hooks/](../../packages/hooks/contract) |
+| Research code | [bench/hooks/](../../research/bench/hooks), [07-eval/](../../research/evals/overlay-enforcement) |
 | Tarball smoke test | [scripts/smoke.ts](../../scripts/smoke.ts) |
 | CI: `check`, `test`, `smoke`, `hooks` jobs, no filters | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) |
 | Dependabot: npm and github-actions, no gomod | [.github/dependabot.yml](../../.github/dependabot.yml) |
 | One `CHANGELOG.md`, one version (0.1.0, unpublished) | root |
 
 ## Preconditions
+
+> **As done:** landed before hooks PR 2, which rebases onto it. `packages/hooks/` holds only the contract
+> suite until then, so `go.work`, the Go steps in the `hooks` CI job and the Dependabot `gomod` entry arrive
+> with that rebase (a `go.work` or `gomod` entry pointing at a missing `go.mod` fails). No changeset yet:
+> nothing is published, and the first `changeset version` starts from 0.1.0.
+
+As planned:
 
 - Hooks PR 2 (`feat/hooks-go-git-guard`) is merged.
 - The hooks agent pauses until this PR merges, then continues PRs 3–5 on the new paths.

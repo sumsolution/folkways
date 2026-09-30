@@ -1,14 +1,14 @@
 # Hook contract suite
 
 Black-box tests for the five hooks in spec §7.1. They run **any** implementation as a subprocess, so the
-same suite checks a Node, Go or Rust build. Defined by [ADR 0002](../../docs/adr/0002-hook-runtime.md);
-tool behavior behind each rule: [08-research-hook-runtime.md](../../docs/design/08-research-hook-runtime.md).
+same suite checks a Node, Go or Rust build. Defined by [ADR 0002](../../../docs/adr/0002-hook-runtime.md);
+tool behavior behind each rule: [08-research-hook-runtime.md](../../../docs/design/08-research-hook-runtime.md).
 
 ## Run
 
 ```
-FOLKWAYS_HOOK_CMD="/abs/path/to/folkways-hook" pnpm test test/hooks
-FOLKWAYS_HOOK_CMD="node /abs/path/to/src/cli.ts hook" FOLKWAYS_HOOKS=git-guard,session-end pnpm test test/hooks
+FOLKWAYS_HOOK_CMD="/abs/path/to/folkways-hook" pnpm --filter @folkways/hooks test
+FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOKS=git-guard,session-end pnpm --filter @folkways/hooks test
 ```
 
 - The harness runs `/bin/sh -c "$FOLKWAYS_HOOK_CMD <hook>"`, as both tools do, with the payload on stdin.
@@ -37,6 +37,13 @@ Placeholders, filled in payloads, files and expectations: `${TEAM}` (team repo, 
 `CLAUDE_PROJECT_DIR`), `${PROJECTS}`, `${MAIN}` (a main clone under `projects_dir`), `${WORKTREE}` (a worktree
 of it on `feat/EX-1-orders`), `${HEAD}` / `${HEAD7}` (the worktree's HEAD), `${OLD_HEAD}` / `${OLD_HEAD7}` (its first commit), `${TRANSCRIPT}`.
 
+## Versioning
+
+The contract is the interface between `@folkways/hooks` and `@folkways/cli`, which writes hook names and
+events into team repos' `settings.json` and pins one hooks version (`folkways.hooks` in its `package.json`,
+[ADR 0003](../../../docs/adr/0003-repo-layout.md)). Renaming or removing a hook, or changing its event, is a
+major hooks bump and needs a matching CLI change. New rules or fixtures that tighten behaviour are minor.
+
 ## The contract
 
 Rules every implementation must follow. Where spec §7.1 leaves details open, this contract pins them down;
@@ -45,7 +52,7 @@ change them here and in the fixtures together.
 **All hooks**
 
 - Exit 0, always, including on bad input. Copilot CLI denies the tool call when a `preToolUse` hook exits
-  nonzero or crashes ([08 §1](../../docs/design/08-research-hook-runtime.md)), so a bug must fail open.
+  nonzero or crashes ([08 §1](../../../docs/design/08-research-hook-runtime.md)), so a bug must fail open.
 - Find the team repo from `CLAUDE_PROJECT_DIR`, else the process cwd. Claude Code's hook cwd follows the
   Bash tool's `cd`; `CLAUDE_PROJECT_DIR` doesn't. Copilot CLI runs repo hooks in the project root.
 - Accept Claude Code payloads and both Copilot CLI shapes: PascalCase events (snake_case fields, ISO

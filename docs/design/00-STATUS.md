@@ -4,7 +4,7 @@
 **Last updated:** 2026-09-29 (session 4: overlays, skills, hook runtime)
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Hooks (Go) next.
+**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Hooks (Go) next.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -23,16 +23,16 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [04-research-copilot-capabilities.md](04-research-copilot-capabilities.md) | Claude Code vs Copilot mechanisms (Opus-checked) |
 | [05-research-repo-split.md](05-research-repo-split.md) | Team / personal split options; why the personal repo was dropped |
 | [06-v1-spec.md](06-v1-spec.md) | **The v1 spec (draft).** Repos, npm distribution and sync, overlays, config, skills, hooks, flows |
-| [07-research-overlay-enforcement.md](07-research-overlay-enforcement.md) | How mores can be enforced and folkways layered; basis of ADR 0001. Eval harness and results in [07-eval/](07-eval) |
+| [07-research-overlay-enforcement.md](07-research-overlay-enforcement.md) | How mores can be enforced and folkways layered; basis of ADR 0001. Eval harness and results in [07-eval/](../../research/evals/overlay-enforcement) |
 | [08-research-hook-runtime.md](08-research-hook-runtime.md) | Spec §9.3 answers, hook runtime options and benchmarks; basis of ADR 0002 |
 | [09-research-skill-authoring.md](09-research-skill-authoring.md) | Skill structure, triggering and headless rules; basis of the authoring guide |
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
 | [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
-| [12-plan-repo-layout.md](12-plan-repo-layout.md) | Plan for the pnpm workspace move (ADR 0003), after hooks PR 2 |
+| [12-plan-repo-layout.md](12-plan-repo-layout.md) | The pnpm workspace move (ADR 0003): done on `claude/project-architecture-structure-700d4f`, before hooks PR 2 merged |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
-| [../../bench/hooks/](../../bench/hooks) | Hook runtime benchmark (Node, Go, Rust) with Linux and macOS results |
+| [../../research/](../../research) | Evidence: hook runtime benchmark ([bench/hooks/](../../research/bench/hooks)) and the overlay-enforcement eval ([evals/overlay-enforcement/](../../research/evals/overlay-enforcement)) |
 
 ## Decided (details in the notes, by round)
 
@@ -88,17 +88,18 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 
 | Part | Where | Notes |
 |---|---|---|
-| CLI `init`, `sync`, `upgrade`, `version` | [src/](../../src) | TypeScript, npm package `@folkways/cli`, Node 24+. Sync is staged and atomic and refuses to overwrite. `hook`, `review`, `run`, `doctor` are stubs |
-| Skills | [assets/skills/](../../assets/skills) | 16: adr, commit, handoff, knowledge-audit, onboard, pr, qa, research, review, session-close, setup, side-quest, start, status, tests, ticket |
-| Overlay compile | [src/overlays.ts](../../src/overlays.ts) | `sync` compiles team overlays into skills (`compileSkillFiles`) and lints personal overlays. Personal overlays attach at step 0 via `@` of `.local/me/...`, with a read fallback |
-| `.local/me` link | [src/](../../src) | Symlink to `people/<handle>/`, created by `onboard`, kept by `sync` |
-| Framework instructions | [assets/instructions.md](../../assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
-| Settings fragment | [assets/settings.json](../../assets/settings.json) | Push ask rule only; no hooks yet |
-| Team scaffold | [templates/](../../templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
-| Hook contract suite | [test/hooks/](../../test/hooks) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `session-end`, `precompact`; the Go binary is built against it |
-| Hook benchmark | [bench/hooks/](../../bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
-| CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
-| Tests | [test/](../../test) | vitest: 336 pass, 88 skipped |
+| CLI `init`, `sync`, `upgrade`, `version` | [packages/cli/src/](../../packages/cli/src) | TypeScript, npm package `@folkways/cli`, Node 24+. Sync is staged and atomic and refuses to overwrite. `hook`, `review`, `run`, `doctor` are stubs |
+| Skills | [assets/skills/](../../packages/cli/assets/skills) | 16: adr, commit, handoff, knowledge-audit, onboard, pr, qa, research, review, session-close, setup, side-quest, start, status, tests, ticket |
+| Overlay compile | [src/overlays.ts](../../packages/cli/src/overlays.ts) | `sync` compiles team overlays into skills (`compileSkillFiles`) and lints personal overlays. Personal overlays attach at step 0 via `@` of `.local/me/...`, with a read fallback |
+| `.local/me` link | [src/](../../packages/cli/src) | Symlink to `people/<handle>/`, created by `onboard`, kept by `sync` |
+| Framework instructions | [assets/instructions.md](../../packages/cli/assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
+| Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule only; no hooks yet |
+| Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
+| Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `session-end`, `precompact`; the Go binary is built against it |
+| Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
+| CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
+| Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
+| Tests | per package | vitest: CLI 324 pass; hooks 14 pass, 88 skipped until a binary exists |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -116,8 +117,9 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
-1. **Hooks** in Go: follow [11-plan-hooks-build.md](11-plan-hooks-build.md) through PR 2, then the
-   **repo layout** move ([12-plan-repo-layout.md](12-plan-repo-layout.md), ADR 0003), then hooks PRs 3–5 on the new layout.
+1. Merge the **repo layout** move ([12-plan-repo-layout.md](12-plan-repo-layout.md), ADR 0003). Then hooks PR 2
+   (`feat/hooks-go-git-guard`) rebases onto it: `hooks/` → `packages/hooks/`, Go steps in the `hooks` CI job, `go.work`,
+   Dependabot `gomod`. Then hooks PRs 3–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md).
    Hooks PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
    repos → packaging, smoke and release.
 2. `review` / `run` / `doctor`.
@@ -130,9 +132,9 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
   fixtures done (`push-me-cannot-loosen-denied`); the Go implementation lands in plan 11, PR 2.
 - [ ] Spec §4.1: add `git.commit_pattern` (decided yes).
 - [x] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Contract and fixtures done; the Go implementation lands in plan 11, PR 2.
-- [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../assets/prompts/review.md).
+- [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../packages/cli/assets/prompts/review.md).
 - [ ] `doctor` checks: stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
-- [ ] [assets/settings.json](../../assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
+- [ ] [assets/settings.json](../../packages/cli/assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
 - [ ] `scripts/` is not in the `tsconfig.json` `include`; gitignore `.folkways-sync-*` in the team template.
 - [ ] Spec §3.1 hook ownership wording (plan 11, PR 4). GitHub ignores `{#id}`, so in-page skill anchors are dead in the web view.
 - [ ] Research 10: a live `@` check (new session, marker-file skill) and Copilot CLI.

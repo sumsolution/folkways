@@ -1,4 +1,4 @@
-// Bench prototype (not a production hook): git-guard for the black-box contract suite in test/hooks.
+// Bench prototype (not a production hook): git-guard for the black-box contract suite in packages/hooks/contract.
 // Usage: folkways-hook git-guard < payload.json. Always exits 0 (a crash would make Copilot CLI deny the tool).
 package main
 

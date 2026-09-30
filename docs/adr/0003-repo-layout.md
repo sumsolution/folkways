@@ -24,7 +24,7 @@ its packages, and build, test and publish them so each package can move at its o
   sync Action (spec §9.7), a Claude Code plugin, and later other harnesses, for solo projects as well as
   teams (see "Future direction").
 - **Tests by language.** CLI tests are vitest in `test/`. Go unit tests belong beside the code as
-  `*_test.go`. The hook contract ([test/hooks/](../../test/hooks)) is JSON fixtures plus a TypeScript
+  `*_test.go`. The hook contract ([test/hooks/](../../packages/hooks/contract)) is JSON fixtures plus a TypeScript
   black-box runner that works on any build of the binary. It specifies the hooks, not the CLI.
 - **Release coupling.** A CLI release pins one hooks version. The hooks and the CLI change at different
   rates: a lexer fix in `git-guard` shouldn't force a CLI release, and a new skill shouldn't rebuild four
@@ -173,7 +173,7 @@ yet. For now we record the seams, so today's work leaves them open:
 ## Consequences
 
 - **The restructure** is one PR of `git mv` plus config, planned in
-  [12-plan-repo-layout.md](../design/12-plan-repo-layout.md). It lands after hooks PR 2 and before PRs 3–5.
+  [12-plan-repo-layout.md](../design/12-plan-repo-layout.md). It landed before hooks PR 2, which rebases onto it.
   `AGENTS.md`, spec §2.1 (which also fixes the stale `src/hooks/*.ts`) and the paths in
   [11](../design/11-plan-hooks-build.md) change in that PR.
 - **Hooks plan 11 changes:** decision 3 reads the pin from `folkways.hooks` instead of the root version, and

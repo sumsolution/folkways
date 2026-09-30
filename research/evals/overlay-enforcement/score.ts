@@ -1,7 +1,7 @@
 // Scores results/<model>/<layout>/<personal>/run-*.md against the team commit rule and writes
 // results/summary.json and results/summary.md. See README.md.
 //
-//   node docs/design/07-eval/score.ts
+//   node research/evals/overlay-enforcement/score.ts
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

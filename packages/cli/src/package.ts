@@ -10,3 +10,9 @@ export function packageVersion(pkg: string = PACKAGE_ROOT): string {
   const json = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')) as { version: string };
   return json.version;
 }
+
+/** The exact `@folkways/hooks-<os>-<cpu>` version this CLI pins (`folkways.hooks` in package.json, ADR 0003). */
+export function hooksVersion(pkg: string = PACKAGE_ROOT): string {
+  const json = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8')) as { folkways: { hooks: string } };
+  return json.folkways.hooks;
+}

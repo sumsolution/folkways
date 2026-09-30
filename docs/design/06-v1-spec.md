@@ -21,29 +21,37 @@ team repo (`team.yaml`, `overlays/`, team `skills/`). Examples in the framework 
 Two repos: the **framework** (versioned, public, published to npm as `@folkways/cli`) and one **team
 repo** per team. Sessions run from the team repo. Code changes happen in project repos, in worktrees.
 
-### 2.1 Framework repo (npm package `@folkways/cli`)
+### 2.1 Framework repo (pnpm workspace, [ADR 0003](../adr/0003-repo-layout.md))
 
 ```
 folkways/
-├── AGENTS.md                # framework's own dev instructions (not shipped)
-├── package.json             # bin: folkways; deps: yaml; engines: node >=24
-├── CHANGELOG.md
-├── src/                     # TypeScript. Compiled to dist/ by tsc on publish
-│   ├── cli.ts               #   init, sync, upgrade, hook, review, run, doctor
-│   └── hooks/*.ts           #   source of the `folkways-hook` Go binary (§7.1)
-├── assets/                  # text files copied into team repos by `sync`
-│   ├── instructions.md      #   imported by the team AGENTS.md (§5)
-│   ├── skills/<name>/       #   SKILL.md + references/
-│   ├── prompts/*.md         #   fixed prompts for headless runs (review, knowledge-audit)
-│   ├── settings.json        #   hook entries + permission rules merged into .claude/settings.json
-│   └── workflows/*.yml      #   GitHub Actions (knowledge-audit)
-├── templates/               # one-time scaffold for `init`: team.yaml, READMEs, .gitignore
-│                            #   (`dot-x` → `.x`, `name.tmpl` → `name`, so they stay inert here)
-└── test/                    # vitest
+├── AGENTS.md                    # framework's own dev instructions (not shipped)
+├── package.json                 # private workspace root; ships nothing
+├── pnpm-workspace.yaml          # packages/* + supply-chain settings
+├── .changeset/                  # per-package versions and changelogs
+├── packages/
+│   ├── cli/                     # npm package `@folkways/cli`
+│   │   ├── package.json         #   bin: folkways; engines: node >=24; folkways.hooks: pinned hooks version
+│   │   ├── src/                 #   TypeScript. Compiled to dist/ by tsc on publish
+│   │   │   └── cli.ts           #     init, sync, upgrade, hook, review, run, doctor
+│   │   ├── assets/              #   text files copied into team repos by `sync`
+│   │   │   ├── instructions.md  #     imported by the team AGENTS.md (§5)
+│   │   │   ├── skills/<name>/   #     SKILL.md + references/
+│   │   │   ├── prompts/*.md     #     fixed prompts for headless runs (review, knowledge-audit)
+│   │   │   ├── settings.json    #     hook entries + permission rules merged into .claude/settings.json
+│   │   │   └── workflows/*.yml  #     GitHub Actions (knowledge-audit)
+│   │   ├── templates/           #   one-time scaffold for `init`: team.yaml, READMEs, .gitignore
+│   │   │                        #     (`dot-x` → `.x`, `name.tmpl` → `name`, so they stay inert here)
+│   │   └── test/                #   vitest
+│   └── hooks/                   # `folkways-hook` (Go, §7.1), published as `@folkways/hooks-<os>-<cpu>`
+│       └── contract/            #   black-box contract suite: fixtures + runner
+├── scripts/                     # cross-package: smoke test
+├── research/                    # benchmarks and evals behind decisions
+└── docs/
 ```
 
 TypeScript is compiled because Node won't strip types in `node_modules` (verified 2026-09-28:
-`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`). Source imports use `.ts` extensions, so `src/` also runs
+`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`). Source imports use `.ts` extensions, so `packages/cli/src/` also runs
 directly under Node 24 during development.
 
 ### 2.2 Team repo
@@ -307,7 +315,7 @@ binary from a `@folkways/hooks-<os>-<cpu>` optional dependency of `@folkways/cli
 `publicHoistPattern: ["@folkways/hooks-*"]`. The relative form breaks in Claude Code, whose hook cwd follows the Bash
 tool's `cd` ([08 §1](08-research-hook-runtime.md)). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd, and
 always exit 0: Copilot CLI denies the tool call when a `preToolUse` hook exits nonzero. Behavior details and output shapes:
-the contract suite, [test/hooks/README.md](../../test/hooks/README.md) ([ADR 0002](../adr/0002-hook-runtime.md)).
+the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.md) ([ADR 0002](../adr/0002-hook-runtime.md)).
 
 ### 7.2 `folkways` CLI (`@folkways/cli`, run with `npx folkways` in a team repo)
 
