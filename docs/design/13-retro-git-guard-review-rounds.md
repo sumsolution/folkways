@@ -56,7 +56,7 @@ simple fail-open model in the handoff for PR 13.
 
 Keep them small.
 
-1. **`assets/instructions.md`, new "Step back" section.**
+1. **`packages/cli/assets/instructions.md`, new "Step back" section.**
    - Triggers: findings land in code the last round added; the change has clearly outgrown its plan;
      about to recommend "fix everything" a second time; a fix needs a new layer of machinery.
    - Action: stop, show the numbers (size then and now, rounds, where findings come from), and recommend
