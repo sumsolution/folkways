@@ -29,6 +29,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
 | [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
 | [12-plan-repo-layout.md](12-plan-repo-layout.md) | The pnpm workspace move (ADR 0003): done on `claude/project-architecture-structure-700d4f`, before hooks PR 2 merged |
+| [13-retro-git-guard-review-rounds.md](13-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes and proposed skill changes (step back, proportion, acting on review) |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -118,13 +119,14 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
 1. Merge the **repo layout** move ([12-plan-repo-layout.md](12-plan-repo-layout.md), ADR 0003). Then hooks PR 2
-   (`feat/hooks-go-git-guard`) rebases onto it: `hooks/` → `packages/hooks/`, Go steps in the `hooks` CI job, `go.work`,
+   (`feat/hooks-go-git-guard`) merges `main` (no rebase): `hooks/` → `packages/hooks/`, Go steps in the `hooks` CI job, `go.work`,
    Dependabot `gomod`. Then hooks PRs 3–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md).
    Hooks PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
    repos → packaging, smoke and release.
-2. `review` / `run` / `doctor`.
-3. Publish 0.1.0.
-4. Set up the beta team repo.
+2. **Skills from the retro:** make the changes in [13](13-retro-git-guard-review-rounds.md) and run its behavior eval.
+3. `review` / `run` / `doctor`.
+4. Publish 0.1.0.
+5. Set up the beta team repo.
 
 ## Follow-ups (not ticketed)
 
