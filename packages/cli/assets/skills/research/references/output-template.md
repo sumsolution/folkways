@@ -9,6 +9,7 @@ Read when writing the research file. Template for `NN-<topic>.md`.
 
 **Question:** <what we set out to answer, one or two lines>
 **Feeds decision:** <what the answer will be used for>
+**Non-goals:** <what the answer and any plan from it deliberately won't cover>
 **Researched:** <date>, by <handle> with <tool>.
 **Answer:** <two or three lines; the conclusion first>
 **Confidence:** high | medium | low. <one line on why>
@@ -24,6 +25,10 @@ Read when writing the research file. Template for `NN-<topic>.md`.
 
 ## Details
 <Only what the table can't hold. Group by sub-question. Short quotes, each linked.>
+
+## Plan
+<Only when the research recommends building something. Steps, non-goals, and a rough size budget
+(lines, files, days) so a reviewer can tell when the work outgrows it. Omit otherwise.>
 
 ## Risks and open questions
 - <What could make this wrong; what the user should decide or check.>

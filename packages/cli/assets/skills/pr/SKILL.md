@@ -50,6 +50,20 @@ Read these first. A missing file is normal; skip it.
 Updating an existing PR: same gate. After new commits, the review must cover the new HEAD before you
 push again.
 
+## Acting on review feedback {#feedback}
+
+For comments from people, review bots or a fresh-process review:
+
+1. **Sort each finding** against the change's intent and non-goals: realistic, false positive, or out of
+   scope. Judge severity yourself; don't inherit the reviewer's label or threat model.
+2. **Look for a cluster.** When several findings share one cause, that's a design question for the user,
+   not a fix list: follow "Step back" in the framework instructions.
+3. **Show the user the sort** before changing code: what you'd fix, what you'd decline and why, and the
+   smaller option.
+4. **Record non-goals** where the next reviewer will see them: the PR description, or the spec or
+   contract the change implements.
+5. **Reply to each declined finding** with the reason, once. Posting is the user's call.
+
 ## Title {#title}
 
 The commit header rules from the `commit` skill: `<type>(<scope>): <subject>`, module scope, no ticket

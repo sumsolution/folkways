@@ -37,8 +37,8 @@ author. Keep it that way: don't read the author's session notes as a substitute 
 
 1. **Load intent before the diff.** Read the ticket, the effort's `00-STATUS.md` and design docs, any
    ADRs it links, and `knowledge/` entries on the touched area. Write down in two or three lines what
-   the change must do and what it must not break. If there is no ticket, review against the PR
-   description and note the missing ticket as a process finding.
+   the change must do, what it must not break, and its non-goals. If there is no ticket, review
+   against the PR description and note the missing ticket as a process finding.
 2. **Pin the SHA.** Review exactly one SHA. Check it out in a detached worktree
    (`git worktree add --detach <projects_dir>/.worktrees/<repo>/review-<sha7> <sha>`), never in the
    user's clone. Record the SHA in the output.
@@ -65,6 +65,9 @@ author. Keep it that way: don't read the author's session notes as a substitute 
   keep the PR's scope, and suggest a follow-up ticket (the `side-quest` skill writes it).
 - **Size:** friction shows in review rounds and time open more than in line count. If the change
   mixes independent outcomes, suggest a split.
+- **Proportion:** is the complexity in line with the intent and its stated non-goals? A finding that
+  falls under a stated non-goal is a `question` or `thought`, not a blocking `issue`. After two or more
+  review rounds on the same area, review the design, not the diff: say whether the approach still fits.
 
 ## Findings format {#findings-format}
 
