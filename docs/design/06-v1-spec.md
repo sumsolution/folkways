@@ -72,7 +72,7 @@ team-repo/
 │   ├── overlays/<skill>/    #   personal overlays: add only
 │   ├── inbox/               #   side quests, ticket drafts with no effort
 │   └── work/<KEY>-<slug>/   #   personal efforts; promote with git mv to efforts/
-├── .local/                  # gitignored: me.yaml, session markers, private scratch
+├── .local/                  # gitignored: me.yaml, hook state, private scratch
 ├── node_modules/            # gitignored; holds the pinned @folkways/cli
 ├── .folkways/               # SYNCED, framework-owned (§3)
 │   ├── manifest.json        #   version + checksum of every synced file
@@ -269,7 +269,7 @@ and attaches personal additions (§3.2); writes only after approval; succinct ou
 |---|---|---|
 | `ticket` | beta team's ticket skill | Tracker from `team.yaml`. Team templates and examples → `overlays/ticket/`. Framework ships generic templates + synthetic examples. Drafts go to the effort folder, else `people/<h>/inbox/` (drop `.agents/tickets`). Adds: tables where useful, call out gotchas. |
 | `adr` | `adr` | Method + default template (Issue → Context → Decision → Options → Consequences) + synthetic examples. Targets, group label, reviewers from `team.yaml`; gold-standard examples → `overlays/adr/`. Confluence and `docs/adr/NNNN-*.md`. Architecture knowledge section: **later** (dedicated session). |
-| `session-close` | `session-close` | Homes: `knowledge/` (by PR), `state/`, effort `00-STATUS.md`, overlays, `people/<h>/inbox/`. Lists all side quests found. Clears the `.local/` unclosed-session marker. Claude auto-memory stays optional. |
+| `session-close` | `session-close` | Homes: `knowledge/` (by PR), `state/`, effort `00-STATUS.md`, overlays, `people/<h>/inbox/`. Lists all side quests found. Claude auto-memory stays optional. |
 | `knowledge-audit` | `knowledge-audit` | Tracker `state/knowledge-audit.md`. Headless mode = open a PR of proposals (§7.4), not a log block. |
 
 `epic-retro` and `doc-eval` are not ported (agreed 2026-09-28).
@@ -304,8 +304,7 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 |---|---|---|---|
 | `context-band` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
 | `precompact` | `PreCompact` | Logs a missed band to `.local/`. | yes |
-| `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". If an unclosed-session marker exists: inject "offer session-close". Reminds the `start` procedure. | yes |
-| `session-end` | `SessionEnd` | Writes `.local/sessions/<id>.unclosed`. | `sessionEnd` |
+| `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". Reminds the `start` procedure. | yes |
 | `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message format (Angular, allowed scope). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
 
 Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.

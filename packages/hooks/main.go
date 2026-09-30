@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sumsolution/folkways/packages/hooks/internal/contextband"
 	"github.com/sumsolution/folkways/packages/hooks/internal/gitguard"
 	"github.com/sumsolution/folkways/packages/hooks/internal/payload"
+	"github.com/sumsolution/folkways/packages/hooks/internal/precompact"
+	"github.com/sumsolution/folkways/packages/hooks/internal/sessionstart"
 	"github.com/sumsolution/folkways/packages/hooks/internal/team"
 )
 
@@ -16,7 +19,10 @@ var version = "dev"
 
 // hooks maps a hook name to its implementation.
 var hooks = map[string]func(p payload.Payload, cfg team.Config){
-	"git-guard": gitguard.Run,
+	"git-guard":     gitguard.Run,
+	"context-band":  contextband.Run,
+	"precompact":    precompact.Run,
+	"session-start": sessionstart.Run,
 }
 
 func main() {

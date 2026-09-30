@@ -1,6 +1,6 @@
 # Hook contract suite
 
-Black-box tests for the five hooks in spec §7.1. They run **any** implementation as a subprocess, so the
+Black-box tests for the four hooks in spec §7.1. They run **any** implementation as a subprocess, so the
 same suite checks a Node, Go or Rust build. Defined by [ADR 0002](../../../docs/adr/0002-hook-runtime.md);
 tool behavior behind each rule: [08-research-hook-runtime.md](../../../docs/design/08-research-hook-runtime.md).
 
@@ -8,7 +8,7 @@ tool behavior behind each rule: [08-research-hook-runtime.md](../../../docs/desi
 
 ```
 FOLKWAYS_HOOK_CMD="/abs/path/to/folkways-hook" pnpm --filter @folkways/hooks test
-FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOKS=git-guard,session-end pnpm --filter @folkways/hooks test
+FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOKS=git-guard,precompact pnpm --filter @folkways/hooks test
 ```
 
 - The harness runs `/bin/sh -c "$FOLKWAYS_HOOK_CMD <hook>"`, as both tools do, with the payload on stdin.
@@ -25,7 +25,7 @@ FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOK
 | `description` | one line, shown in the test name |
 | `env.team` | deep-merged into the base `team.yaml` (scopes `web-app, auth, ci`, `review.trigger: pre-push`, bands 125K/150K/200K) |
 | `env.me` | deep-merged into the base `.local/me.yaml` (`handle: alex`, `projects_dir: ${PROJECTS}`); `null` removes it |
-| `env.files` | extra files in the team repo (review files, session markers) |
+| `env.files` | extra files in the team repo (review files, state) |
 | `env.claudeProjectDir` | default `true`; `false` leaves `CLAUDE_PROJECT_DIR` unset, as Copilot CLI does for repo hooks |
 | `env.transcript` | transcript lines: a number is a main-chain assistant line with that many tokens in context, `{ "sidechain": n }` a subagent line, an object is written as is |
 | `steps[]` | one or more calls in the same environment: `payload` (stdin), optional `cwd`, optional `transcript` (replaces the file), `expect` |
@@ -102,10 +102,8 @@ change them here and in the fixtures together.
 - git-guard catches agent mistakes, not a determined bypass: `bash -c`, `eval`, aliases and scripts are out of scope.
 
 **`session-start`** (`SessionStart`): always remind the `start` procedure. `source: compact`: say to update
-`00-STATUS.md` now. Any `.local/sessions/*.unclosed`: offer `session-close`.
-
-**`session-end`** (`SessionEnd` / `sessionEnd`): write `.local/sessions/<session id>.unclosed` in the team
-repo. No output. No session id: do nothing.
+`00-STATUS.md` now. It doesn't offer `session-close`: most sessions aren't worth banking, and the person runs
+it when one is.
 
 **`precompact`** (`PreCompact`): append a line with the session id and `trigger` to `.local/precompact.log`.
 No output; never block compaction.

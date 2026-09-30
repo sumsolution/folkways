@@ -1,6 +1,6 @@
 ---
 name: session-close
-description: Banks what a session learned - proposes where each durable fact, status change and lesson should be saved, then writes it on approval. Use when the user says "close the session", "wrap up", "bank this", "end of day", "what should we save", "before I go" or "anything worth keeping", or when the SessionStart hook reports an unclosed session. Not for writing the status doc for a fresh session (use handoff).
+description: Banks what a session learned - proposes where each durable fact, status change and lesson should be saved, then writes it on approval. Use when the user says "close the session", "wrap up", "bank this", "end of day", "what should we save", "before I go" or "anything worth keeping". Not for writing the status doc for a fresh session (use handoff).
 ---
 
 # session-close
@@ -54,9 +54,6 @@ Read these first. A missing file is normal; skip it.
    what was left out and why, and any side quests still unfiled. Then:
    - If the knowledge audit is due (see `state/knowledge-audit.md`, or no tracker and `knowledge/` is
      non-empty), offer to run `knowledge-audit`. Don't start it unasked.
-   - Clear this session's `.local/sessions/<id>.unclosed` marker. If the run is for an earlier session
-     (the hook reported it), clear that marker instead, and only after its banking is done or declined.
-     `.local/` is never committed.
    - Commit nothing unless asked. Landing paths: `knowledge/` changes go on a branch and a PR;
      `state/`, efforts and `people/` go straight to the default branch, rebased, after approval.
 
@@ -99,5 +96,4 @@ A fact the team needs goes in `knowledge/`, not only in auto-memory.
 No one can approve, so write nothing to `knowledge/`, `state/` or the effort. Run steps 1 to 4 and write
 the proposal table, the considered-and-dropped list and the side-quest list to
 `people/<handle>/inbox/session-close-<YYYY-MM-DD>.md`, or to a draft PR branch if the prompt asked for
-one. Mark each judgment call (a home you weren't sure of, a contradiction) so a reviewer can decide. Don't
-clear the unclosed marker; a person still has to close the session.
+one. Mark each judgment call (a home you weren't sure of, a contradiction) so a reviewer can decide.

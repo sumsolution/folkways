@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { git, tmp } from './util.ts';
 
 export const FIXTURES = resolve(import.meta.dirname, 'fixtures');
-export const HOOKS = ['context-band', 'precompact', 'session-start', 'session-end', 'git-guard'] as const;
+export const HOOKS = ['context-band', 'precompact', 'session-start', 'git-guard'] as const;
 
 /** One call of the hook. `payload`, `cwd`, `files` and `expect` may use the placeholders in `Vars`. */
 export interface Step {

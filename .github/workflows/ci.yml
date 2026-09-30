@@ -120,7 +120,7 @@ jobs:
         working-directory: packages/hooks
         run: go build -o bin/folkways-hook .
       - name: Go tests and contract suite
-        run: FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test
+        run: FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" pnpm --filter @folkways/hooks test
 
   evals:
     name: evals

@@ -26,3 +26,22 @@ func Deny(reason string) {
 		PermissionDecisionReason string   `json:"permissionDecisionReason"`
 	}{decision{"PreToolUse", "deny", reason}, "deny", reason})
 }
+
+// Context adds context to the conversation. Copilot CLI reads only the top-level additionalContext,
+// and only on SessionStart, so it is added there.
+func Context(event, text string) {
+	type specific struct {
+		HookEventName     string `json:"hookEventName"`
+		AdditionalContext string `json:"additionalContext"`
+	}
+	top := ""
+	if event == "SessionStart" {
+		top = text
+	}
+	enc := json.NewEncoder(Stdout)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(struct {
+		HookSpecificOutput specific `json:"hookSpecificOutput"`
+		AdditionalContext  string   `json:"additionalContext,omitempty"`
+	}{specific{event, text}, top})
+}
