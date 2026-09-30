@@ -1,5 +1,10 @@
 {
-  "description": "`--git-dir` and `--work-tree` select the target repo",
+  "description": "An inbox file whose name does not start with a date is not a review",
+  "env": {
+    "files": {
+      "people/alex/inbox/whenever-review-${HEAD7}.md": "# Review\n\nVerdict: approve\n"
+    }
+  },
   "steps": [
     {
       "payload": {
@@ -10,7 +15,7 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "git --git-dir=${MAIN}/.git --work-tree=${MAIN} reset --hard",
+          "command": "cd ${WORKTREE} && git push -u origin HEAD",
           "description": "Run a command"
         },
         "tool_use_id": "toolu_01"
@@ -20,10 +25,10 @@
           "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
-            "permissionDecisionReason": "re:worktree"
+            "permissionDecisionReason": "re:review"
           },
           "permissionDecision": "deny",
-          "permissionDecisionReason": "re:worktree"
+          "permissionDecisionReason": "re:review"
         }
       }
     }

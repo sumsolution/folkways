@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -40,16 +41,16 @@ func hasFrontmatterReview(dir, handle, head string) bool {
 	return false
 }
 
-// hasInboxReview reads the person's inbox directory literally (the handle is never a glob) and matches by
-// file name only: the date part is not validated.
+// hasInboxReview reads the person's inbox directory literally (the handle is never a glob) and matches
+// file names `<YYYY-MM-DD>-review-<sha7>.md`.
 func hasInboxReview(dir, handle, head string) bool {
 	if handle == "" || len(head) < 7 {
 		return false
 	}
+	name := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}-review-` + regexp.QuoteMeta(head[:7]) + `\.md$`)
 	entries, _ := os.ReadDir(filepath.Join(dir, "people", handle, "inbox"))
-	suffix := "-review-" + head[:7] + ".md"
 	for _, e := range entries {
-		if !e.IsDir() && strings.HasSuffix(e.Name(), suffix) {
+		if !e.IsDir() && name.MatchString(e.Name()) {
 			return true
 		}
 	}

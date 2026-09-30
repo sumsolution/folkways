@@ -100,7 +100,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 324 pass; hooks 14 pass, 88 skipped until a binary exists |
+| Tests | per package | vitest: CLI 324 pass; hooks 15 pass, 119 skipped until a binary exists (git-guard 85 pass against it) |
 
 ## Review follow-ups (PR #1, not blocking)
 

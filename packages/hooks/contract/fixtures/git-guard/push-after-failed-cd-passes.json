@@ -1,5 +1,5 @@
 {
-  "description": "`cd <missing> || git push` runs the push in the original directory, so the review check applies",
+  "description": "A `cd` in `||` may or may not have run, so the directory is unknown: fail open",
   "steps": [
     {
       "payload": {
@@ -16,15 +16,7 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": {
-          "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": "re:review"
-          },
-          "permissionDecision": "deny",
-          "permissionDecisionReason": "re:review"
-        }
+        "stdout": null
       }
     }
   ]

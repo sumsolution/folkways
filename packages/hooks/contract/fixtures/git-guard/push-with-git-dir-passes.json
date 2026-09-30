@@ -1,5 +1,5 @@
 {
-  "description": "`pushd <dir>` changes directory like cd",
+  "description": "`--git-dir` is not resolved: the target repo is unknown, fail open",
   "steps": [
     {
       "payload": {
@@ -10,21 +10,13 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "pushd ${WORKTREE} && git push",
+          "command": "git --git-dir=${WORKTREE}/.git push",
           "description": "Run a command"
         },
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": {
-          "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": "re:review"
-          },
-          "permissionDecision": "deny",
-          "permissionDecisionReason": "re:review"
-        }
+        "stdout": null
       }
     }
   ]

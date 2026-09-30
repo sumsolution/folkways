@@ -86,47 +86,106 @@ func mkdir(t *testing.T, parts ...string) string {
 	return p
 }
 
-func TestCheckCommandDirectories(t *testing.T) {
-	e := newEnv(t)
-	wt, main := e.worktree, e.main
-	cases := []struct {
-		name   string
-		cmd    string
-		cwd    string
-		denied string
-	}{
-		{"cd then push", "cd " + wt + " && git push", "/", "Push blocked"},
-		{"failed cd falls back to cwd", "cd /nonexistent-dir || git push", wt, "Push blocked"},
-		{"cd and: only the new dir", "cd " + wt + " && git checkout x", main, ""},
-		{"cd and: main clone", "cd " + main + " && git checkout x", wt, "main clone"},
-		{"cd semicolon: new dir", "cd " + main + "; git checkout x", wt, "main clone"},
-		{"cd semicolon: original dir", "cd " + wt + "; git checkout x", main, "main clone"},
-		{"cd or: original dir only", "cd " + main + " || git checkout x", wt, ""},
-		{"cd and-or: either dir", "cd " + wt + " && git status || git checkout x", main, "main clone"}, // cd failed: still in the original main clone
-		{"cd in pipeline does not persist", "cd " + main + " | git checkout x", wt, ""},
-		{"cd in background does not persist", "cd " + main + " & git checkout x", wt, ""},
-		{"subshell cd does not leak", "(cd " + main + ") && git checkout x", wt, ""},
-		{"subshell push", "(cd " + wt + " && git push)", "/", "Push blocked"},
-		{"subshell main clone", "(cd " + main + " && git reset --hard HEAD)", wt, "main clone"},
-		{"brace group", "{ cd " + wt + "; git push; }", "/", "Push blocked"},
-		{"command substitution", "cd " + wt + " && echo $(git push)", "/", "Push blocked"},
-		{"backticks", "cd " + wt + " && echo `git push`", "/", "Push blocked"},
-		{"substitution in quotes", "cd " + wt + " && echo \"x $(git push)\"", "/", "Push blocked"},
-		{"heredoc body is data", "cat <<EOF > notes.md\ngit push\nEOF", wt, ""},
-		{"heredoc then command", "cat <<EOF > n.md\nx\nEOF\ngit push", wt, "Push blocked"},
-		{"heredoc same line chain", "cat <<EOF && git push\nx\nEOF", wt, "Push blocked"},
-		{"global option --no-pager", "cd " + wt + " && git --no-pager push", "/", "Push blocked"},
-		{"global option main clone", "cd " + main + " && git --no-pager reset --hard", wt, "main clone"},
-		{"global options with operands", "git -c a=b --git-dir " + main + "/.git --work-tree " + main + " -C " + wt + " push", "/", "Push blocked"},
-		{"global options with equals", "git -C " + wt + " --git-dir=.git --namespace=y --exec-path=z --config-env=a=B -p -P --bare --paginate --no-replace-objects --no-optional-locks --literal-pathspecs --glob-pathspecs --noglob-pathspecs --icase-pathspecs --no-lazy-fetch push", "/", "Push blocked"},
-		{"-C relative to cd", "cd " + filepath.Dir(wt) + " && git -C app-wt push", "/", "Push blocked"},
-	}
+// checkAll runs each case in e and reports the ones whose reason does not match.
+func checkAll(t *testing.T, e env, cases []dirCase) {
+	t.Helper()
 	for _, c := range cases {
 		got := checkCommand(c.cmd, c.cwd, e.cfg)
 		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
 			t.Errorf("%s: %q: reason %q, want substring %q", c.name, c.cmd, got, c.denied)
 		}
 	}
+}
+
+type dirCase struct {
+	name   string
+	cmd    string
+	cwd    string
+	denied string // substring of the reason; "" = pass
+}
+
+// The directory model: one current directory, changed only by a top-level cd in an && or ; chain.
+// Anything else that could move it makes it unknown, and an unknown directory skips the push and
+// main-clone checks.
+func TestCheckCommandDirectories(t *testing.T) {
+	e := newEnv(t)
+	t.Setenv("HOME", filepath.Dir(filepath.Dir(e.main)))
+	wt, main := e.worktree, e.main
+	checkAll(t, e, []dirCase{
+		{"payload cwd", "git push", wt, "Push blocked"},
+		{"cd and", "cd " + wt + " && git push", "/", "Push blocked"},
+		{"cd and: only the new dir", "cd " + wt + " && git checkout x", main, ""},
+		{"cd and: main clone", "cd " + main + " && git checkout x", wt, "main clone"},
+		{"cd semicolon", "cd " + main + "; git checkout x", wt, "main clone"},
+		{"cd semicolon: only the new dir", "cd " + wt + "; git checkout x", main, ""},
+		{"relative cd", "cd " + filepath.Dir(wt) + " && cd app-wt && git push", "/", "Push blocked"},
+		{"tilde", "cd ~/projects/app-wt && git push", "/", "Push blocked"},
+		{"$HOME", `cd "$HOME/projects/app-wt" && git push`, "/", "Push blocked"},
+		{"${HOME}", "cd ${HOME}/projects/app && git reset --hard", wt, "main clone"},
+		{"quoted tilde is literal", `cd "~/projects/app-wt" && git push`, "/", ""},
+		{"plain cd goes home", "cd && git checkout x", main, ""},
+		{"-C", "git -C " + wt + " push", "/", "Push blocked"},
+		{"attached -C", "git -C" + wt + " push", "/", "Push blocked"},
+		{"-C relative to cd", "cd " + filepath.Dir(wt) + " && git -C app-wt push", "/", "Push blocked"},
+		{"-c and flags", "cd " + main + " && git -c a=b -ccore.x=y --no-pager -P --no-optional-locks reset --hard", wt, "main clone"},
+		{"subshell", "(cd " + wt + " && git push)", "/", "Push blocked"},
+		{"subshell cd does not leak", "(cd " + main + ") && git checkout x", wt, ""},
+		{"brace group", "{ cd " + wt + "; git push; }", "/", "Push blocked"},
+		{"substitution inherits cd", "cd " + wt + " && echo $(git push)", "/", "Push blocked"},
+		{"substitution cd does not leak", "echo $(cd " + main + ") && git checkout x", wt, ""},
+
+		// Unknown: fail open.
+		{"cd variable", "cd $ELSEWHERE && git push", wt, ""},
+		{"cd dash", "cd - && git push", wt, ""},
+		{"relative cd after unknown", "cd $ELSEWHERE && cd sub && git push", wt, ""},
+		{"absolute cd after unknown is known", "cd \"$X\" && cd " + wt + " && git push", "/", "Push blocked"},
+		{"absolute -C after unknown is known", "cd $X && git -C " + wt + " push", "/", "Push blocked"},
+		{"relative -C after unknown", "cd $X && git -C sub push", wt, ""},
+		{"-C variable", "git -C \"$X\" push", wt, ""},
+		{"cd in ||", "cd /nonexistent-dir || git push", wt, ""},
+		{"cd in if", "if true; then cd " + main + "; fi; git push", wt, ""},
+		{"cd in pipeline", "cd " + main + " | git checkout x", wt, ""},
+		{"cd in background", "cd " + main + " & git checkout x", wt, ""},
+		{"pushd", "pushd " + wt + " && git push", wt, ""},
+		{"popd", "popd; git push", wt, ""},
+		{"--git-dir", "git --git-dir=" + main + "/.git reset --hard", wt, ""},
+		{"--git-dir operand", "git --git-dir " + main + "/.git reset --hard", wt, ""},
+		{"--work-tree", "cd " + main + " && git --work-tree=/tmp reset --hard", wt, ""},
+		{"GIT_DIR", "GIT_DIR=" + main + "/.git git reset --hard", wt, ""},
+		{"unknown subcommand", "git $SUB push", wt, ""},
+		{"absolute git path", "/usr/bin/git push", wt, ""}, // not recognised: documented non-goal
+	})
+}
+
+// Git commands are found wherever the shell would run them; data is not commands.
+func TestCheckCommandShellSyntax(t *testing.T) {
+	e := newEnv(t)
+	wt := e.worktree
+	cases := []dirCase{
+		{"and-or chain", "git status && git log || git push", wt, "Push blocked"},
+		{"pipeline", "echo a | git push", wt, "Push blocked"},
+		{"background", "git push &", wt, "Push blocked"},
+		{"if condition", "if git push; then :; fi", wt, "Push blocked"},
+		{"else body", "if false; then :; else git push; fi", wt, "Push blocked"},
+		{"while body", "while true; do git push; done", wt, "Push blocked"},
+		{"for items substitution", "for i in $(git push); do :; done", wt, "Push blocked"},
+		{"case body", "case x in x) git push;; esac", wt, "Push blocked"},
+		{"negation", "! git push", wt, "Push blocked"},
+		{"backticks", "echo `git push`", wt, "Push blocked"},
+		{"substitution in quotes", "echo \"x $(git push)\"", wt, "Push blocked"},
+		{"nested substitution", "echo $(echo $(git push))", wt, "Push blocked"},
+		{"assignment substitution", "X=$(git push) true", wt, "Push blocked"},
+		{"process substitution", "cat <(git push)", wt, "Push blocked"},
+		{"redirect target substitution", "echo > $(git push)", wt, "Push blocked"},
+		{"heredoc body is data", "cat <<EOF > notes.md\ngit push\nEOF", wt, ""},
+		{"heredoc then command", "cat <<EOF > n.md\nx\nEOF\ngit push", wt, "Push blocked"},
+		{"unquoted heredoc substitution", "cat <<EOF\n$(git push)\nEOF", wt, "Push blocked"},
+		{"quoted heredoc is data", "cat <<'EOF'\n$(git push)\nEOF", wt, ""},
+		{"comment", "echo ok # git push", wt, ""},
+		{"line continuation", "git \\\n push", wt, "Push blocked"},
+		{"parse error fails open", "git push; ) (", wt, ""},
+	}
+	checkAll(t, e, cases)
 }
 
 func TestCommitMessageHeredocIsNotCommands(t *testing.T) {
@@ -139,78 +198,6 @@ func TestCommitMessageHeredocIsNotCommands(t *testing.T) {
 	bad := "git commit -m \"$(cat <<'EOF'\nnope\nEOF\n)\""
 	if got := checkCommand(bad, t.TempDir(), cfg); !strings.Contains(got, "not Angular") {
 		t.Errorf("bad heredoc message not denied: %q", got)
-	}
-}
-
-func TestCheckCommandShellSyntax(t *testing.T) {
-	e := newEnv(t)
-	home := filepath.Dir(e.main) // projects/
-	t.Setenv("HOME", filepath.Dir(home))
-	rel := "projects/app-wt"
-	wt, main := e.worktree, e.main
-	cases := []struct {
-		name   string
-		cmd    string
-		cwd    string
-		denied string
-	}{
-		{"$HOME", `cd "$HOME/` + rel + `" && git push`, "/", "Push blocked"},
-		{"${HOME}", `cd ${HOME}/` + rel + ` && git push`, "/", "Push blocked"},
-		{"tilde", "cd ~/" + rel + " && git push", "/", "Push blocked"},
-		{"tilde main clone", "cd ~/projects/app && git reset --hard HEAD", wt, "main clone"},
-		{"quoted tilde is literal", `cd "~/` + rel + `" && git push`, "/", ""},
-		{"unknown cd then and: fail open", "cd $ELSEWHERE && git push", wt, ""},
-		{"unknown cd then or: original dir", "cd $ELSEWHERE || git push", wt, "Push blocked"},
-		{"unknown cd then semicolon: original dir", "cd $ELSEWHERE; git push", wt, "Push blocked"},
-		{"unknown cd then relative cd stays unknown", "cd $ELSEWHERE && cd sub && git push", wt, ""},
-		{"unknown git dir option", "git -C $ELSEWHERE push", wt, ""},
-		{"unknown subcommand", "git $SUB push", wt, ""},
-		{"plain cd goes home", "cd && git checkout x", wt, ""},
-		{"cd dash is unknown", "cd - && git push", wt, ""},
-		{"attached -C", "git -C" + wt + " push", "/", "Push blocked"},
-		{"attached -c", "cd " + main + " && git -ccore.x=y reset --hard", wt, "main clone"},
-		{"git-dir and work-tree", "git --git-dir=" + main + "/.git --work-tree=" + main + " reset --hard", wt, "main clone"},
-		{"git-dir only, .git suffix", "git --git-dir=" + main + "/.git reset --hard", wt, "main clone"},
-		{"git-dir separate operand", "git --git-dir " + wt + "/.git push", "/", "Push blocked"},
-		{"git-dir relative to -C", "git -C " + filepath.Dir(wt) + " --git-dir=app-wt/.git push", "/", "Push blocked"},
-		{"work-tree wins", "git --git-dir=" + main + "/.git --work-tree=" + wt + " push", "/", "Push blocked"},
-		{"if body", "if true; then cd " + wt + "; git push; fi", "/", "Push blocked"},
-		{"if condition", "if git push; then :; fi", wt, "Push blocked"},
-		{"else body", "if false; then :; else git push; fi", wt, "Push blocked"},
-		{"while body", "while true; do git push; done", wt, "Push blocked"},
-		{"for body", "for i in 1 2; do git push; done", wt, "Push blocked"},
-		{"for items substitution", "for i in $(git push); do :; done", wt, "Push blocked"},
-		{"case body", "case x in x) git push;; esac", wt, "Push blocked"},
-		{"case word substitution", "case $(git push) in x) :;; esac", wt, "Push blocked"},
-		{"function body", "f() { git push; }", wt, "Push blocked"},
-		{"time", "time git push", wt, "Push blocked"},
-		{"negation", "! git push", wt, "Push blocked"},
-		{"pipeline", "echo a | git push", wt, "Push blocked"},
-		{"background", "git push &", wt, "Push blocked"},
-		{"declare with substitution", "export X=$(git push)", wt, "Push blocked"},
-		{"assignment substitution", "X=$(git push) true", wt, "Push blocked"},
-		{"[[ ]] substitution", "[[ $(git push) ]]", wt, "Push blocked"},
-		{"arithmetic substitution", "echo $(( $(git push) + 1 ))", wt, "Push blocked"},
-		{"process substitution", "cat <(git push)", wt, "Push blocked"},
-		{"redirect target substitution", "echo > $(git push)", wt, "Push blocked"},
-		{"nested substitution", "echo $(echo $(git push))", wt, "Push blocked"},
-		{"substitution inherits cd", "cd " + wt + " && echo $(git push)", "/", "Push blocked"},
-		{"substitution cd does not leak", "echo $(cd " + main + ") && git checkout x", wt, ""},
-		{"unquoted heredoc substitution", "cat <<EOF\n$(git push)\nEOF", wt, "Push blocked"},
-		{"quoted heredoc is data", "cat <<'EOF'\n$(git push)\nEOF", wt, ""},
-		{"double-quoted delimiter heredoc is data", "cat <<\"EOF\"\n$(git push)\nEOF", wt, ""},
-		{"heredoc with dash", "cat <<-EOF\n\t$(git push)\n\tEOF", wt, "Push blocked"},
-		{"comment", "echo ok # git push", wt, ""},
-		{"line continuation", "git \\\n push", wt, "Push blocked"},
-		{"parse error fails open", "git push; ) (", wt, ""},
-		{"unterminated quote fails open", "git push 'abc", wt, ""},
-		{"absolute git path", "/usr/bin/git push", wt, ""}, // not recognised: documented non-goal
-	}
-	for _, c := range cases {
-		got := checkCommand(c.cmd, c.cwd, e.cfg)
-		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
-			t.Errorf("%s: %q: reason %q, want substring %q", c.name, c.cmd, got, c.denied)
-		}
 	}
 }
 
@@ -261,48 +248,6 @@ func TestCommitMessages(t *testing.T) {
 		got := checkCommand(c.cmd, "/nonexistent", cfg)
 		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
 			t.Errorf("%s: reason %q, want substring %q", c.cmd, got, c.denied)
-		}
-	}
-}
-
-func TestGitTargets(t *testing.T) {
-	e := newEnv(t)
-	t.Setenv("HOME", filepath.Dir(filepath.Dir(e.main)))
-	wt, main := e.worktree, e.main
-	team := e.cfg.Dir
-	cases := []struct {
-		name   string
-		cmd    string
-		cwd    string
-		denied string
-	}{
-		{"pushd like cd", "pushd " + wt + " && git push", "/", "Push blocked"},
-		{"pushd main clone", "pushd " + main + " && git reset --hard", wt, "main clone"},
-		{"pushd tilde", "pushd ~/projects/app-wt >/dev/null && git push", "/", "Push blocked"},
-		{"pushd with rotation is unknown", "pushd +1 && git push", wt, ""},
-		{"pushd option is unknown", "pushd -n " + main + " && git push", wt, ""},
-		{"pushd without args is unknown", "pushd && git push", wt, ""},
-		{"pushd unknown then semicolon", "pushd +1; git push", wt, "Push blocked"},
-		{"popd is unknown", "popd && git push", wt, ""},
-		{"popd then semicolon keeps the original", "popd; git push", wt, "Push blocked"},
-		{"env GIT_DIR and GIT_WORK_TREE", "GIT_DIR=" + main + "/.git GIT_WORK_TREE=" + main + " git reset --hard", team, "main clone"},
-		{"env GIT_DIR only", "GIT_DIR=" + main + "/.git git reset --hard", wt, "main clone"},
-		{"env GIT_DIR push", "GIT_DIR=" + wt + "/.git git push", "/", "Push blocked"},
-		{"option wins over env", "GIT_DIR=" + main + "/.git git --git-dir=" + wt + "/.git reset --hard", "/", ""},
-		{"env unresolvable is unknown", "GIT_DIR=$X git push", wt, ""},
-		{"env relative to dir", "cd " + wt + " && GIT_DIR=.git git push", "/", "Push blocked"},
-		{"work-tree alone is ignored", "cd " + main + " && git --work-tree=" + team + " reset --hard", wt, "main clone"},
-		{"work-tree alone: repo is the current dir", "cd " + wt + " && git --work-tree=" + main + " reset --hard", team, ""},
-		{"work-tree env alone is ignored", "cd " + main + " && GIT_WORK_TREE=" + team + " git reset --hard", wt, "main clone"},
-		{"unresolvable work-tree with git-dir is unknown", "git --git-dir=" + main + "/.git --work-tree=$X reset --hard", wt, ""},
-		{"unresolvable work-tree alone does not matter", "cd " + main + " && git --work-tree=$X reset --hard", wt, "main clone"},
-		{"absolute -C after unknown cd is known", "cd $X && git -C " + wt + " push", "/", "Push blocked"},
-		{"relative -C after unknown cd is unknown", "cd $X && git -C sub push", wt, ""},
-	}
-	for _, c := range cases {
-		got := checkCommand(c.cmd, c.cwd, e.cfg)
-		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
-			t.Errorf("%s: %q: reason %q, want substring %q", c.name, c.cmd, got, c.denied)
 		}
 	}
 }

@@ -37,52 +37,14 @@ func checkCommand(cmd, payloadCwd string, cfg team.Config) string {
 	if err != nil {
 		return ""
 	}
-	cur := payloadCwd
-	if cur == "" {
-		cur, _ = os.Getwd()
+	dir := payloadCwd
+	if dir == "" {
+		dir, _ = os.Getwd()
 	}
-	home, err := os.UserHomeDir()
-	w := &walker{cfg: cfg, res: resolver{home: home, homeOK: err == nil && home != ""}}
-	w.list(file.Stmts, dirset{dirs: []string{cur}})
+	home, _ := os.UserHomeDir()
+	w := &walker{cfg: cfg, res: newResolver(home)}
+	w.list(file.Stmts, cwd{dir, dir != ""}, true)
 	return w.reason
-}
-
-func resolve(base, dir string) string {
-	if filepath.IsAbs(dir) {
-		return filepath.Clean(dir)
-	}
-	return filepath.Join(base, dir)
-}
-
-// messageArg returns the value of the commit message word: its literal text, or the body of
-// `$(cat <<'EOF' ... EOF)`. ok is false for any other expansion, which cannot be evaluated here.
-func (r resolver) messageArg(w *syntax.Word) (string, bool) {
-	if s, ok := r.word(w); ok {
-		return s, true
-	}
-	if len(w.Parts) != 1 {
-		return "", false
-	}
-	dq, ok := w.Parts[0].(*syntax.DblQuoted)
-	if !ok || len(dq.Parts) != 1 {
-		return "", false
-	}
-	cs, ok := dq.Parts[0].(*syntax.CmdSubst)
-	if !ok || len(cs.Stmts) != 1 {
-		return "", false
-	}
-	st := cs.Stmts[0]
-	call, ok := st.Cmd.(*syntax.CallExpr)
-	if !ok || len(call.Args) == 0 || len(st.Redirs) != 1 {
-		return "", false
-	}
-	if name, ok := r.word(call.Args[0]); !ok || name != "cat" {
-		return "", false
-	}
-	if h := st.Redirs[0]; (h.Op == syntax.Hdoc || h.Op == syntax.DashHdoc) && h.Hdoc != nil {
-		return r.heredocBody(h.Hdoc)
-	}
-	return "", false
 }
 
 // Commit options that take an operand. A short one in a cluster (`-Skey`, `-Fmsg.txt`) takes the rest of the
@@ -92,15 +54,10 @@ const (
 	shortOptionalAfter = "Su"
 )
 
-// Long commit options whose operand is the next word (`--opt value`).
-var longWithOperand = map[string]bool{"--file": true, "--reuse-message": true, "--reedit-message": true, "--template": true,
-	"--author": true, "--date": true, "--cleanup": true, "--fixup": true, "--squash": true, "--trailer": true,
-	"--pathspec-from-file": true, "--gpg-sign": false}
-
 // commitMessage returns the first message given by -m, -am, -m<msg>, --message <msg> or --message=<msg>.
 // A short-option cluster is read left to right: an m ends it with the message, an option with an operand
 // ends it without one. ok is false when there is none or it is not statically known.
-func commitMessage(r resolver, args []arg) (string, bool) {
+func commitMessage(args []arg) (string, bool) {
 	for i := 0; i < len(args); i++ {
 		a := args[i]
 		if !a.ok {
@@ -114,11 +71,9 @@ func commitMessage(r resolver, args []arg) (string, bool) {
 			if i+1 >= len(args) {
 				return "", false
 			}
-			return r.messageArg(args[i+1].w)
+			return args[i+1].val, args[i+1].ok
 		case strings.HasPrefix(v, "--message="):
 			return strings.TrimPrefix(v, "--message="), true
-		case longWithOperand[v]:
-			i++
 		case strings.HasPrefix(v, "-") && !strings.HasPrefix(v, "--"):
 		cluster:
 			for k := 1; k < len(v); k++ {
@@ -131,7 +86,7 @@ func commitMessage(r resolver, args []arg) (string, bool) {
 					if i+1 >= len(args) {
 						return "", false
 					}
-					return r.messageArg(args[i+1].w)
+					return args[i+1].val, args[i+1].ok
 				case strings.IndexByte(shortWithOperand, c) >= 0:
 					if k+1 == len(v) {
 						i++ // the operand is the next word
@@ -156,8 +111,8 @@ func subjectOf(msg string) string {
 	return ""
 }
 
-func checkCommit(r resolver, args []arg, cfg team.Config) string {
-	msg, ok := commitMessage(r, args)
+func checkCommit(args []arg, cfg team.Config) string {
+	msg, ok := commitMessage(args)
 	if !ok {
 		return ""
 	}
