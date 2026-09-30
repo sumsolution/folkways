@@ -1,13 +1,16 @@
 import { FolkwaysError } from './errors.ts';
 
 /**
- * Hook entries whose command starts with this are framework-owned (spec §3.1).
- * The hook runtime (ADR 0002) may change the command form; change it here only.
+ * Hook entries whose command starts with this are framework-owned (spec §3.1): the Go binary from
+ * `@folkways/hooks-<os>-<cpu>` (ADR 0002). Change the command form here only.
  */
-export const FRAMEWORK_HOOK_PREFIX = 'node_modules/.bin/folkways hook ';
+export const FRAMEWORK_HOOK_PREFIX = '"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook ';
+
+/** Earlier command forms, still owned so `sync` removes them. */
+const OLD_HOOK_PREFIXES = ['node_modules/.bin/folkways hook '];
 
 export function isFrameworkHook(command: string): boolean {
-  return command.startsWith(FRAMEWORK_HOOK_PREFIX);
+  return [FRAMEWORK_HOOK_PREFIX, ...OLD_HOOK_PREFIXES].some((prefix) => command.startsWith(prefix));
 }
 
 interface HookEntry {
@@ -19,6 +22,7 @@ interface HookGroup {
   [key: string]: unknown;
 }
 export interface Settings {
+  disableAllHooks?: boolean;
   hooks?: Record<string, HookGroup[]>;
   permissions?: { ask?: string[]; [key: string]: unknown };
   [key: string]: unknown;
@@ -38,7 +42,8 @@ const isEmptyGroup = (g: unknown): boolean => isObject(g) && Array.isArray(g.hoo
 
 /**
  * Merge the framework settings fragment into a team's .claude/settings.json.
- * Replaces framework hook entries, adds missing framework `ask` rules, keeps everything else.
+ * Replaces framework hook entries, adds missing framework `ask` rules, sets `disableAllHooks` from the
+ * fragment (ADR 0001 M11), keeps everything else.
  * Throws a FolkwaysError when the team settings have a shape it can't merge into.
  */
 export function mergeSettings(current: Settings, fragment: Settings): Settings {
@@ -72,6 +77,8 @@ export function mergeSettings(current: Settings, fragment: Settings): Settings {
   }
   if (Object.keys(hooks).length > 0) out.hooks = hooks as Settings['hooks'];
   else delete out.hooks;
+
+  if (fragment.disableAllHooks !== undefined) out.disableAllHooks = fragment.disableAllHooks;
 
   const ask = fragment.permissions?.ask ?? [];
   if (ask.length > 0) {

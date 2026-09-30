@@ -14,6 +14,7 @@ import {
 import { dirname, join } from 'node:path';
 import { FolkwaysError } from './errors.ts';
 import { fsOps, listFiles, pruneEmptyDirs, sha256, sha256Text } from './files.ts';
+import { hookWarnings } from './hooks.ts';
 import { MANIFEST, type Manifest, readManifest, writeManifest } from './manifest.ts';
 import { compileSkillFiles, lintPersonalOverlay } from './overlays.ts';
 import { PACKAGE_ROOT, packageVersion } from './package.ts';
@@ -370,7 +371,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   pruneEmptyDirs(join(team, '.folkways'));
   pruneEmptyDirs(join(team, '.github'));
 
-  const warnings = [...compiled.warnings, ...lintPersonalOverlays(team)];
+  const warnings = [...compiled.warnings, ...lintPersonalOverlays(team), ...hookWarnings(team)];
   const link = linkPersonalFolder(team);
   if (link) warnings.push(link);
   const agents = join(team, 'AGENTS.md');

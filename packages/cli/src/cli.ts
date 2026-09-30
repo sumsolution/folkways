@@ -2,6 +2,7 @@
 import { parseArgs } from 'node:util';
 import { FolkwaysError } from './errors.ts';
 import { git } from './git.ts';
+import { runHook } from './hooks.ts';
 import { init } from './init.ts';
 import { packageVersion } from './package.ts';
 import { fromUserAgent, PACKAGE_MANAGERS, type PackageManager } from './package-manager.ts';
@@ -19,8 +20,9 @@ const USAGE = `usage: folkways <command> [options]
                                         differing team files at framework paths
   upgrade <version>            install <version> on branch chore/folkways-<version>, sync, commit
                                (uses the team repo's package manager)
+  hook <name>                  run a hook by hand; reads the payload on stdin
   version                      print the installed version
-  hook | review | run | doctor not built yet`;
+  review | run | doctor        not built yet`;
 
 function teamRoot(): string {
   try {
@@ -72,7 +74,12 @@ function main(argv: string[]): void {
     case '--version':
       console.log(packageVersion());
       return;
-    case 'hook':
+    case 'hook': {
+      const { positionals } = parseArgs({ args: rest, allowPositionals: true });
+      if (positionals.length !== 1) throw new FolkwaysError('usage: folkways hook <name> < payload.json');
+      process.exitCode = runHook(teamRoot(), positionals[0]!);
+      return;
+    }
     case 'review':
     case 'run':
     case 'doctor':

@@ -82,7 +82,7 @@ diff, squash with a `(#N)` title, Summer approves push and merge.
   `handoff.bands`; per-session state; re-announce after compaction; silent on Copilot (no transcript).
 - CI job drops `FOLKWAYS_HOOKS`: all 111 run.
 
-### 4. `feat(cli)`: wire hooks into team repos
+### 4. `feat(cli)`: wire hooks into team repos (done)
 
 - `packages/cli/assets/settings.json`: one entry per hook and event, command
   `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` (shell form). Also
