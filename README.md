@@ -71,7 +71,11 @@ That scaffolds the team repo, syncs the framework files and makes the first comm
 | `review`, `run`, `doctor` | coming soon; today they say "not built yet" |
 | npm release | coming soon |
 
-The design record is in [docs/design/](docs/design/00-STATUS.md). License: TBD.
+The design record is in [docs/design/](docs/design/00-STATUS.md).
+
+## License
+
+[Apache-2.0](LICENSE). Copyright 2026 Summer Jordan. The license grants no rights to the name folkways.
 
 ## The guide
 

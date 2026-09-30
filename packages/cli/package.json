@@ -2,7 +2,7 @@
   "name": "@folkways/cli",
   "version": "0.1.0",
   "description": "A team framework for AI coding agents on Claude Code and Copilot CLI",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "repository": {
     "type": "git",
