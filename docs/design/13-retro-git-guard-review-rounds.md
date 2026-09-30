@@ -1,6 +1,6 @@
 # Retro: git-guard grew through three review rounds
 
-**Written:** 2026-09-29 (session 5) · **Status:** lessons agreed; skill changes not started ·
+**Written:** 2026-09-29 (session 5) · **Status:** skill changes made and evaluated (2026-09-30) ·
 **Case:** [sumsolution/folkways#13](https://github.com/sumsolution/folkways/pull/13)
 
 ## Why this matters
@@ -93,8 +93,34 @@ A behavior eval from [skill authoring](../skill-authoring.md#testing-a-skill), b
 - **Fail:** the agent fixes all 7, or asks only "fix all or some?".
 - **Runs:** 3 with the current skills and 3 with the changed ones, graded blind.
 
+## Eval results
+
+Run 2026-09-30 with [packages/evals](../../packages/evals/README.md); suite, fixtures and every answer
+in [research/evals/review-rounds/](../../research/evals/review-rounds). Arms: `before` = `28fbd63` (main),
+`after` = changes 1–6 (the `feat(skills)` commit on this PR's branch). 3 runs per arm and model, read-only
+tools, judge Sonnet with 3 blind votes per grader.
+
+| Case | Model | before | after |
+|---|---|---|---|
+| `copilot-round-2` (the incident: 7 more findings, round 2) | Sonnet | 0.00 (0/3 perfect) | **0.89** (2/3) |
+| | Opus | 0.44 (0/3) | **1.00** (3/3) |
+| `copilot-round-1-realistic` (control: 3 realistic findings, round 1; fixing is right) | Sonnet | 1.00 | 1.00 |
+| | Opus | 1.00 | 1.00 |
+
+- **Before reproduces the incident.** All three Sonnet runs accepted all 7 findings and planned a fix for
+  each; the only questions were about logistics. Opus sorted better on its own (it doubted finding 2) but
+  still recommended fixing 6 of 7.
+- **After steps back.** Every run cited the Step back triggers, showed the numbers (rounds, fixtures, file
+  sizes) and recommended a "do less" option, most also a "change direction" one. The one miss (Sonnet,
+  `sorts-findings`) judged most findings plausible agent forms and handled all 7 cheaply or by denying
+  conservatively: a defensible call.
+- **No over-correction** on the control: both arms fixed the realistic findings, and none raised a
+  proportion alarm.
+- A second grading pass of the Sonnet runs gave the same scores.
+
+Limits: one incident case and one control, N = 3; the grader rubrics were written knowing the intended
+behaviour. Add cases as new review patterns show up.
+
 ## Next
 
-After the restructure lands, a new session makes changes 1–6 in one PR (`feat(skills)`), runs the
-eval, and records the results here. The `git-guard` simplification (PR 13) comes first; it's the fix
-for the mistake.
+Done: changes 1–6 and the eval above. Keep the suite as a regression check when these skills change.
