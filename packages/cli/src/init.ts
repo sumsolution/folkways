@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync
 import { basename, dirname, join, resolve } from 'node:path';
 import { FolkwaysError } from './errors.ts';
 import { listFiles } from './files.ts';
+import { PNPM_WORKSPACE } from './hooks.ts';
 import { git } from './git.ts';
 import { PACKAGE_NAME, PACKAGE_ROOT, packageVersion } from './package.ts';
 import { installCommand, type PackageManager, packageManagerField } from './package-manager.ts';
@@ -77,6 +78,7 @@ function scaffold(dest: string, name: string, pkg: string, options: InitOptions)
     devDependencies: { [PACKAGE_NAME]: version },
   };
   writeFileSync(join(dest, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  if (pm === 'pnpm') writeFileSync(join(dest, 'pnpm-workspace.yaml'), PNPM_WORKSPACE);
 
   git(dest, 'init', '-q', '-b', 'main');
   if (options.install ?? true) {

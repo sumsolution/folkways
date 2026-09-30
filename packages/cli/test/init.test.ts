@@ -91,6 +91,13 @@ describe('init with pnpm', () => {
   it('leaves packageManager unset for npm', () => {
     const dest = init(join(tmp(), 'team'), { install: false, pkg: makePackage('1.0.0'), packageManager: 'npm' });
     expect(json(join(dest, 'package.json')).packageManager).toBeUndefined();
+    expect(existsSync(join(dest, 'pnpm-workspace.yaml'))).toBe(false);
+  });
+
+  it('hoists the hook binary for pnpm (ADR 0002) and commits the setting', () => {
+    const dest = init(join(tmp(), 'team'), { install: false, pkg: makePackage('1.0.0'), packageManager: 'pnpm' });
+    expect(read(join(dest, 'pnpm-workspace.yaml'))).toBe('publicHoistPattern:\n  - "@folkways/hooks-*"\n');
+    expect(isClean(dest)).toBe(true);
   });
 });
 

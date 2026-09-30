@@ -106,7 +106,8 @@ Code and text are delivered differently (round 12):
 | `.folkways/**` | framework | replaced |
 | `.claude/skills/<name>/` listed in manifest | framework | replaced |
 | `.github/workflows/folkways-*.yml` | framework | replaced |
-| `.claude/settings.json` hook entries whose command contains `folkways-hook ` | framework | those entries replaced; all other keys and entries untouched |
+| `.claude/settings.json` hook entries whose command starts with `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook ` (or the old `node_modules/.bin/folkways hook `) | framework | those entries replaced; all other keys and entries untouched |
+| `.claude/settings.json` `disableAllHooks` | framework | set to `false` (ADR 0001 M11) |
 | `.claude/settings.json` `permissions.ask` rules from the framework | framework | added if missing; never removed |
 | `AGENTS.md` | team | never written after `init`; `sync` warns if the `@.folkways/instructions.md` line is missing |
 | Everything else (`overlays/`, `people/`, team skills, `team.yaml`, `package.json`, …) | team / person | never written |

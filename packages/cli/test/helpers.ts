@@ -53,7 +53,7 @@ export function addFrameworkContent(pkg: string): void {
   put(join(pkg, 'assets/workflows/knowledge-audit.yml'), 'name: audit\n');
   const settings = json(join(pkg, 'assets/settings.json'));
   settings.hooks = {
-    SessionStart: [{ hooks: [{ type: 'command', command: 'node_modules/.bin/folkways hook session-start' }] }],
+    SessionStart: [{ hooks: [{ type: 'command', command: '"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook session-start' }] }],
   };
   writeFileSync(join(pkg, 'assets/settings.json'), JSON.stringify(settings));
 }

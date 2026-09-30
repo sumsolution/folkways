@@ -1,8 +1,11 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
 import { FRAMEWORK_HOOK_PREFIX, isFrameworkHook, mergeSettings } from '../src/settings.ts';
+import { REPO, json } from './helpers.ts';
 
-const ours = (name: string) => ({ type: 'command', command: `node_modules/.bin/folkways hook ${name}` });
+const ours = (name: string) => ({ type: 'command', command: `${FRAMEWORK_HOOK_PREFIX}${name}` });
+const legacy = (name: string) => ({ type: 'command', command: `node_modules/.bin/folkways hook ${name}` });
 const theirs = { type: 'command', command: 'scripts/team.sh' };
 
 describe('mergeSettings', () => {
@@ -37,6 +40,17 @@ describe('mergeSettings', () => {
     expect(out).toEqual(current);
   });
 
+  it('removes entries in the old `folkways hook` form', () => {
+    const current = { hooks: { SessionStart: [{ hooks: [legacy('session-start'), theirs] }] } };
+    const out = mergeSettings(current, { hooks: { SessionStart: [{ hooks: [ours('session-start')] }] } });
+    expect(out.hooks).toEqual({ SessionStart: [{ hooks: [theirs] }, { hooks: [ours('session-start')] }] });
+  });
+
+  it('sets disableAllHooks from the fragment, over the team value', () => {
+    expect(mergeSettings({ disableAllHooks: true }, { disableAllHooks: false })).toEqual({ disableAllHooks: false });
+    expect(mergeSettings({ disableAllHooks: true }, {})).toEqual({ disableAllHooks: true });
+  });
+
   it('does not mutate its input', () => {
     const current = { hooks: { Stop: [{ hooks: [ours('x'), theirs] }] } };
     mergeSettings(current, {});
@@ -45,8 +59,9 @@ describe('mergeSettings', () => {
 });
 
 describe('isFrameworkHook', () => {
-  it('owns commands that start with the framework prefix', () => {
-    expect(FRAMEWORK_HOOK_PREFIX).toBe('node_modules/.bin/folkways hook ');
+  it('owns commands that start with the framework prefix, or the old one', () => {
+    expect(FRAMEWORK_HOOK_PREFIX).toBe('"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook ');
+    expect(isFrameworkHook('"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook git-guard')).toBe(true);
     expect(isFrameworkHook('node_modules/.bin/folkways hook session-start')).toBe(true);
   });
 
@@ -56,6 +71,8 @@ describe('isFrameworkHook', () => {
     'npx folkways hook x',
     'scripts/team.sh && node_modules/.bin/folkways hook x',
     'node_modules/.bin/folkways hooks x',
+    'node_modules/.bin/folkways-hook x',
+    'scripts/team.sh && "${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook x',
     '',
   ])('does not own %j', (command) => expect(isFrameworkHook(command)).toBe(false));
 
@@ -92,5 +109,28 @@ describe('mergeSettings with unexpected shapes', () => {
     const fragment = { permissions: { ask: ['Bash(git push:*)'] }, hooks: { Stop: [{ hooks: [ours('a')] }] } };
     expect(() => mergeSettings(current as any, fragment)).toThrow(FolkwaysError);
     expect(() => mergeSettings(current as any, fragment)).toThrow(message);
+  });
+});
+
+describe('assets/settings.json', () => {
+  const settings = json(join(REPO, 'assets/settings.json'));
+  const entries = Object.entries(settings.hooks as Record<string, { matcher?: string; hooks: { command: string }[] }[]>).flatMap(
+    ([event, groups]) => groups.flatMap((g) => g.hooks.map((h) => ({ event, matcher: g.matcher, command: h.command }))),
+  );
+
+  it('wires each hook to its events (spec §7.1)', () => {
+    const wired = entries.map((e) => `${e.event}${e.matcher ? `(${e.matcher})` : ''} ${e.command.slice(FRAMEWORK_HOOK_PREFIX.length)}`);
+    expect(wired.sort()).toEqual([
+      'PostToolBatch context-band',
+      'PreCompact precompact',
+      'PreToolUse(Bash) git-guard',
+      'SessionStart session-start',
+      'UserPromptSubmit context-band',
+    ]);
+  });
+
+  it('owns every entry and keeps hooks on (ADR 0001 M11)', () => {
+    expect(entries.every((e) => isFrameworkHook(e.command))).toBe(true);
+    expect(settings.disableAllHooks).toBe(false);
   });
 });

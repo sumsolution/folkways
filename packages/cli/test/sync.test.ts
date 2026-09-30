@@ -29,7 +29,7 @@ describe('sync to a new version', () => {
     expect(manifest.skills).toEqual(['start']);
     expect(Object.keys(manifest.files)).toContain('.claude/skills/start/SKILL.md');
     expect(hookCommand(json(join(team, '.claude/settings.json')), 'SessionStart')).toBe(
-      'node_modules/.bin/folkways hook session-start',
+      '"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook session-start',
     );
   });
 
@@ -55,6 +55,8 @@ describe('sync to a new version', () => {
   it('removes files and hooks the new version dropped', () => {
     sync(team, next);
     const later = makePackage('0.3.0');
+    const { hooks: _, ...rest } = json(join(later, 'assets/settings.json'));
+    put(join(later, 'assets/settings.json'), JSON.stringify(rest));
     sync(team, later);
     expect(existsSync(join(team, '.claude/skills/start'))).toBe(false);
     expect(existsSync(join(team, '.folkways/prompts'))).toBe(false);
@@ -107,6 +109,40 @@ describe('sync refusals and warnings', () => {
     expect(() => sync(team, next)).toThrow(/settings\.json is not valid JSON/);
     expect(existsSync(join(team, '.claude/skills/start'))).toBe(false);
     expect(json(join(team, '.folkways/manifest.json')).version).toBe('0.1.0');
+  });
+
+  it('warns when dependencies are installed without the hook binary', () => {
+    mkdirSync(join(team, 'node_modules/.bin'), { recursive: true });
+    expect(sync(team, next).warnings).toEqual([expect.stringMatching(/node_modules\/\.bin\/folkways-hook is missing/)]);
+    put(join(team, 'node_modules/.bin/folkways-hook'), '');
+    expect(sync(team, next).warnings).toEqual([]);
+  });
+
+  it('does not look for the hook binary before dependencies are installed', () => {
+    expect(sync(team, next).warnings).toEqual([]);
+  });
+
+  it.each([
+    ['no pnpm-workspace.yaml', undefined, true],
+    ['another pattern', 'publicHoistPattern:\n  - "*eslint*"\n', true],
+    ['the pattern elsewhere', 'catalog:\n  x: "@folkways/hooks-*"\n', true],
+    ['the pattern in a list', 'packages: []\npublicHoistPattern:\n  - "*eslint*"\n  - \'@folkways/hooks-*\'\n', false],
+    ['the pattern inline', 'publicHoistPattern: ["@folkways/hooks-*"]\n', false],
+    ['hoist everything', 'publicHoistPattern:\n  - "*"\n', false],
+    ['shamefullyHoist', 'shamefullyHoist: true\n', false],
+  ])('pnpm team with %s', (_, workspace, warns) => {
+    const pkg = json(join(team, 'package.json'));
+    put(join(team, 'package.json'), JSON.stringify({ ...pkg, packageManager: 'pnpm@10.0.0' }));
+    if (workspace) put(join(team, 'pnpm-workspace.yaml'), workspace);
+    const warnings = sync(team, next).warnings;
+    if (warns) expect(warnings).toEqual([expect.stringMatching(/publicHoistPattern.*@folkways\/hooks-\*/)]);
+    else expect(warnings).toEqual([]);
+  });
+
+  it('skips the pnpm check for a package manager it does not support', () => {
+    const pkg = json(join(team, 'package.json'));
+    put(join(team, 'package.json'), JSON.stringify({ ...pkg, packageManager: 'yarn@4.0.0' }));
+    expect(sync(team, next).warnings).toEqual([]);
   });
 
   it('warns when AGENTS.md lost the import line', () => {
