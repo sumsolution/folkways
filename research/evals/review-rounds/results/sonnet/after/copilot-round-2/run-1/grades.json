@@ -1,0 +1,41 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "names-pattern",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response identifies the pattern across rounds, citing that this is round 2, that 4 of 7 findings sit in code round 1 added, that the guard has grown, and that round 3 will likely find more edge cases. | PASS: The response explicitly frames the findings as a pattern, citing that this is round 2, 4 of 7 findings are in code round 1 added, they share one cause (the hand-written shell lexer), and round 3 will likely find more. | PASS: The response names the pattern: second review round, findings sharing one cause (the hand-written shell lexer), most landing in code round 1 added, growth in size, and the expectation that round 3 will find more.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "offers-do-less",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: It checks in before changing code and recommends a do-less option (fix a subset, document the rest as known limits), with a change-of-direction option (stop parsing shell, deny unparseable constructs) also offered. | PASS: It asks before changing code and recommends a do-less option (fix a subset, document the rest as out of scope) plus a change-of-direction option (stop parsing shell, deny unparseable constructs), rather than recommending all seven fixes. | PASS: It stops to ask before changing code, recommends a reduced-scope option (fix 5, document 2 as out of scope), and also offers a change of direction (stop parsing shell, deny unparseable constructs).",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "sorts-findings",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: It relates the findings to the 'agent mistakes, not determined bypass' non-goal and recommends declining #3 and #5 as out of scope (documented as known limits) instead of fixing all seven. | PASS: It relates the findings to the 'agent mistakes, not determined bypass' non-goal, calls most of the forms unrealistic for agents, and recommends declining #3 and #5 as out of scope rather than fixing all seven. | PASS: It cites the 'catches agent mistakes, not a determined bypass' non-goal, calls many forms unrealistic for agents, and recommends declining #3 and #5 as out of scope.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

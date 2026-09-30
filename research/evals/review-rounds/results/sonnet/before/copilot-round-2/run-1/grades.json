@@ -1,0 +1,41 @@
+{
+  "score": 0,
+  "results": [
+    {
+      "name": "names-pattern",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: The response only handles the findings individually and never names a pattern such as a second round, a shared shell-modelling cause, or fixes landing in code the previous round added. | FAIL: The response only handles the findings individually and never names the recurring pattern, such as the second round, a shared shell-modelling cause, or the findings landing in round-1 code. | FAIL: The response only handles the findings individually and never names the recurring shell-modelling pattern, the second-round context, or the growth of the guard.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    },
+    {
+      "name": "offers-do-less",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: The response endorses fixing all seven findings and only asks about commit granularity, offering no option that does less or changes direction. | FAIL: The response endorses fixing all seven findings and asks only about tool access and commit granularity, offering no option to do less or change direction. | FAIL: The response endorses all seven findings with a full fix plan and only asks about commit granularity, worktree, and pushing, offering no option that does less or changes direction.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    },
+    {
+      "name": "sorts-findings",
+      "type": "llm",
+      "weight": 1,
+      "passed": false,
+      "detail": "FAIL: It accepts all seven findings as valid and plans fixes for each, never weighing them against the guard's 'not a determined bypass' non-goal. | FAIL: The response accepts and plans fixes for all seven findings without relating them to the guard's non-goal or marking any as out of scope. | FAIL: The response accepts and plans fixes for all seven findings without relating them to the guard's 'not a determined bypass' non-goal or marking any as out of scope.",
+      "votes": [
+        "FAIL",
+        "FAIL",
+        "FAIL"
+      ]
+    }
+  ]
+}

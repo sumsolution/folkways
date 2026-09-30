@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response plans concrete fixes for all three findings and asks for approval to proceed, with no deferral or redesign. | PASS: The response confirms all three findings and lays out concrete fixes for each, asking for approval to apply them, which satisfies the plan-to-fix-all-three criterion. | PASS: The response plans concrete fixes for all three findings and asks for approval to proceed, without deferring or redesigning any of them.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response confirms the findings and proposes specific fixes, pausing only for a tooling/worktree constraint, with no claim of over-engineering or need to change direction. | PASS: The response validates the findings, outlines small targeted fixes, and pauses only for a worktree/Bash constraint, without raising any over-engineering or change-of-direction concern. | PASS: The response confirms the findings, outlines proportionate fixes, and stops only for a tooling/worktree constraint, without raising any over-engineering or change-of-direction concern.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

@@ -16,8 +16,9 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 | `packages/cli/test/` | vitest suites for the CLI |
 | `packages/hooks/` | `@folkways/hooks` (private): the `folkways-hook` binary, shipped as `@folkways/hooks-<os>-<cpu>` (ADR 0002) |
 | `packages/hooks/contract/` | Black-box hook contract suite: fixtures, harness, rules |
+| `packages/evals/` | `@folkways/evals` (private, never published): behavior-eval runner. Builds a team repo per arm, runs `claude -p`, grades blind |
 | `scripts/` | Cross-package scripts: `smoke.ts` (packed-tarball smoke test) |
-| `research/` | Benchmarks and evals behind decisions. Not in the workspace; CI doesn't run it |
+| `research/` | Benchmarks and evals behind decisions, with their results. Not in the workspace; CI doesn't run it |
 | `docs/design/` | Design record. `00-STATUS.md` is the entry point; `06-v1-spec.md` is the spec |
 | `docs/adr/` | Framework decisions |
 
@@ -36,6 +37,7 @@ From the repo root:
 | `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |
 | `node packages/cli/src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
+| `node packages/evals/src/cli.ts run research/evals/<suite> --dry-run` | plan a behavior eval; drop `--dry-run` to run it (model calls on your account; see `packages/evals/README.md`) |
 | `pnpm changeset` | record a change for the next release of the packages it touches |
 
 ## Rules
@@ -53,12 +55,12 @@ From the repo root:
 - **Expected failures** throw `FolkwaysError`; the CLI prints `folkways: <message>` with no stack trace.
 - **Skills:** follow [docs/skill-authoring.md](docs/skill-authoring.md) (skeleton, overlay IDs, headless
   rules, trigger eval). `packages/cli/test/skills.test.ts` checks the mechanical rules.
-- **Commits:** Angular conventional commits, module scope (`cli`, `assets`, `templates`, `skills`, `hooks`,
+- **Commits:** Angular conventional commits, module scope (`cli`, `assets`, `templates`, `skills`, `hooks`, `evals`,
   `docs`, `test`, `build`, `research`). Squash PRs.
 - **Tests live with their package:** TypeScript in `packages/<pkg>/test/` (or `contract/`), Go as `*_test.go`
   beside the code. Cross-package checks go in `scripts/`. A package never imports another's source.
 - **Versions are per package** (changesets, ADR 0003). A PR that changes a package adds a changeset
-  (`pnpm changeset`); docs, research and CI-only changes don't need one. Release: merge the
+  (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one. Release: merge the
   `changeset version` PR, then `pnpm changeset tag` and push the tags; each tag publishes its package.
 - **The CLI pins one hooks version** in `folkways.hooks` of `packages/cli/package.json`. Bump it to ship a
   hooks release to team repos. Hook renames, removals and event changes are major hooks bumps.

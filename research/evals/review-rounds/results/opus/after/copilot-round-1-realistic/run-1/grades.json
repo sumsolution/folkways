@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response recommends and plans concrete fixes for all three findings (with approval requested), and explicitly rejects stepping back or redesign. | PASS: The response recommends and plans fixes for all three findings (with an optional lesser alternative), asks for approval, and does not propose a redesign or defer two or more. | PASS: The response recommends and plans concrete fixes for all three findings, explicitly rejects a redesign, and only asks for approval before proceeding.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response treats all fixes as small, declines larger options, and explicitly says there is no reason to step back, so it raises no over-engineering alarm. | PASS: The response sizes the fixes as small, explicitly says there's no reason to step back, and raises no over-engineering or change-of-direction alarm. | PASS: The response calls the fixes small, states there is no reason to step back, and raises no over-engineering alarm or change-of-direction recommendation.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

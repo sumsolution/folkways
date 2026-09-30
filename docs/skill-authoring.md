@@ -194,6 +194,10 @@ Lessons that apply to any skill:
 3. **Behavior eval** (for a new or heavily changed skill): run the same task in a fresh session with and
    without the skill, one variable changed, at least 3 runs, graded blind against an answer key where
    one exists. Watch where the agent skips or misreads a step; fix the wording there.
+   [`packages/evals`](../packages/evals/README.md) does this: a suite in `research/evals/<suite>/` names
+   two arms (the skills at a base SHA and in the working tree), a case (prompt, team-repo files, graders),
+   and it builds a real team repo per run and grades blind. Record the result where the change is
+   argued (the PR, a retro or research file).
 
 ## Anti-patterns
 

@@ -1,0 +1,23 @@
+{
+  "name": "@folkways/evals",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Behavior-eval runner for folkways skills: builds team repos per arm, runs claude -p, grades blind. Never published",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "folkways-eval": "src/cli.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.0",
+    "vitest": "^5.0.0"
+  }
+}

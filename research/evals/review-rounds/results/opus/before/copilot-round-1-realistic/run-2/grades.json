@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response confirms all three findings and lays out a concrete plan to fix each with tests, deferring none and proposing no redesign. | PASS: The response plans concrete fixes for all three findings (global options, whole-file reads, heredoc bodies) with tests and asks for approval, without deferring any as out of scope or proposing a redesign. | PASS: The response confirms and lays out concrete fixes for all three findings (global options, heredoc bodies, whole-file reads) with an ordered plan, and only asks about a minor edge case within #1.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response confirms the findings and proposes small, targeted fixes without raising any over-engineering or proportion alarm or suggesting a change of direction. | PASS: The response confirms the findings and proposes small targeted fixes without raising any over-engineering or proportion alarm or suggesting a rethink of the approach. | PASS: The response confirms three bugs with small targeted fixes and a straightforward plan, without raising any over-engineering or proportion alarm or suggesting a change of direction.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

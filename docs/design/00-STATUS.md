@@ -29,7 +29,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
 | [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
 | [12-plan-repo-layout.md](12-plan-repo-layout.md) | The pnpm workspace move (ADR 0003): done on `claude/project-architecture-structure-700d4f`, before hooks PR 2 merged |
-| [13-retro-git-guard-review-rounds.md](13-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes and proposed skill changes (step back, proportion, acting on review) |
+| [13-retro-git-guard-review-rounds.md](13-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes, the skill changes (made) and their eval results |
+| [14-research-eval-harness.md](14-research-eval-harness.md) | Eval harness: build or adopt (`claude plugin eval`, promptfoo, Inspect, …). Built `packages/evals`, no new dependencies |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -100,8 +101,9 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Not yet wired into team repos ([plan](11-plan-hooks-build.md), PR 4) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS; packed-tarball smoke test ([scripts/smoke.ts](../../scripts/smoke.ts)) |
+| Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 324 pass; hooks 14 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
+| Tests | per package | vitest: CLI 324 pass; evals 26 pass (no model calls); hooks 14 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -119,9 +121,9 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
-1. Hooks PRs 3–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md): the other hooks (PR 3, open),
-   wiring into team repos, packaging, smoke and release. Repo layout (ADR 0003) and hooks PR 2 (`git-guard`) are merged.
-2. **Skills from the retro:** make the changes in [13](13-retro-git-guard-review-rounds.md) and run its behavior eval.
+1. Hooks PRs 4–5 per [11-plan-hooks-build.md](11-plan-hooks-build.md): wiring into team repos, packaging,
+   smoke and release. Repo layout (ADR 0003), hooks PR 2 (`git-guard`) and PR 3 (the other hooks) are merged.
+2. **Skills from the retro:** done, with the eval ([13](13-retro-git-guard-review-rounds.md), "Eval results"). Next evals: overlay precedence ported to `packages/evals`, trigger evals.
 3. `review` / `run` / `doctor`.
 4. Publish 0.1.0.
 5. Set up the beta team repo.

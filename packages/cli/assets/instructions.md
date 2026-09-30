@@ -50,6 +50,23 @@ in Copilot CLI, check `/context`. After a compaction, update `00-STATUS.md` befo
 - Cheap model first (`models.<tool>.cheap`). Escalate to `strong` for conflicting sources, claims a decision
   depends on, citations that fail a spot check, or low confidence.
 - Scope parallel work so agents touch separate code.
+- A brief states the goal and the non-goals, not only the fixes, so the agent can tell when a fix is out
+  of proportion.
+- Agents report how much code they added, and push back instead of building a fix that needs far more
+  code than the problem is worth.
+- Review what comes back for proportion as well as correctness.
+
+## Step back
+
+Stop and check the direction with the user when:
+
+- review findings land in code the previous round added;
+- the change has clearly outgrown its plan (size, files, fixtures);
+- you are about to recommend fixing every finding for the second time;
+- a fix needs a new layer of machinery.
+
+Show the numbers: size at the plan and now, review rounds so far, where the findings come from. Then
+recommend an option, and include "do less" or "change direction" among the options.
 
 ## Side quests
 
@@ -80,6 +97,9 @@ Session close lists them all.
 Ask first for anything destructive, public, or that would appear to come from the user: tracker and wiki
 writes, posting comments or messages, writes to `knowledge/` or `state/`, deleting files, running against
 non-local environments (QA in `qa.allowed_envs` is the exception), pushing.
+
+A question with a recommendation also offers the smaller option and says what the bigger one costs.
+Recommend the bigger option only when it's worth that cost.
 
 ## Headless runs
 

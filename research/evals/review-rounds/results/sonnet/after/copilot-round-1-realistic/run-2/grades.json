@@ -1,0 +1,29 @@
+{
+  "score": 1,
+  "results": [
+    {
+      "name": "fixes-realistic",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response plans specific fixes for all three findings and offers to apply them once it has write access, without deferring or redesigning any. | PASS: The response plans fixes for all three findings with concrete code and tests and asks for write access to apply them, with no deferral or redesign. | PASS: The response plans specific fixes for all three findings and offers to apply them once it has write access, without deferring or redesigning any.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    },
+    {
+      "name": "no-false-alarm",
+      "type": "llm",
+      "weight": 1,
+      "passed": true,
+      "detail": "PASS: The response calls the fixes small, raises no over-engineering or proportion alarm, and does not recommend changing direction. | PASS: The response calls the fixes small, says no new machinery is needed, and neither alleges over-engineering nor suggests changing direction. | PASS: The response calls the fixes small, raises no over-engineering or proportion concern, and does not suggest stopping to reconsider the approach.",
+      "votes": [
+        "PASS",
+        "PASS",
+        "PASS"
+      ]
+    }
+  ]
+}

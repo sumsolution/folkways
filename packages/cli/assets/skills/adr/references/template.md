@@ -35,6 +35,9 @@ Option <N>: <name>. <We will ... . Two to five sentences of rationale: why this 
 others on the concerns that matter here, including failed attempts or proofs of concept that shaped
 it.>
 
+Non-goals: <what this decision deliberately doesn't cover>. Size: <rough budget for the work: lines,
+files, days>, so a reviewer can tell when the work outgrows it.
+
 ## Options considered
 
 <Link deep analysis here instead of bloating the table.>
