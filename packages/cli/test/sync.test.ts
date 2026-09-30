@@ -130,6 +130,9 @@ describe('sync refusals and warnings', () => {
     ['the pattern inline', 'publicHoistPattern: ["@folkways/hooks-*"]\n', false],
     ['hoist everything', 'publicHoistPattern:\n  - "*"\n', false],
     ['shamefullyHoist', 'shamefullyHoist: true\n', false],
+    ['comments around the pattern', 'publicHoistPattern: # hoisted\n  # the hook binary\n  - "@folkways/hooks-*" # folkways\n', false],
+    ['an unquoted pattern with a comment', 'publicHoistPattern:\n  - @folkways/hooks-* # folkways\n', false],
+    ['the pattern only in a comment', 'publicHoistPattern:\n  - "*eslint*" # not "@folkways/hooks-*"\n', true],
   ])('pnpm team with %s', (_, workspace, warns) => {
     const pkg = json(join(team, 'package.json'));
     put(join(team, 'package.json'), JSON.stringify({ ...pkg, packageManager: 'pnpm@10.0.0' }));

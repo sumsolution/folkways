@@ -13,7 +13,11 @@ export const HOIST_PATTERN = '@folkways/hooks-*';
 /** `pnpm-workspace.yaml` for a new pnpm team repo. */
 export const PNPM_WORKSPACE = `publicHoistPattern:\n  - "${HOIST_PATTERN}"\n`;
 
-const unquote = (s: string): string => s.trim().replace(/^(["'])(.*)\1$/, '$2');
+/** A YAML scalar without its quotes or trailing comment: `"a#b" # c` is `a#b`, `a # c` is `a`. */
+const scalar = (s: string): string => {
+  const quoted = /^\s*(["'])(.*?)\1/.exec(s);
+  return quoted ? quoted[2]! : s.replace(/(^|\s)#.*$/, '').trim();
+};
 
 /**
  * Whether a `pnpm-workspace.yaml` hoists the hook binary: `shamefullyHoist: true`, or a
@@ -28,13 +32,13 @@ export function hoistsHooks(yaml: string): boolean {
   const items = inline?.split(',') ?? [];
   if (inline === undefined) {
     for (const line of lines.slice(start + 1)) {
-      if (line.trim() === '') continue;
+      if (line.trim() === '' || line.trim().startsWith('#')) continue;
       const item = /^\s+-\s*(.*)$/.exec(line)?.[1];
       if (item === undefined) break;
       items.push(item);
     }
   }
-  return items.map(unquote).some((p) => p === HOIST_PATTERN || p === '*');
+  return items.map(scalar).some((p) => p === HOIST_PATTERN || p === '*');
 }
 
 /** What would stop hooks from running in this team repo; `sync` prints these as warnings. */
