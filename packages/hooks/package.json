@@ -1,0 +1,20 @@
+{
+  "name": "@folkways/hooks",
+  "version": "0.1.0",
+  "private": true,
+  "description": "folkways-hook: the hooks binary, its contract suite and its build. Published as @folkways/hooks-<os>-<cpu>",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.0",
+    "vitest": "^5.0.0"
+  }
+}

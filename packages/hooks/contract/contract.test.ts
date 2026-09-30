@@ -1,4 +1,4 @@
-// Black-box hook contract suite. Runs any implementation: FOLKWAYS_HOOK_CMD="<command>" pnpm test test/hooks
+// Black-box hook contract suite. Runs any implementation: FOLKWAYS_HOOK_CMD="<command>" pnpm --filter @folkways/hooks test
 // The command gets the hook name appended, e.g. FOLKWAYS_HOOK_CMD="node_modules/.bin/folkways hook".
 // FOLKWAYS_HOOKS=git-guard,session-end limits the run to some hooks. See README.md.
 import { describe, expect, it } from 'vitest';

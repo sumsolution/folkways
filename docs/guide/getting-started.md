@@ -22,7 +22,7 @@ Until then, run it from a clone of this repo:
 git clone https://github.com/sumsolution/folkways.git
 cd folkways
 pnpm install
-node src/cli.ts init ../example-team --no-install
+node packages/cli/src/cli.ts init ../example-team --no-install
 ```
 
 `init` refuses a non-empty directory. It then:

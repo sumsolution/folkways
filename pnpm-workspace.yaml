@@ -1,3 +1,6 @@
+packages:
+  - packages/*
+
 # Supply-chain hardening. https://pnpm.io/settings
 minimumReleaseAge: 10080        # minutes (7 days): don't resolve versions younger than this
 trustPolicy: no-downgrade       # fail if a version has weaker provenance than earlier versions

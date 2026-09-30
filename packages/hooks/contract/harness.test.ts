@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { read } from '../helpers.ts';
+import { read } from './util.ts';
 import { buildEnv, check, fill, merge, mismatch, transcriptJsonl, type Vars } from './harness.ts';
 
 describe('mismatch', () => {

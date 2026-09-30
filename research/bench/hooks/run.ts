@@ -1,4 +1,4 @@
-// Hook runtime benchmark. Usage: node bench/hooks/run.ts [--runs 50] [--only id,id] [--keep]
+// Hook runtime benchmark. Usage: node research/bench/hooks/run.ts [--runs 50] [--only id,id] [--keep]
 // Builds every candidate whose toolchain is installed, installs them into throwaway npm and pnpm team repos,
 // times each call path, and prints Markdown tables. See README.md.
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';

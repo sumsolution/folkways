@@ -2,7 +2,7 @@
 # Does a project PreToolUse hook, an `ask` rule and a `deny` rule still block under bypass mode?
 # And does one flag turn the hook off? See ../07-research-overlay-enforcement.md §4.
 #
-#   sh docs/design/07-eval/hook-bypass.sh        (needs an authenticated `claude` CLI; IS_SANDBOX=1 when root)
+#   sh research/evals/overlay-enforcement/hook-bypass.sh        (needs an authenticated `claude` CLI; IS_SANDBOX=1 when root)
 set -eu
 out=$(cd "$(dirname "$0")" && pwd)/results/hook-bypass
 mkdir -p "$out"

@@ -1,7 +1,7 @@
 # Overlay-enforcement eval
 
 Does a model follow a **team** rule when a **personal** overlay tries to change it? Results and
-discussion: [07-research-overlay-enforcement.md](../07-research-overlay-enforcement.md) §6.
+discussion: [07-research-overlay-enforcement.md](../../../docs/design/07-research-overlay-enforcement.md) §6.
 
 ## Method
 
@@ -57,9 +57,9 @@ to commit messages. `run.ts` strips those lines before saving and counts them in
 Needs Node 24+ and an authenticated `claude` CLI. From the repo root:
 
 ```sh
-node docs/design/07-eval/run.ts --model sonnet --n 3        # all 25 cells, 75 runs
-node docs/design/07-eval/run.ts --model opus --n 3 --cells runtime-implicit/d-persuasive,hybrid/d-persuasive
-node docs/design/07-eval/score.ts                           # writes results/summary.{md,json}
+node research/evals/overlay-enforcement/run.ts --model sonnet --n 3        # all 25 cells, 75 runs
+node research/evals/overlay-enforcement/run.ts --model opus --n 3 --cells runtime-implicit/d-persuasive,hybrid/d-persuasive
+node research/evals/overlay-enforcement/score.ts                           # writes results/summary.{md,json}
 ```
 
 `run.ts` overwrites `results/<model>/<cell>/run-N.*`. Raw outputs are kept as returned, minus the
