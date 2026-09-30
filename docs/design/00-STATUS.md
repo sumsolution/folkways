@@ -28,7 +28,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [09-research-skill-authoring.md](09-research-skill-authoring.md) | Skill structure, triggering and headless rules; basis of the authoring guide |
 | [10-research-skill-at-imports.md](10-research-skill-at-imports.md) | `@` imports inside skills, for personal overlays (step 0) |
 | [11-plan-hooks-build.md](11-plan-hooks-build.md) | **Next.** Plan for the Go hooks: decisions to confirm, five PRs, verification |
-| [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime (both accepted) |
+| [12-plan-repo-layout.md](12-plan-repo-layout.md) | Plan for the pnpm workspace move (ADR 0003), after hooks PR 2 |
+| [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
 | [../../bench/hooks/](../../bench/hooks) | Hook runtime benchmark (Node, Go, Rust) with Linux and macOS results |
@@ -79,6 +80,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 - [ ] Choose a license (open source; owner's call). `package.json` says `UNLICENSED` until then.
 - [x] npm scope `@folkways` (Summer, 2026-09-28). Maybe a dedicated `folkways` GitHub org later.
 - [ ] Later: publish a GitHub Action that runs `folkways sync` on dependency-update PRs (spec §9.7).
+- [ ] Later: solo projects and a Claude Code plugin; other harnesses after that (ADR 0003, Future direction). Not scoped.
 - [ ] Dedicated session: architecture knowledge for the `adr` skill.
 - [ ] Trademark check for `folkways` (USPTO/EUIPO); register folkways.dev and a GitHub handle (Summer).
 
@@ -114,8 +116,9 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 **Branch:** `main`, all work merged (PRs #4, #5, #6, #8, #9).
 
-1. **Hooks** in Go: follow [11-plan-hooks-build.md](11-plan-hooks-build.md). Confirm its six decisions,
-   then five PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
+1. **Hooks** in Go: follow [11-plan-hooks-build.md](11-plan-hooks-build.md) through PR 2, then the
+   **repo layout** move ([12-plan-repo-layout.md](12-plan-repo-layout.md), ADR 0003), then hooks PRs 3–5 on the new layout.
+   Hooks PRs: contract amendments → Go module + `git-guard` → the other four hooks → wiring into team
    repos → packaging, smoke and release.
 2. `review` / `run` / `doctor`.
 3. Publish 0.1.0.

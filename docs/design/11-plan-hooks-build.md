@@ -2,6 +2,11 @@
 
 **Written:** 2026-09-29 (end of session 4) · **Status:** not started · **Decision:** [ADR 0002](../adr/0002-hook-runtime.md)
 
+> **Layout change after PR 2 ([ADR 0003](../adr/0003-repo-layout.md), [12](12-plan-repo-layout.md)).** PRs 3–5 use
+> `packages/hooks/` (contract in `packages/hooks/contract/`, CLI in `packages/cli/`). Decision 3 reads the pinned
+> hooks version from `folkways.hooks` in `packages/cli/package.json`, not the root version. PR 5 builds a
+> release per package, on `@folkways/hooks@*` and `@folkways/cli@*` tags. Paths below are updated in the move PR.
+
 ## Goal
 
 Ship the five hooks of [spec §7.1](06-v1-spec.md) as one Go binary, `folkways-hook`, delivered as the
