@@ -29,7 +29,8 @@ Read these first. A missing file is normal; skip it.
 
 1. **Find the repo and branch.** Project code is changed only in a worktree under
    `<projects_dir>/.worktrees/<repo>/<branch>`, never in the user's own clone. If you are in the
-   user's clone, stop and say so. In the team repo, see [Where commits go](#where-commits-go).
+   user's clone, stop and say so. In the team repo, see [Where commits go](#where-commits-go). In a solo
+   repo, commit in place: it is the user's clone, and the branch is theirs to choose.
 2. **Check what is staged.** Read `git status` and `git diff --staged`. Stage files by name; don't stage
    everything blindly. Stop and ask if the diff holds:
    - more than one logical change (propose separate commits),
@@ -44,7 +45,8 @@ Read these first. A missing file is normal; skip it.
 6. **After the commit:** if the review trigger is `after-commit`, run
    `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root (the
    pinned CLI; never a bare `npx folkways`, which can fetch an unrelated package) and say where the
-   review file landed. Never push; that is the `pr` skill, and every push needs approval.
+   review file landed. In a solo repo there's no CLI: run the `review` skill in a fresh subagent given
+   only the repo, branch, base and HEAD SHA. Never push; that is the `pr` skill, and every push needs approval.
 
 ## Message format {#message-format}
 

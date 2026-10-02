@@ -167,6 +167,18 @@ describe('guided setup', () => {
   });
 });
 
+describe('solo review gate', () => {
+  it('pr accepts the review git-guard accepts in a solo repo (spec 7.3 walk-back)', () => {
+    expect(read(skillFile('pr'))).toMatch(/solo repo[^]*only `work\/` and `inbox\/`/);
+  });
+  it.each(['pr', 'commit'])('%s runs the review without the CLI in a solo repo', (skill) => {
+    expect(read(skillFile(skill))).toMatch(/solo\s+repo[^]*fresh\s+subagent/);
+  });
+  it('commit works in place in a solo repo', () => {
+    expect(read(skillFile('commit'))).toMatch(/In a solo\s+repo, commit in place/);
+  });
+});
+
 describe('assets/instructions.md', () => {
   const text = read(join(REPO, 'assets/instructions.md'));
 
