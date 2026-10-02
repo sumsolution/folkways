@@ -16,6 +16,7 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 | `packages/cli/test/` | vitest suites for the CLI |
 | `packages/hooks/` | `@folkways/hooks` (private): the `folkways-hook` binary, shipped as `@folkways/hooks-<os>-<cpu>` (ADR 0002) |
 | `packages/hooks/contract/` | Black-box hook contract suite: fixtures, harness, rules |
+| `packages/claude-plugin/` | `@folkways/claude-plugin`: builds the Claude Code plugin into `dist/` from the CLI's assets and the hook binaries. The root `.claude-plugin/marketplace.json` installs it from npm |
 | `packages/evals/` | `@folkways/evals` (private, never published): behavior-eval runner. Builds a team repo per arm, runs `claude -p`, grades blind |
 | `scripts/` | Cross-package scripts: `smoke.ts` (packed-tarball smoke test), `release.ts` (builds and checks a tag's tarballs), `pack.ts` (shared by both) |
 | `research/` | Benchmarks and evals behind decisions, with their results. Not in the workspace; CI doesn't run it |
@@ -34,6 +35,7 @@ From the repo root:
 | `pnpm run build` | build every package (the CLI's `src/` to `dist/`, also on `pnpm pack` / `pnpm publish`; the hook packages to `packages/hooks/npm/`, needs Go) |
 | `pnpm --filter @folkways/cli test` | one package only (same for `check`, `build`, `@folkways/hooks`) |
 | `pnpm run smoke` | pack the CLI and the four hook packages, install them with npm and pnpm, drive `init` and `sync`, run the contract suite through the installed binary (needs Go) |
+| `pnpm --filter @folkways/claude-plugin run build` | build the Claude Code plugin into `packages/claude-plugin/dist/` (needs Go); dogfood with `claude --plugin-dir packages/claude-plugin/dist` |
 | `pnpm --filter @folkways/hooks run build` | cross-compile the `@folkways/hooks-<os>-<cpu>` packages into `packages/hooks/npm/` |
 | `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |
@@ -67,6 +69,9 @@ From the repo root:
   pins is on npm: approve the hooks publish first, then re-run the CLI's release.
 - **The CLI's `optionalDependencies`** are added at pack time by `.pnpmfile.mjs`, never committed. A new hook
   platform goes in `TARGETS` (`packages/hooks/scripts/build.ts`) and `PLATFORMS` (`.pnpmfile.mjs`); smoke checks they match.
+- **The Claude Code plugin is generated.** Its skills, instructions and `hooks.json` come from `packages/cli/assets/`
+  at build time; edit them there. A change to those assets that should reach plugin users needs a
+  `@folkways/claude-plugin` changeset too.
 - **The CLI pins one hooks version** in `folkways.hooks` of `packages/cli/package.json`. Bump it to ship a
   hooks release to team repos. Hook renames, removals and event changes are major hooks bumps.
 - **CI** runs only the jobs for the packages a change touches; the `ci` job is the required check. A new

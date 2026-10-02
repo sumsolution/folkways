@@ -4,6 +4,7 @@ name: release
 #   @folkways/hooks@x.y.z → the four @folkways/hooks-<os>-<cpu> packages (ADR 0002)
 #   @folkways/cli@x.y.z   → @folkways/cli, which pins the hooks version in `folkways.hooks`; that hooks
 #                           release must be on npm first, or the build job fails
+#   @folkways/claude-plugin@x.y.z → the Claude Code plugin, carrying folkways-hook built from the tagged commit
 # `build` makes and checks every tarball (scripts/release.ts). `publish` waits for approval in the `npm`
 # environment, then publishes those exact tarballs with npm trusted publishing (OIDC) and provenance.
 # GitHub skips workflows when more than three tags are pushed at once: push release tags one or two at a time.
@@ -12,6 +13,7 @@ on:
     tags:
       - '@folkways/hooks@*'
       - '@folkways/cli@*'
+      - '@folkways/claude-plugin@*'
 
 permissions:
   contents: read

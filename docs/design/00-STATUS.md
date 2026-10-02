@@ -1,7 +1,7 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-09-30 (session 6: hooks packaging and release)
+**Last updated:** 2026-10-02 (session 7: Claude Code plugin)
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
 **Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow; nothing published yet.
@@ -86,7 +86,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 - [ ] Decide DCO sign-off before the first outside PR.
 - [x] npm scope `@folkways` (Summer, 2026-09-28). Maybe a dedicated `folkways` GitHub org later.
 - [ ] Later: publish a GitHub Action that runs `folkways sync` on dependency-update PRs (spec §9.7).
-- [ ] Later: solo projects and a Claude Code plugin; other harnesses after that (ADR 0003, Future direction). Not scoped.
+- [ ] Later: solo projects; other harnesses after that (ADR 0003, Future direction). Not scoped. The Claude Code plugin is built (`packages/claude-plugin`); team overlays in it are not.
 - [ ] Dedicated session: architecture knowledge for the `adr` skill.
 - [ ] Trademark check for `folkways` (USPTO/EUIPO); register folkways.dev and a GitHub handle (Summer).
 
@@ -106,9 +106,10 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS. Smoke ([scripts/smoke.ts](../../scripts/smoke.ts)) on linux x64 and arm64 and macOS arm64 (darwin-x64 ships, untested in CI): packed CLI and hook tarballs, npm and pnpm, contract suite through the installed binary |
 | Release | [.github/workflows/release.yml](../../.github/workflows/release.yml) | One package per changeset tag. Builds and checks the tarballs ([scripts/release.ts](../../scripts/release.ts)), then publishes after approval in the `npm` environment, with trusted publishing and provenance. Never run yet |
+| Claude Code plugin | [packages/claude-plugin/](../../packages/claude-plugin) | Built from the CLI's assets: skills rewritten to `folkways:<name>` and `${CLAUDE_PLUGIN_ROOT}` paths, instructions as session-start context, `hooks.json` generated from `assets/settings.json`, `folkways-hook` for all four platforms. Quiet in synced team repos. No team overlays, no push ask rule. Released as `@folkways/claude-plugin` on its own tag; the root [marketplace](../../.claude-plugin/marketplace.json) installs it from npm. Dogfood from `dist/` |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
+| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it); claude-plugin 19 pass |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -134,7 +135,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
    "Still open"), a lockfile made on macOS and installed on Linux.
 3. Next evals: overlay precedence ported to `packages/evals`, trigger evals.
 4. `review` / `run` / `doctor`.
-5. Publish: `@folkways/hooks@0.1.0`, then `@folkways/cli@0.1.0`.
+5. Publish: `@folkways/hooks@0.1.0`, then `@folkways/cli@0.1.0`, and `@folkways/claude-plugin@0.1.0` (add it to npm trusted publishing first).
 6. Set up the beta team repo.
 
 ## Follow-ups (not ticketed)

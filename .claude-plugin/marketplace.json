@@ -1,0 +1,12 @@
+{
+  "name": "folkways",
+  "description": "The folkways framework for Claude Code",
+  "owner": { "name": "Summer Jordan" },
+  "plugins": [
+    {
+      "name": "folkways",
+      "source": { "source": "npm", "package": "@folkways/claude-plugin" },
+      "description": "The folkways way of working: framework skills, session instructions and hooks"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assert, CLI, HOOKS, packCli, packHooks, readJson, run as runIn, skippedTests } from './pack.ts';
+import { assert, CLI, HOOKS, packClaudePlugin, packCli, packHooks, readJson, run as runIn, skippedTests } from './pack.ts';
 
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'folkways-smoke-')));
 const env = {
@@ -105,6 +105,20 @@ try {
     const suite = run('pnpm', ['exec', 'vitest', 'run', 'contract'], HOOKS, { FOLKWAYS_HOOK_CMD: hookBin });
     assert(skippedTests(suite) === 0, `the contract suite skipped cases:\n${suite}`);
   }
+
+  step('claude plugin: pack, unpack, run a hook');
+  const pluginTgz = packClaudePlugin(join(root, 'claude-plugin'), join(root, 'pack-plugin'));
+  const unpacked = join(root, 'plugin-unpacked');
+  mkdirSync(unpacked);
+  run('tar', ['-xzf', pluginTgz, '-C', unpacked], root);
+  const plugin = join(unpacked, 'package');
+  const plain = join(root, 'plain-project');
+  mkdirSync(plain);
+  const started = run('sh', ['-c', 'echo \'{"hook_event_name":"SessionStart"}\' | sh "$0" session-start', join(plugin, 'hooks', 'run.sh')], plain, {
+    CLAUDE_PLUGIN_ROOT: plugin,
+    CLAUDE_PROJECT_DIR: plain,
+  });
+  assert(started.includes('`start` skill'), `the packed plugin's session-start hook printed:\n${started}`);
 
   console.log('smoke: ok');
 } catch (error) {
