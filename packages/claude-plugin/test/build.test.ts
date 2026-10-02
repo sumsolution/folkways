@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   ASSETS,
   buildPlugin,
@@ -159,6 +159,7 @@ describe('buildPlugin', () => {
     const text = read('instructions.md');
     expect(text).toMatch(/^# folkways \(plugin\)/);
     expect(text).toContain('`folkways:onboard` skill');
+    expect(text).toContain('folkways:setup');
     for (const s of frameworkSkills()) expect(text).not.toMatch(new RegExp(`\`${s}\`\\s+skill`));
   });
 
@@ -170,39 +171,80 @@ describe('buildPlugin', () => {
 
   describe('run.sh', () => {
     const plain = join(tmp, 'plain');
+    const configured = join(tmp, 'configured');
     const synced = join(tmp, 'synced');
+    const fake = join(tmp, 'fake-hook');
+    const calls = join(tmp, 'calls.log');
+    const fakeEnv = { FOLKWAYS_HOOK_CMD: fake, FAKE_CALLS: calls };
+    const called = () => (existsSync(calls) ? readFileSync(calls, 'utf8').trim().split('\n') : []);
     beforeAll(() => {
       mkdirSync(plain);
+      mkdirSync(configured);
+      writeFileSync(join(configured, 'folkways.yaml'), 'name: Example Team\n');
       mkdirSync(join(synced, '.folkways'), { recursive: true });
       writeFileSync(join(synced, '.folkways/manifest.json'), '{}');
+      writeFileSync(join(synced, 'folkways.yaml'), 'name: Example Team\n');
+      writeFileSync(fake, '#!/bin/sh\necho "$1" >> "$FAKE_CALLS"\necho "fake $1"\n');
+      chmodSync(fake, 0o755);
     });
+    beforeEach(() => rmSync(calls, { force: true }));
 
-    it('prints the instructions', () => {
-      const r = run('instructions', plain);
+    it('prints the instructions in a configured repo', () => {
+      const r = run('instructions', configured);
       expect(r.status).toBe(0);
       expect(r.stdout).toBe(read('instructions.md'));
     });
 
     it.skipIf(!host)('runs the host binary with the hook name, naming skills as the plugin does', () => {
-      const r = run('git-guard', plain);
+      const r = run('git-guard', configured);
       expect(r.status).toBe(0);
       expect(r.stdout.trim()).toBe(`stub ${host} git-guard folkways`);
     });
 
     it('stays quiet in a synced team repo', () => {
       for (const hook of ['instructions', 'session-start', 'git-guard']) {
-        const r = run(hook, synced);
+        const r = run(hook, synced, fakeEnv);
         expect(r.status).toBe(0);
         expect(r.stdout).toBe('');
       }
+      expect(called()).toEqual([]);
     });
 
-    it('without a binary, says so at session start and is silent otherwise', () => {
+    it('runs every hook in a configured repo', () => {
+      for (const hook of ['session-start', 'git-guard']) {
+        const r = run(hook, configured, fakeEnv);
+        expect(r.status).toBe(0);
+        expect(r.stdout.trim()).toBe(`fake ${hook}`);
+      }
+      expect(called()).toEqual(['session-start', 'git-guard']);
+    });
+
+    it('in an unconfigured repo prints no instructions and runs only session-start', () => {
+      expect(run('instructions', plain, fakeEnv).stdout).toBe('');
+      for (const hook of ['git-guard', 'precompact', 'context-band']) {
+        const r = run(hook, plain, fakeEnv);
+        expect(r.status).toBe(0);
+        expect(r.stdout).toBe('');
+      }
+      expect(called()).toEqual([]);
+      const start = run('session-start', plain, fakeEnv);
+      expect(start.status).toBe(0);
+      expect(start.stdout.trim()).toBe('fake session-start');
+      expect(called()).toEqual(['session-start']);
+    });
+
+    it('in an unconfigured repo without a binary, prints nothing', () => {
+      const r = run('session-start', plain, { FOLKWAYS_HOOK_CMD: join(tmp, 'nope') });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toBe('');
+    });
+
+    it('in a configured repo without a binary, says so at session start and is silent otherwise', () => {
       const missing = { FOLKWAYS_HOOK_CMD: join(tmp, 'nope') };
-      const start = run('session-start', plain, missing);
+      const start = run('session-start', configured, missing);
       expect(start.status).toBe(0);
       expect(start.stdout).toMatch(/hooks? .*off/);
-      const guard = run('git-guard', plain, missing);
+      const guard = run('git-guard', configured, missing);
       expect(guard.status).toBe(0);
       expect(guard.stdout).toBe('');
     });
