@@ -14,13 +14,14 @@ survive refactors and fail when the code is wrong.
 Read these first. A missing file is normal; skip it.
 
 1. `folkways.yaml`: `repos` (default branches), `git.scopes`.
-2. `.local/me.yaml`: `handle`, `projects_dir`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/tests/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/tests/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/tests/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.

@@ -13,13 +13,14 @@ can check. End-to-end test writing is out of scope for v1.
 Read these first. A missing file is normal; skip it.
 
 1. `folkways.yaml`: `qa.allowed_envs`, `repos`.
-2. `.local/me.yaml`: `handle`, `projects_dir`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/qa/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/qa/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/qa/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -49,7 +50,7 @@ Read these first. A missing file is normal; skip it.
 ## Output {#output}
 
 `<effort>/NN-qa-<env>-<sha7>.md`; with no effort,
-`people/<handle>/inbox/<YYYY-MM-DD>-qa-<env>-<sha7>.md`:
+`<personal root>/inbox/<YYYY-MM-DD>-qa-<env>-<sha7>.md`:
 
 ```markdown
 # QA: EX-123 in dev

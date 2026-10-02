@@ -1,31 +1,37 @@
 ---
 name: setup
-description: Configures a new team repo - interviews a team lead to fill in folkways.yaml, moves existing team material into overlays or team skills, and writes the first state/ files. Use when `folkways init` has just run, or when the user says "set up the team repo", "configure folkways", "fill in folkways.yaml", "add our Jira project" or "import our existing templates". Not for setting up one person's machine (use onboard).
+description: Guided setup of folkways in a repo, solo or team - asks which, then interviews for folkways.yaml (tracker, docs, commit format, review trigger, hooks). Use when folkways isn't set up here (no folkways.yaml), when `folkways init` has just run, or when the user says "set up folkways", "configure folkways", "fill in folkways.yaml" or "import our existing templates". Not for one person's machine in a team repo (use onboard).
 ---
 
 # setup
 
-Turn a freshly scaffolded team repo into this team's repo. Everything team-specific lives in
-`folkways.yaml`, `overlays/` and team skills, never in framework files.
+Set folkways up in this repo: `folkways.yaml` for a solo repo, or a scaffolded team repo made into this
+team's. Everything repo-specific lives in `folkways.yaml`, `overlays/` and team skills, never in
+framework files.
 
 ## Step 0: Load config and overlays
 
 Read these first. A missing file is normal; skip it.
 
-1. `folkways.yaml`: the scaffold's example values show every field; this skill replaces them.
+1. `folkways.yaml`: missing in a new repo (the plugin case); after `folkways init` the scaffold's example
+   values show every field, and this skill replaces them.
 2. `.local/me.yaml`: `handle` (the lead may not have one yet; carry on without it).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/setup/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/setup/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/setup/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
 
 ## Workflow
 
+0. **Solo or team?** Ask first; it decides the rest. Solo: one person, usually a code repo, no handle and no
+   `people/`. Team: the scaffolded team repo. An existing `folkways.yaml` already has a `mode`; confirm
+   it instead of asking. Then follow [Solo](#solo) or the steps below.
 1. **Interview in small clusters,** one topic per turn, per [Interview](#interview). Offer the
    scaffold's value as the default. Prefer links and exact names over descriptions.
 2. **Verify what you can** as you go: repo URLs clone (`git ls-remote`), the tracker project key exists,
@@ -49,22 +55,38 @@ Read these first. A missing file is normal; skip it.
    From then on, `folkways.yaml`, `overlays/` and team skills change by PR. On an existing repo with a
    remote, commit on a branch and offer a PR instead.
 
+## Solo {#solo}
+
+1. **Check the root.** Is there already a `work/`, `inbox/`, `state/`, `knowledge/` or `overlays/` that
+   isn't folkways'? List them and ask before using each; if the answer is no, stop and say folkways
+   can't be set up here without them.
+2. **Interview** the solo rows of [Interview](#interview): tracker and docs, commit format, review
+   trigger, context bands, which hooks to turn off. Skip clusters the user doesn't use.
+3. **Show `folkways.yaml`** with `mode: solo`, in full; write it on approval. Create nothing else:
+   folders appear on first use. Check that `.local/` is gitignored and offer to add it.
+4. **Commit `folkways.yaml` on approval,** and say the plugin runs per it from the next session. Solo
+   needs no `onboard`; `.local/me.yaml` is optional (`projects_dir`, `tool`).
+
 ## Interview {#interview}
 
 | Cluster | `folkways.yaml` fields |
 |---|---|
-| Team and members | `team`, `members` (handle, GitHub user, name) |
-| Tracker and docs | `tracker`, `docs` |
+| Mode (first question); team and members (team only) | `mode`, `team`, `members` (handle, GitHub user, name) |
+| Tracker and docs (solo and team) | `tracker`, `docs` |
 | Repos | `repos` (name, URL, default branch, owner: team or other) |
 | Research sources, in search order | `research.sources` |
-| Git and review | `git.scopes`, `git.branch_pattern`, `review.trigger` |
+| Commit format (solo and team): Angular with scopes, Angular, a custom pattern, or none | `git.commit_convention` (`angular`, `pattern`, `none`), `git.scopes`, `git.commit_pattern` (regex on the subject line) |
+| Branches and review (solo and team) | `git.branch_pattern`, `review.trigger` (`on-demand` turns the review gate off) |
 | ADRs | `adr.targets`, `adr.repo_path`, `adr.confluence`, `adr.reviewers` |
 | QA, notifications, models | `qa.allowed_envs`, `notifications`, `models` |
-| Automation | `handoff.bands`, `knowledge_audit` |
+| Context bands (solo and team) | `handoff.bands` |
+| Hooks to turn off (solo and team) | `hooks:` booleans: `git-guard`, `context-band`, `precompact`, `session-start`; all `true` by default |
+| Automation | `knowledge_audit` |
 
-Skip a cluster the team doesn't use, and leave the field out rather than inventing a value.
+Rows marked team only, and `repos`, research, ADR, QA and notifications, are team-mode questions; the
+solo interview stops at the rows marked solo and team. Skip a cluster the team doesn't use, and leave the field out rather than inventing a value.
 
 ## Headless
 
 Don't run setup headless: it needs a person's answers. If started headless, write a checklist of the
-`folkways.yaml` fields still holding scaffold values to the run output, and change nothing.
+`folkways.yaml` fields still holding scaffold values (or, with no file, the questions) to the run output, and change nothing.

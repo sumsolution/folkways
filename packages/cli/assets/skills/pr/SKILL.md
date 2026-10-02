@@ -13,13 +13,14 @@ squash-merged, so the title becomes the commit on the default branch.
 Read these first. A missing file is normal; skip it.
 
 1. `folkways.yaml`: `git` (convention, scopes, merge), `review.trigger`, `notifications`, `members`.
-2. `.local/me.yaml`: `handle`, `projects_dir`, `review.trigger` (overrides the team value).
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, `review.trigger` (overrides the team value).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/pr/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/pr/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/pr/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -29,7 +30,7 @@ Read these first. A missing file is normal; skip it.
 1. **Check the branch.** Not the default branch; name follows `git.branch_pattern`; working tree clean.
    Uncommitted changes go through the `commit` skill first.
 2. **Check the review gate.** A fresh-process review must cover the exact HEAD SHA: a file
-   `NN-review-<sha7>.md` in the effort (or `<YYYY-MM-DD>-review-<sha7>.md` in `people/<handle>/inbox/`) whose frontmatter `sha` equals
+   `NN-review-<sha7>.md` in the effort (or `<YYYY-MM-DD>-review-<sha7>.md` in `<personal root>/inbox/`) whose frontmatter `sha` equals
    `git rev-parse HEAD`. If there is none, or it covers an older SHA, run
    `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root and
    wait for it. This holds for every trigger setting; the trigger only decides when the review runs

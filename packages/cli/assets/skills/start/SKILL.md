@@ -12,15 +12,18 @@ a new effort gets a folder and a `00-STATUS.md` before any real work.
 
 Read these first. A missing file is normal; skip it.
 
-1. `folkways.yaml`: `tracker`, `repos`, `research.sources`.
-2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`. **If it's missing,** stop and run the `onboard`
-   skill first; nothing else works without a handle.
+1. `folkways.yaml`: `mode`, `tracker`, `repos`, `research.sources`. **If it's missing,** say folkways
+   isn't set up in this repo, offer the `setup` skill, and stop; don't assume the team layout.
+2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`. **In a team repo, if it's missing,** stop and run
+   the `onboard` skill first; nothing else works without a handle. In a solo repo (`mode: solo`) there is
+   no handle and the file is optional.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/start/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/start/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/start/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -29,14 +32,14 @@ Read these first. A missing file is normal; skip it.
 
 - **Compacted context:** if this session was just compacted, update the effort's `00-STATUS.md` before
   anything else (the `handoff` skill).
-- **Team repo freshness:** `git fetch` and say if the team repo's default branch is ahead of the local
+- **Repo freshness:** `git fetch` and say if the repo's default branch is ahead of the local
   one. Pull only with the user's approval.
 
 ## Which case
 
 Ask only if you can't tell. If the user named a ticket key or effort, look for it:
 
-- `efforts/*/00-STATUS.md` and `people/<handle>/work/*/00-STATUS.md` whose folder name starts with the key.
+- `efforts/*/00-STATUS.md` (team repos) and `<personal root>/work/*/00-STATUS.md` whose folder name starts with the key.
 
 Found → [Resume](#resume). Not found, or the user wants something new → [New effort](#new-effort).
 If the user just says "start", list their open efforts (folder, `Last updated`, first line of
@@ -59,7 +62,8 @@ Always these three steps, in order:
    tool isn't available, ask the user to paste or link the content; don't guess.
 2. **Name the folder** `<KEY>-<slug>` (e.g. `EX-123-handle-expired-tokens`); with no ticket, a short
    slug and a note that there's no ticket. New efforts start personal:
-   `people/<handle>/work/<KEY>-<slug>/`. Use `efforts/` only if the user says it's shared from day one.
+   `<personal root>/work/<KEY>-<slug>/`. Use `efforts/` only if the user says it's shared from day one
+   (team repos only).
 3. **Suggest next steps,** usually research first. Offer to run the `research` skill for preliminary
    findings.
 4. **Propose `00-STATUS.md`** from [references/status-template.md](references/status-template.md)
@@ -70,6 +74,6 @@ Always these three steps, in order:
 ## Headless
 
 Headless runs have no one to confirm with. Resume: read and report state; take the next step only if
-the prompt asked for it. New effort: create the folder and `00-STATUS.md` under `people/<handle>/work/`
+the prompt asked for it. New effort: create the folder and `00-STATUS.md` under `<personal root>/work/`
 (or where the prompt says), mark every guess `(unconfirmed)` in the file, and list them in the output.
 Never pull, and never write outside the team repo.

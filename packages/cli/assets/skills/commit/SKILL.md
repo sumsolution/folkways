@@ -13,13 +13,14 @@ title into the commit on the default branch, so the same rules cover PR titles (
 Read these first. A missing file is normal; skip it.
 
 1. `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
-2. `.local/me.yaml`: `handle`, `projects_dir`, and `review.trigger` (it overrides the team value).
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, and `review.trigger` (it overrides the team value).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/commit/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/commit/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/commit/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -46,6 +47,9 @@ Read these first. A missing file is normal; skip it.
    review file landed. Never push; that is the `pr` skill, and every push needs approval.
 
 ## Message format {#message-format}
+
+Follow `git.commit_convention` (default `angular`). `pattern`: the subject must match
+`git.commit_pattern`; the rules below don't apply. `none`: any clear, imperative subject. For `angular`:
 
 ```
 <type>(<scope>): <subject>
@@ -102,6 +106,7 @@ Create the branch in a new worktree from a freshly fetched default branch:
 |---|---|---|
 | Project repo | any | a feature branch in a worktree; never the default branch |
 | Team repo | `state/`, `efforts/`, `people/` | the default branch, rebased on push (keep history linear) |
+| Solo repo | anything | the user's choice; ask |
 | Team repo | `knowledge/`, `overlays/`, team skills, `folkways.yaml`, framework upgrades | a branch and a PR |
 
 Use `git mv` for moves so history follows the file.

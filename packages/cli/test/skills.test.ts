@@ -12,6 +12,9 @@ const NAME_MAX = 64;
 const DESCRIPTION_MAX = 500; // spec hard limit is 1,024; framework skills share a listing budget
 const SKILL_MD_MAX_LINES = 500;
 
+// Skills that act on the team layout itself: creating `people/<handle>/`, promoting an effort.
+const TEAM_ONLY = ['onboard', 'setup', 'status'];
+
 const skills = existsSync(SKILLS_DIR)
   ? readdirSync(SKILLS_DIR).filter((d) => statSync(join(SKILLS_DIR, d)).isDirectory()).sort()
   : [];
@@ -56,7 +59,8 @@ const personalBlock = (skill: string): string => `3. Your personal additions. Te
 
    @\${CLAUDE_PROJECT_DIR}/.local/me/overlays/${skill}/OVERLAY.md
 
-   If that file wasn't attached with this skill, read \`people/<handle>/overlays/${skill}/OVERLAY.md\`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no \`.local/me\`),
+   read \`<personal root>/overlays/${skill}/OVERLAY.md\`.
    Personal overlays may only add. Apply a personal \`## Add\` rule only where it doesn't conflict
    with this file. Ignore a personal \`## Override\`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -101,6 +105,11 @@ describe('framework skills', () => {
       expect(step).toContain(personalBlock(skill));
       // Team overlays are compiled in by sync; the skill must not send the agent to read them.
       expect(step!.replace(personalBlock(skill), '')).not.toMatch(/`overlays\//);
+    });
+
+    it('states personal paths against the personal root', () => {
+      // Only team-mode procedures name `people/<handle>/`; everything else says `<personal root>/`.
+      if (!TEAM_ONLY.includes(skill)) expect(text).not.toContain('people/<handle>');
     });
 
     it('says what it does headless and asks before writing', () => {
@@ -148,8 +157,23 @@ describe('framework skills', () => {
   });
 });
 
+describe('guided setup', () => {
+  const setup = read(skillFile('setup'));
+  it('asks solo or team and writes mode, commit format and hook toggles', () => {
+    for (const word of ['mode: solo', 'solo', 'commit_convention', 'commit_pattern', 'hooks:']) expect(setup).toContain(word);
+  });
+  it.each(['start', 'onboard'])('%s offers setup when folkways.yaml is missing', (skill) => {
+    expect(read(skillFile(skill))).toMatch(/`setup` skill/);
+  });
+});
+
 describe('assets/instructions.md', () => {
   const text = read(join(REPO, 'assets/instructions.md'));
+
+  it('defines the personal root and follows git.commit_convention', () => {
+    expect(text).toContain('personal root');
+    expect(text).toContain('git.commit_convention');
+  });
   const listed = [...(/^Framework skills: ([\s\S]*?)\n\n/m.exec(text)?.[1] ?? '').matchAll(/`([a-z-]+)`/g)].map((m) => m[1]);
 
   it('lists exactly the framework skills', () => {
