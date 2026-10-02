@@ -12,7 +12,7 @@
 Ship the four hooks of [spec §7.1](06-v1-spec.md) as one Go binary, `folkways-hook`, delivered as the
 per-platform optional dependencies `@folkways/hooks-<os>-<cpu>` of `@folkways/cli`, and wired into team
 repos by `sync`. Done when the [contract suite](../../packages/hooks/contract) passes all 111 cases against the binary
-installed from packed tarballs, with npm and pnpm, on all four platforms.
+installed from packed tarballs, with npm and pnpm, on every platform CI has a runner for (darwin-x64 has none; ADR 0002).
 
 ## Starting point
 
@@ -110,7 +110,8 @@ diff, squash with a `(#N)` title, Summer approves push and merge.
   binary arrives the way it will from npm: as the CLI's hoisted optional dependency. Asserts
   `.bin/folkways-hook --version`, all four platforms in the lockfile (the npm/cli#8320 check), `sync` with
   no warnings, and the full contract suite through the installed binary.
-- CI smoke matrix: `ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest` (arm64), `macos-26-intel`.
+- CI smoke matrix: `ubuntu-latest`, `ubuntu-24.04-arm`, `macos-latest` (arm64). `macos-26-intel` was dropped
+  on 2026-10-02: darwin-x64 still ships, untested in CI (ADR 0002).
 - `.github/workflows/release.yml`, on `@folkways/hooks@*` and `@folkways/cli@*` tags: `build` runs check and
   tests, then `scripts/release.ts` (hooks: four tarballs plus the contract suite against the release binary;
   CLI: the tarball, and fails unless every pinned platform package is already on npm). `publish` needs the

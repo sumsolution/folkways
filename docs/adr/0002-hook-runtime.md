@@ -106,10 +106,12 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
 - **Release pipeline:** a new CI workflow cross-compiles `folkways-hook` for darwin-arm64, darwin-x64,
   linux-x64 and linux-arm64 (`CGO_ENABLED=0`). It generates each platform `package.json` (`os`, `cpu`, `bin`,
   version = the `@folkways/hooks` version, per [ADR 0003](0003-repo-layout.md)), publishes the four platform packages first, each with provenance, then
-  `@folkways/cli`, whose `optionalDependencies` pin them exactly. A smoke job per OS (macOS arm64 and x64
-  runners, Linux x64 and arm64) installs the packed tarballs with npm and with pnpm and runs the contract suite
+  `@folkways/cli`, whose `optionalDependencies` pin them exactly. A smoke job per OS (macOS arm64, Linux x64
+  and arm64) installs the packed tarballs with npm and with pnpm and runs the contract suite
   against `node_modules/.bin/folkways-hook`. Releases that already published cannot be half-undone: the job
-  validates everything before the first publish.
+  validates everything before the first publish. darwin-x64 is built and shipped but not smoke-tested
+  (2026-10-02): Intel Macs end with macOS 26, GitHub's Intel runner image with them, and the beta team is
+  unlikely to have one. Its amd64 code is the one linux-x64 tests; only the darwin link is unchecked.
 - **Hook command in `settings.json`:** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`,
   replacing `node_modules/.bin/folkways hook <name>`. `src/settings.ts` must recognize it (`FRAMEWORK_HOOK_PREFIX` / `isFrameworkHook` today
   matches `folkways hook `). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd.
