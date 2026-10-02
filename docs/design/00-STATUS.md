@@ -44,7 +44,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
   company-specific content in the framework.** v1 tools: **Claude Code (desktop + CLI) and Copilot CLI
   only** (11). No IDE integrations, no Copilot cloud agent.
 - **Architecture (3, 6, 11):** framework published as npm package `@folkways/cli`, pinned in one team repo; `folkways sync`
-  copies its text files in (12). Team repo: `team.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
+  copies its text files in (12). Team repo: `folkways.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
   skills, committed `people/<handle>/` (`overlays/`, `inbox/`, `work/`), gitignored `.local/` (`me.yaml`).
   **No separate personal repo** (11). Knowledge, skills, overlays via PR; state, efforts, people via direct
   rebased push. Promotion = `git mv` to `efforts/`. Every effort has a `00-STATUS.md`. Agent-space stays as-is.
@@ -81,7 +81,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 3. The plugin in a repo that isn't a team repo (Summer to revisit `start`). Every session is told to follow
    `folkways:start`, whose step 2 stops and runs `onboard` when `.local/me.yaml` is missing; `onboard`
    assumes the team-repo layout. The hooks there: `git-guard` denies commits that aren't Angular
-   `type(scope): subject` (no `team.yaml` needed); `precompact` writes `.local/precompact.log` into the
+   `type(scope): subject` (no `folkways.yaml` needed); `precompact` writes `.local/precompact.log` into the
    repo; `context-band` stays off (no `handoff.bands`); the main-clone and pre-push checks stay off (no
    `me.yaml`). Decide which of these a plain repo should get, alongside ADR 0003's open solo-config question.
 
@@ -107,7 +107,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | `.local/me` link | [src/](../../packages/cli/src) | Symlink to `people/<handle>/`, created by `onboard`, kept by `sync` |
 | Framework instructions | [assets/instructions.md](../../packages/cli/assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
 | Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule, `disableAllHooks: false`, one entry per hook and event, run as `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` |
-| Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
+| Team scaffold | [templates/](../../packages/cli/templates) | `folkways.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
 | Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `precompact`; the Go binary is built against it |
 | Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Wired into team repos by `sync`; `init` sets pnpm's `publicHoistPattern`; `sync` warns when the binary or that setting is missing; `folkways hook <name>` runs it by hand. Packaged as `@folkways/hooks-<os>-<cpu>` ([build.ts](../../packages/hooks/scripts/build.ts)); the packed CLI pins them via [.pnpmfile.mjs](../../.pnpmfile.mjs). `FOLKWAYS_SKILL_NAMESPACE` makes the hooks name skills `folkways:<name>` (the plugin sets it) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |

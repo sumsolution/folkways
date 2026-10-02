@@ -27,7 +27,7 @@ node packages/cli/src/cli.ts init ../example-team --no-install
 
 `init` refuses a non-empty directory. It then:
 
-1. Copies the scaffold: `README.md`, `team.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`,
+1. Copies the scaffold: `README.md`, `folkways.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`,
    `.claude/settings.json`, and READMEs for `knowledge/`, `state/`, `efforts/`, `overlays/` and
    `people/`.
 2. Writes a private `package.json` that pins this exact `@folkways/cli` version.
@@ -44,10 +44,10 @@ Your team repo is ready. <(^_^<)
 
 ### 2. Fill in the config
 
-Open Claude Code or Copilot CLI in the new repo and run the `setup` skill. It interviews you for `team.yaml` and moves existing team material into
+Open Claude Code or Copilot CLI in the new repo and run the `setup` skill. It interviews you for `folkways.yaml` and moves existing team material into
 `overlays/` or team skills.
 
-Or edit `team.yaml` by hand. The comments say what each field is for. Keep examples synthetic until
+Or edit `folkways.yaml` by hand. The comments say what each field is for. Keep examples synthetic until
 you're in your own private repo.
 
 ### 3. Push it

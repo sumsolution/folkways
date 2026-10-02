@@ -126,14 +126,14 @@ func checkCommit(args []arg, cfg team.Config) string {
 		return ""
 	}
 	if m[1] == "" {
-		return fmt.Sprintf("Commit message needs a scope: \"type(scope): subject\", one of team.yaml git.scopes (%s).", strings.Join(scopes, ", "))
+		return fmt.Sprintf("Commit message needs a scope: \"type(scope): subject\", one of folkways.yaml git.scopes (%s).", strings.Join(scopes, ", "))
 	}
 	for _, s := range scopes {
 		if s == m[1] {
 			return ""
 		}
 	}
-	return fmt.Sprintf("Scope \"%s\" is not in team.yaml git.scopes (%s).", m[1], strings.Join(scopes, ", "))
+	return fmt.Sprintf("Scope \"%s\" is not in folkways.yaml git.scopes (%s).", m[1], strings.Join(scopes, ", "))
 }
 
 func gitOut(dir string, args ...string) (string, error) {

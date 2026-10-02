@@ -7,7 +7,7 @@ Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `si
 
 ## Session start
 
-- Read `team.yaml` and `.local/me.yaml`. If `me.yaml` is missing, run the `onboard` skill first.
+- Read `folkways.yaml` and `.local/me.yaml`. If `me.yaml` is missing, run the `onboard` skill first.
 - **Resuming an effort:** read its `00-STATUS.md`, check git state, confirm next steps with the user.
 - **New effort:** ask for a ticket or docs, read them, suggest next steps (usually `research`), create
   `00-STATUS.md`. The `start` skill does this.
@@ -119,4 +119,4 @@ actions, `main`, external systems. Flag every judgement call in the output with 
   the skill, so run it after an overlay change. Personal ones go in
   `people/<handle>/overlays/<skill>/OVERLAY.md` (add only); each skill attaches them in step 0.
 - Rules that must hold whatever an overlay says (commit format, push approval, the review gate) live in
-  `team.yaml` and are checked by hooks. Put them there, not in an overlay.
+  `folkways.yaml` and are checked by hooks. Put them there, not in an overlay.

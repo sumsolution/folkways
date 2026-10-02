@@ -12,7 +12,7 @@ files and asks before touching anything outside the team repo.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `members`, `repos`, `research.sources`, `models`, `review.trigger`.
+1. `folkways.yaml`: `members`, `repos`, `research.sources`, `models`, `review.trigger`.
 2. `.local/me.yaml`: if it exists, this is a re-run; show its values and change only what the user asks.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
@@ -28,7 +28,7 @@ Read these first. A missing file is normal; skip it.
 
 1. **Check the install.** `node_modules/.bin/folkways` must exist. If not, run the team's install
    (`npm ci`, or `pnpm install --frozen-lockfile` when `pnpm-lock.yaml` exists) on approval.
-2. **Identify the person.** Ask for their handle; it must match a `members` entry in `team.yaml`. Not
+2. **Identify the person.** Ask for their handle; it must match a `members` entry in `folkways.yaml`. Not
    listed → they need a PR adding them (offer to draft it); continue with the handle meanwhile.
 3. **Write `.local/me.yaml`** per [me.yaml](#me-yaml). Ask for `projects_dir` as an absolute path; `~`
    is not reliably expanded. Show the file; write on approval. `.local/` is gitignored; check that it is.
@@ -53,8 +53,8 @@ handle: alex
 projects_dir: /Users/alex/projects     # absolute
 tool: claude                           # claude | copilot (default for `folkways run`)
 review:
-  trigger: pre-push                    # optional; overrides team.yaml
-models: {}                             # optional; overrides team.yaml models
+  trigger: pre-push                    # optional; overrides folkways.yaml
+models: {}                             # optional; overrides folkways.yaml models
 notifications: { slack_user: "@alex" } # optional
 ```
 

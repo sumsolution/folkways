@@ -96,7 +96,7 @@ describe('framework skills', () => {
     it('has the shared step 0: config, then personal additions under the precedence rule', () => {
       const step = stepZero(text);
       expect(step, 'no "## Step 0" section').toBeDefined();
-      expect(step).toContain('`team.yaml`');
+      expect(step).toContain('`folkways.yaml`');
       expect(step).toContain('`.local/me.yaml`');
       expect(step).toContain(personalBlock(skill));
       // Team overlays are compiled in by sync; the skill must not send the agent to read them.

@@ -13,7 +13,7 @@ you are. The user makes the call.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `research.sources`, `repos`, `docs`, `models`.
+1. `folkways.yaml`: `research.sources`, `repos`, `docs`, `models`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`, `models`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
@@ -46,7 +46,7 @@ Read these first. A missing file is normal; skip it.
 
 ## Source order {#source-order}
 
-Use the order in `team.yaml` `research.sources`; each entry has a `name`, a `kind` (`local`, `repos`,
+Use the order in `folkways.yaml` `research.sources`; each entry has a `name`, a `kind` (`local`, `repos`,
 `url`, `mcp`, `web`) and notes. Without config, use: `knowledge/`, the team's repos, other teams'
 repos, internal docs and API portal, docs wiki, tracker, monitoring, chat, then the web.
 
@@ -61,7 +61,7 @@ repos, internal docs and API portal, docs wiki, tracker, monitoring, chat, then 
 |---|---|---|
 | Understand code in one repo | Local clone (see [clones](#clones)) | Ask |
 | Search many repos | `gh search code`, or local clones | Local clones, else ask |
-| Any source with `kind: mcp` | That server from `team.yaml` | Ask the user to paste, export or link |
+| Any source with `kind: mcp` | That server from `folkways.yaml` | Ask the user to paste, export or link |
 | A source with `kind: url` | Fetch it; note any `notes` (VPN, login) | Ask the user to open it and paste or link |
 | External docs and practice | Web, after team sources | Say the web was not searched |
 
@@ -73,13 +73,13 @@ saying so. If the user can't help, list the source under open questions and lowe
 The user's clones under `projects_dir` belong to the user.
 
 - Never check out, pull, reset or rebase in them.
-- Run `git fetch`, then read `origin/<default>` (default branch from `team.yaml` `repos`) with
+- Run `git fetch`, then read `origin/<default>` (default branch from `folkways.yaml` `repos`) with
   `git grep`, `git show origin/<default>:<path>`, or, for a deep read, a detached worktree at
   `<projects_dir>/.worktrees/<repo>/research-<sha7>`, removed with `git worktree remove` when you
   finish. Record the full SHA you read.
 - **Missing repo:** clone it into `projects_dir` when the search is deep (many files) or the repo will
   be referenced again. Cloning writes to the user's disk: tell them the repo and path and clone on their
-  yes. A repo listed in `team.yaml` `repos` is pre-approved; say so as you clone. Then the same rules apply.
+  yes. A repo listed in `folkways.yaml` `repos` is pre-approved; say so as you clone. Then the same rules apply.
 
 ## Subagents {#subagents}
 

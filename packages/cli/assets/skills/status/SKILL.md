@@ -12,7 +12,7 @@ those files and `state/`. This skill keeps them current and reads them back.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `members`, `tracker`.
+1. `folkways.yaml`: `members`, `tracker`.
 2. `.local/me.yaml`: `handle`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

@@ -31,7 +31,7 @@ export interface Expect {
 export interface Fixture {
   description: string;
   env?: {
-    /** Deep-merged into the base team.yaml. */
+    /** Deep-merged into the base folkways.yaml. */
     team?: Record<string, unknown>;
     /** Deep-merged into the base .local/me.yaml; `null` removes the file. */
     me?: Record<string, unknown> | null;
@@ -152,7 +152,7 @@ function assistant(tokens: number, sidechain: boolean): Plain {
 }
 
 /**
- * The synthetic environment: a team repo with team.yaml and .local/me.yaml, and a projects dir holding a main
+ * The synthetic environment: a team repo with folkways.yaml and .local/me.yaml, and a projects dir holding a main
  * clone (`web-app`, two commits on main) and a worktree of it (`.worktrees/web-app/feat-orders`).
  */
 export function buildEnv(fixture: Fixture): Vars {
@@ -182,7 +182,7 @@ export function buildEnv(fixture: Fixture): Vars {
     TRANSCRIPT: join(root, 'transcript.jsonl'),
   };
   const env = fixture.env ?? {};
-  writeFileSync(join(team, 'team.yaml'), yaml(merge(BASE_TEAM, env.team ?? {})));
+  writeFileSync(join(team, 'folkways.yaml'), yaml(merge(BASE_TEAM, env.team ?? {})));
   if (env.me !== null) {
     const me = merge({ handle: 'alex', projects_dir: projects, tool: 'claude' }, fill(env.me ?? {}, vars));
     mkdirSync(join(team, '.local'), { recursive: true });

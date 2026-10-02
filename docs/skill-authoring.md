@@ -16,7 +16,7 @@ How to write a framework skill in `packages/cli/assets/skills/<name>/`. It is ba
 | `name` is lowercase-hyphenated, at most 64 chars, equals the folder | Spec requirement | yes |
 | `description` is at most 500 chars, no `<` or `>` | Spec limit is 1,024; all skills share a listing budget of about 1% of context in Claude Code | yes |
 | `SKILL.md` is under 500 lines | Spec and Anthropic guidance; the body loads whole on every use | yes |
-| Step 0 reads `team.yaml` and `.local/me.yaml`, then ends with the shared personal-additions block | Team overlays are compiled in by `sync`; the block attaches personal additions and states their precedence, without which they won 18 of 20 eval runs ([07 §6](design/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)) | yes, word for word |
+| Step 0 reads `folkways.yaml` and `.local/me.yaml`, then ends with the shared personal-additions block | Team overlays are compiled in by `sync`; the block attaches personal additions and states their precedence, without which they won 18 of 20 eval runs ([07 §6](design/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)) | yes, word for word |
 | Overridable sections carry a unique `{#id}` | Team overlays replace sections by ID | yes (unique) |
 | Writes, posts and pushes only after approval | Spec §6; instructions "Approval" list | wording only |
 | A `## Headless` section | Spec §7.5; no one can approve in a headless run | yes |
@@ -32,7 +32,7 @@ packages/cli/assets/skills/ticket/
 ├── SKILL.md              # always loaded when the skill triggers; the method
 └── references/           # loaded only when a step says to read one
     ├── templates.md      #   one file per concern
-    ├── jira.md           #   per-tracker mechanics, chosen by team.yaml
+    ├── jira.md           #   per-tracker mechanics, chosen by folkways.yaml
     └── example-overlay.md
 ```
 
@@ -72,7 +72,7 @@ description: Opens or updates a pull request in the team's convention. Use when 
 In this order. Omit a section that has nothing to say, except step 0 and Headless.
 
 1. `# <name>`, then two or three sentences: what the skill is for and the standard it holds.
-2. `## Step 0: Load config and overlays`: the `team.yaml` and `me.yaml` fields this skill uses, so a
+2. `## Step 0: Load config and overlays`: the `folkways.yaml` and `me.yaml` fields this skill uses, so a
    reader knows what configures it, then the shared personal-additions block (see the skeleton; copy
    it exactly, with the skill's name).
 3. `## Workflow`: numbered steps. Each step starts with a bold verb phrase. Say where approval is needed
@@ -87,7 +87,7 @@ Write for an agent that is capable but new to this team:
 - **Be prescriptive where a mistake is costly or consistency matters** (approval gates, paths, formats
   other tools parse, the review file's frontmatter). Give latitude elsewhere; offer one default, not a
   menu.
-- **Tool-neutral verbs.** "Read `team.yaml`", "run `git status`", "ask the user". Never tool names
+- **Tool-neutral verbs.** "Read `folkways.yaml`", "run `git status`", "ask the user". Never tool names
   (`Read`, `Bash`, `view`): they differ between Claude Code and Copilot CLI.
 - **No tool-specific substitutions** (`$ARGUMENTS`, `${CLAUDE_SKILL_DIR}`); Copilot CLI shows them as
   literal text.
@@ -227,7 +227,7 @@ description: <What it produces, one clause>. Use when the user says "<phrase>", 
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: <fields this skill uses>.
+1. `folkways.yaml`: <fields this skill uses>.
 2. `.local/me.yaml`: `handle`, <other fields>.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

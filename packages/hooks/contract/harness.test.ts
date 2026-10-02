@@ -28,7 +28,7 @@ describe('fill and merge', () => {
 describe('buildEnv', () => {
   it('builds a team repo, a main clone and a worktree', () => {
     const vars = buildEnv({ description: '', env: { team: { git: { scopes: [] } }, files: { 'efforts/x/r-${HEAD7}.md': 'sha: ${HEAD}\n' } }, steps: [] });
-    expect(read(join(vars.TEAM, 'team.yaml'))).toMatch(/scopes":\[\]/);
+    expect(read(join(vars.TEAM, 'folkways.yaml'))).toMatch(/scopes":\[\]/);
     expect(read(join(vars.TEAM, '.local/me.yaml'))).toContain(`projects_dir: ${JSON.stringify(vars.PROJECTS)}`);
     expect(read(join(vars.TEAM, `efforts/x/r-${vars.HEAD7}.md`))).toBe(`sha: ${vars.HEAD}\n`);
     expect(read(join(vars.WORKTREE, '.git'))).toMatch(/^gitdir:/);

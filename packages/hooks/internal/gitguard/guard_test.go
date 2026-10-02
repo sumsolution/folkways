@@ -29,7 +29,7 @@ func TestCheckCommit(t *testing.T) {
 		{`git commit --no-edit`, team.Config{}, ""},
 		{`git commit -F msg.txt`, team.Config{}, ""},
 		{`git commit -m "feat: x"`, scoped("web-app"), "needs a scope"},
-		{`git commit -m "feat(auth): x"`, scoped("web-app", "ci"), "not in team.yaml"},
+		{`git commit -m "feat(auth): x"`, scoped("web-app", "ci"), "not in folkways.yaml"},
 		{`git commit -m "feat(ci): x"`, scoped("web-app", "ci"), ""},
 		{"git commit -m \"$(cat <<'EOF'\nfeat(ci): x\n\nbody\nEOF\n)\"", scoped("ci"), ""},
 		{"git commit -m \"$(cat <<'EOF'\nnope\nEOF\n)\"", scoped("ci"), "not Angular"},

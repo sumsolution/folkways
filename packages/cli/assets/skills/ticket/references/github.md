@@ -1,13 +1,13 @@
 # GitHub Issues mechanics
 
-Read when `team.yaml` `tracker.type` is `github`. Items marked *(verify)* come from general knowledge,
+Read when `folkways.yaml` `tracker.type` is `github`. Items marked *(verify)* come from general knowledge,
 not a cited source; check them the first time and tell the user if they differ.
 
 ## Mapping
 
 | Skill concept | GitHub |
 |---|---|
-| Repository | where the team's issues live; ask if `team.yaml` doesn't say |
+| Repository | where the team's issues live; ask if `folkways.yaml` doesn't say |
 | Bug, story, task | organization issue types when the org defines them (defaults: task, bug, feature; a story maps to feature); otherwise a label per type |
 | Spike, epic | an issue type if the org has one, else a label; an epic is a parent issue whose sub-issues are the work |
 | Parent | sub-issues: up to 100 per parent, up to 8 levels deep |

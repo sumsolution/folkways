@@ -1,6 +1,6 @@
 # Jira mechanics
 
-Read when `team.yaml` `tracker.type` is `jira`. Items marked *(verify)* come from general knowledge,
+Read when `folkways.yaml` `tracker.type` is `jira`. Items marked *(verify)* come from general knowledge,
 not a cited source; check them against the team's instance the first time and tell the user if they
 differ.
 

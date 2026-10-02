@@ -13,7 +13,7 @@ and the rules win. A ticket that fills three sections well beats one that fills 
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `tracker` (`type`, `base_url`, `project_key`), `members`, `repos`.
+1. `folkways.yaml`: `tracker` (`type`, `base_url`, `project_key`), `members`, `repos`.
 2. `.local/me.yaml`: `handle`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

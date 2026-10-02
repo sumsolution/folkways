@@ -1,4 +1,4 @@
-// Package team loads the team repo configuration: team.yaml and .local/me.yaml.
+// Package team loads the team repo configuration: folkways.yaml and .local/me.yaml.
 package team
 
 import (
@@ -9,12 +9,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Review is the review section of team.yaml and me.yaml.
+// Review is the review section of folkways.yaml and me.yaml.
 type Review struct {
 	Trigger string `yaml:"trigger"`
 }
 
-// TeamYAML is the part of team.yaml the hooks read.
+// TeamYAML is the part of folkways.yaml the hooks read.
 type TeamYAML struct {
 	Git struct {
 		Scopes []string `yaml:"scopes"`
@@ -39,7 +39,7 @@ type Config struct {
 	Me   MeYAML
 }
 
-// Load reads team.yaml and .local/me.yaml from the team repo (CLAUDE_PROJECT_DIR, else the cwd).
+// Load reads folkways.yaml and .local/me.yaml from the team repo (CLAUDE_PROJECT_DIR, else the cwd).
 // Missing or broken files leave the zero value: the checks that need them simply do not fire.
 func Load() Config {
 	dir := os.Getenv("CLAUDE_PROJECT_DIR")
@@ -52,7 +52,7 @@ func Load() Config {
 // LoadDir reads the configuration of the team repo at dir.
 func LoadDir(dir string) Config {
 	c := Config{Dir: dir}
-	readYAML(filepath.Join(dir, "team.yaml"), &c.Team)
+	readYAML(filepath.Join(dir, "folkways.yaml"), &c.Team)
 	readYAML(filepath.Join(dir, ".local", "me.yaml"), &c.Me)
 	return c
 }
@@ -76,7 +76,7 @@ func (c Config) SafeHandle() string {
 // Triggers in increasing strictness. Unknown values have no rank.
 var triggerRank = map[string]int{"on-demand": 1, "after-commit": 2, "pre-push": 3}
 
-// ReviewTrigger is the effective review.trigger: the stricter of team.yaml and .local/me.yaml.
+// ReviewTrigger is the effective review.trigger: the stricter of folkways.yaml and .local/me.yaml.
 // A person can only tighten the team's setting. A value that is not a known trigger is ignored.
 func (c Config) ReviewTrigger() string {
 	best := ""

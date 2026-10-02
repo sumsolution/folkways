@@ -13,7 +13,7 @@ agent gives the same baseline review; overlays add team and personal rules.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
+1. `folkways.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
 2. `.local/me.yaml`: `handle`, `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

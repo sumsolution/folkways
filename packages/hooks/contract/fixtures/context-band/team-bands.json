@@ -1,5 +1,5 @@
 {
-  "description": "handoff.bands comes from team.yaml",
+  "description": "handoff.bands comes from folkways.yaml",
   "env": {
     "team": {
       "handoff": {

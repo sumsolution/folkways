@@ -12,7 +12,7 @@ squash-merged, so the title becomes the commit on the default branch.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `git` (convention, scopes, merge), `review.trigger`, `notifications`, `members`.
+1. `folkways.yaml`: `git` (convention, scopes, merge), `review.trigger`, `notifications`, `members`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, `review.trigger` (overrides the team value).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

@@ -16,7 +16,7 @@ mostly re-runs the stated method. An entry with no method is itself a finding.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `models`, `knowledge_audit`, `repos`.
+1. `folkways.yaml`: `models`, `knowledge_audit`, `repos`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

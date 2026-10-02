@@ -6,7 +6,7 @@ New to the repo? Install dependencies (`npm ci`, or `pnpm install --frozen-lockf
 
 | Path | Holds | Changes by |
 |---|---|---|
-| `team.yaml` | Team config | PR |
+| `folkways.yaml` | Team config | PR |
 | `knowledge/` | Durable facts, each with `Last verified:` | PR |
 | `state/` | Live trackers, one file per track | direct push |
 | `efforts/<KEY>-<slug>/` | Shared efforts, each with `00-STATUS.md` | direct push |

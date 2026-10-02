@@ -32,7 +32,7 @@ Rebuild after changing skills, instructions or hooks; the next session picks it 
   (`.local/me/overlays/`) still attach.
 - **The push ask rule** isn't set: plugins can't add permission rules.
 - **Synced team repos** (with `.folkways/manifest.json`) are left alone: their own settings run the hooks.
-- **Hooks without a team repo** read no `team.yaml` or `me.yaml`. `git-guard` still denies commits that
+- **Hooks without a team repo** read no `folkways.yaml` or `me.yaml`. `git-guard` still denies commits that
   aren't Angular `type(scope): subject`; `precompact` writes `.local/precompact.log` into the repo;
   `context-band` and the main-clone and pre-push checks stay off. Open question 3 in
   [00-STATUS](../../docs/design/00-STATUS.md).

@@ -13,7 +13,7 @@ survive refactors and fail when the code is wrong.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `repos` (default branches), `git.scopes`.
+1. `folkways.yaml`: `repos` (default branches), `git.scopes`.
 2. `.local/me.yaml`: `handle`, `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

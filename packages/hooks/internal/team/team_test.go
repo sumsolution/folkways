@@ -45,7 +45,7 @@ func TestLoadDir(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("team.yaml", "git:\n  scopes: [a, b]\nreview:\n  trigger: on-demand\n")
+	write("folkways.yaml", "git:\n  scopes: [a, b]\nreview:\n  trigger: on-demand\n")
 	write(".local/me.yaml", "projects_dir: /p\nreview:\n  trigger: pre-push\n")
 	c := LoadDir(dir)
 	if len(c.Team.Git.Scopes) != 2 || c.Me.ProjectsDir != "/p" || c.ReviewTrigger() != "pre-push" {

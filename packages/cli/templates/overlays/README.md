@@ -13,6 +13,6 @@ it references (templates, examples). Changes go by PR.
 additions are appended as `## Team additions`. Run it after changing an overlay and commit the result.
 An override of an ID the skill doesn't have stops the sync. Inside an override, use `###` and deeper
 headings: a `##` heading ends the override. Don't override a section and one of its subsections. Rules that must hold whatever an overlay
-says belong in `team.yaml`, where hooks check them.
+says belong in `folkways.yaml`, where hooks check them.
 
 Personal overlays live in `people/<handle>/overlays/<skill>/OVERLAY.md` and may only add.

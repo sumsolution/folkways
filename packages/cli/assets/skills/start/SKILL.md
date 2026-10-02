@@ -12,7 +12,7 @@ a new effort gets a folder and a `00-STATUS.md` before any real work.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `tracker`, `repos`, `research.sources`.
+1. `folkways.yaml`: `tracker`, `repos`, `research.sources`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`. **If it's missing,** stop and run the `onboard`
    skill first; nothing else works without a handle.
 3. Your personal additions. Team overrides and additions are already compiled into this file by

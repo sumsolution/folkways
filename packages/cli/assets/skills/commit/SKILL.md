@@ -12,7 +12,7 @@ title into the commit on the default branch, so the same rules cover PR titles (
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
+1. `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, and `review.trigger` (it overrides the team value).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
@@ -102,7 +102,7 @@ Create the branch in a new worktree from a freshly fetched default branch:
 |---|---|---|
 | Project repo | any | a feature branch in a worktree; never the default branch |
 | Team repo | `state/`, `efforts/`, `people/` | the default branch, rebased on push (keep history linear) |
-| Team repo | `knowledge/`, `overlays/`, team skills, `team.yaml`, framework upgrades | a branch and a PR |
+| Team repo | `knowledge/`, `overlays/`, team skills, `folkways.yaml`, framework upgrades | a branch and a PR |
 
 Use `git mv` for moves so history follows the file.
 

@@ -13,7 +13,7 @@ table, and what the choice costs. Show trade-offs honestly; don't pretend the ch
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
+1. `folkways.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
 2. `.local/me.yaml`: `handle`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
@@ -118,7 +118,7 @@ Repo files are `NNNN-<slug>.md`, the slug from the decided title.
 
 ## Targets {#targets}
 
-From `team.yaml` `adr.targets` (`repo`, `confluence`, or both). If unset, ask; never guess.
+From `folkways.yaml` `adr.targets` (`repo`, `confluence`, or both). If unset, ask; never guess.
 
 - **Repo:** `<adr.repo_path>/NNNN-<slug>.md` (default path `docs/adr`) in the repo the decision
   concerns; ask which when it spans repos. `NNNN` is the next number after the highest on the fetched
@@ -132,7 +132,7 @@ From `team.yaml` `adr.targets` (`repo`, `confluence`, or both). If unset, ask; n
 
 ## Reviewers {#reviewers}
 
-From `team.yaml` `adr.reviewers` (`min`, `outside_team`). Defaults: at least 2, at least 1 from
+From `folkways.yaml` `adr.reviewers` (`min`, `outside_team`). Defaults: at least 2, at least 1 from
 outside the team, no more than about 8.
 
 - Reviewers reflect the decision's scope: at least the tech lead or a senior engineer, plus the

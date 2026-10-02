@@ -23,7 +23,7 @@ FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOK
 | Field | Meaning |
 |---|---|
 | `description` | one line, shown in the test name |
-| `env.team` | deep-merged into the base `team.yaml` (scopes `web-app, auth, ci`, `review.trigger: pre-push`, bands 125K/150K/200K) |
+| `env.team` | deep-merged into the base `folkways.yaml` (scopes `web-app, auth, ci`, `review.trigger: pre-push`, bands 125K/150K/200K) |
 | `env.me` | deep-merged into the base `.local/me.yaml` (`handle: alex`, `projects_dir: ${PROJECTS}`); `null` removes it |
 | `env.files` | extra files in the team repo (review files, state) |
 | `env.claudeProjectDir` | default `true`; `false` leaves `CLAUDE_PROJECT_DIR` unset, as Copilot CLI does for repo hooks |
@@ -75,7 +75,7 @@ change them here and in the fixtures together.
   the first line must be Angular `type(scope)!?: subject`. When `git.scopes` is non-empty the scope is
   **required** and must be listed. No message flag (`--no-edit`, `-F`): pass.
 - `git push` when the effective `review.trigger` is `pre-push`: deny unless the team repo holds a review
-  covering the target repo's HEAD. The effective trigger is the stricter of `team.yaml` and
+  covering the target repo's HEAD. The effective trigger is the stricter of `folkways.yaml` and
   `.local/me.yaml` (`on-demand` < `after-commit` < `pre-push`); a person can tighten it, not loosen it.
   A review is either a file under `efforts/**` or `people/<handle>/work/**` with frontmatter
   `sha: <full HEAD>`, or `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md` with `<sha7>` the first 7
@@ -110,7 +110,7 @@ No output; never block compaction.
 
 **`context-band`** (`UserPromptSubmit`, `PostToolBatch`): tokens in context = the last transcript line with
 `type: "assistant"`, `isSidechain: false` and non-zero usage: `input_tokens + cache_read_input_tokens +
-cache_creation_input_tokens`. Bands from `team.yaml` `handoff.bands`. A threshold counts when context is `>=` it. When the band rises above the last
+cache_creation_input_tokens`. Bands from `folkways.yaml` `handoff.bands`. A threshold counts when context is `>=` it. When the band rises above the last
 one announced for this session, inject the band text naming the threshold (`125K`); announce only the
 highest band crossed. When context falls below the last band (compaction), lower the stored band so the
 next crossing is announced again. State lives in `.local/`. No transcript

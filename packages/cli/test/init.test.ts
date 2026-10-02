@@ -20,7 +20,7 @@ describe('templateTarget', () => {
 describe('init', () => {
   it('scaffolds, pins, syncs and commits', () => {
     const team = makeTeam(makePackage('1.2.3'));
-    for (const f of ['team.yaml', '.gitignore', 'CLAUDE.md', 'knowledge/README.md', '.folkways/instructions.md']) {
+    for (const f of ['folkways.yaml', '.gitignore', 'CLAUDE.md', 'knowledge/README.md', '.folkways/instructions.md']) {
       expect(existsSync(join(team, f)), f).toBe(true);
     }
     expect(read(join(team, 'CLAUDE.md'))).toContain('@AGENTS.md');

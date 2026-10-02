@@ -12,7 +12,7 @@ can check. End-to-end test writing is out of scope for v1.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `qa.allowed_envs`, `repos`.
+1. `folkways.yaml`: `qa.allowed_envs`, `repos`.
 2. `.local/me.yaml`: `handle`, `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

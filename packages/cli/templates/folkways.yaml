@@ -1,0 +1,61 @@
+# folkways config. The setup skill fills this in; edit by PR.
+# The framework version is pinned in package.json, not here.
+
+team: { name: Example Team, slug: example }
+
+members:                       # handle = people/<handle>/
+  - { handle: alex, github: alex-gh, name: Alex Doe }
+
+tracker:                       # ticket skill
+  type: jira                   # jira | github | linear
+  base_url: https://example.atlassian.net
+  project_key: EX
+
+docs:                          # research, adr
+  type: confluence             # confluence | none
+  base_url: https://example.atlassian.net/wiki
+  spaces: [EX]
+
+repos:                         # research, review, worktrees
+  - { name: web-app, url: git@github.com:example/web-app.git, default_branch: main, owner: team }
+
+research:
+  sources:                     # searched in this order; skip what doesn't apply
+    - { name: knowledge, kind: local }
+    - { name: team repos, kind: repos }
+    - { name: other teams' repos, kind: repos }
+    - { name: confluence, kind: mcp, server: atlassian }
+    - { name: jira, kind: mcp, server: atlassian }
+    - { name: web, kind: web }
+
+git:
+  commit_convention: angular   # type(scope): subject
+  scopes: []                   # allowed module scopes; empty = any
+  branch_pattern: "{type}/{ticket}-{slug}"
+  merge: squash
+
+review:
+  trigger: pre-push            # on-demand | after-commit | pre-push
+
+adr:
+  targets: [repo]              # confluence and/or repo
+  repo_path: docs/adr
+  reviewers: { min: 2, outside_team: 1 }
+
+qa:
+  allowed_envs: [local, dev]   # agents may drive a browser here without asking
+
+notifications:
+  primary: github              # @mention on the draft PR
+  fallback: { slack_channel: "#example-team" }
+
+models:                        # per tool; cheap first, escalate
+  claude: { cheap: sonnet, strong: opus }
+  copilot: { cheap: "", strong: "" }
+
+handoff:
+  bands: [125000, 150000, 200000]
+
+knowledge_audit:
+  cadence: monthly
+  tool: claude                 # claude | copilot (which CLI the Action runs)

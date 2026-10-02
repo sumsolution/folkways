@@ -12,7 +12,7 @@ next session starts from the status doc and git instead of from a summary.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `handoff.bands`.
+1. `folkways.yaml`: `handoff.bands`.
 2. `.local/me.yaml`: `handle`, `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.

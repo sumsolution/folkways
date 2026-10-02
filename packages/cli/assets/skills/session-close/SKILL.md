@@ -13,7 +13,7 @@ proposes before writing, and never commits unless asked.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `repos`, `models`, `knowledge_audit`.
+1. `folkways.yaml`: `repos`, `models`, `knowledge_audit`.
 2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
    `folkways sync`, so don't read `overlays/`.
