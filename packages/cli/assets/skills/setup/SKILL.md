@@ -83,10 +83,11 @@ Read these first. A missing file is normal; skip it.
 | Hooks to turn off (solo and team) | `hooks:` booleans: `git-guard`, `context-band`, `precompact`, `session-start`; all `true` by default |
 | Automation | `knowledge_audit` |
 
-Rows marked team only, and `repos`, research, ADR, QA and notifications, are team-mode questions; the
-solo interview stops at the rows marked solo and team. Skip a cluster the team doesn't use, and leave the field out rather than inventing a value.
+A solo interview asks only the rows marked "solo and team". Skip a cluster nobody uses, and leave the
+field out rather than inventing a value.
 
 ## Headless
 
 Don't run setup headless: it needs a person's answers. If started headless, write a checklist of the
-`folkways.yaml` fields still holding scaffold values (or, with no file, the questions) to the run output, and change nothing.
+`folkways.yaml` fields still holding scaffold values (or, with no file, the questions) to the run
+output, and change nothing.

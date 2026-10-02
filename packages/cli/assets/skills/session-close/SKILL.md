@@ -56,7 +56,8 @@ Read these first. A missing file is normal; skip it.
    - If the knowledge audit is due (see `state/knowledge-audit.md`, or no tracker and `knowledge/` is
      non-empty), offer to run `knowledge-audit`. Don't start it unasked.
    - Commit nothing unless asked. Landing paths: `knowledge/` changes go on a branch and a PR;
-     `state/`, efforts and the personal root go straight to the default branch, rebased, after approval.
+     in a team repo, `state/`, efforts and `people/` go straight to the default branch, rebased, after
+     approval; in a solo repo, ask where they land.
 
 ## Homes {#homes}
 

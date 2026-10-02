@@ -45,7 +45,7 @@ Read these first. A missing file is normal; skip it.
    numbered topic files (`NN-<topic>.md`) linked from the status doc. The status doc stays an index.
 5. **Show the diff** of the status doc and new files. Write on approval.
 6. **Offer to commit** the effort folder (team repo `state/`, `efforts/` and `people/` go straight to the
-   default branch, rebased). Push only on approval.
+   default branch, rebased; in a solo repo, ask where it lands). Push only on approval.
 7. **Give the resume prompt,** one line the user pastes into a fresh session:
    `Resume <personal root>/work/EX-123-handle-expired-tokens: read its 00-STATUS.md and run the start skill.`
 8. **At band 3,** stop after this. Offer `session-close`; if context is tight, suggest running it in the
