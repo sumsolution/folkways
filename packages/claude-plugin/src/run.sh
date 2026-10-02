@@ -2,9 +2,9 @@
 # Runs one folkways hook for the Claude Code plugin: run.sh <hook> < payload.json
 #
 # `instructions` prints the way of working as session context. Every other hook runs this platform's
-# folkways-hook from hooks/bin/; FOLKWAYS_HOOK_CMD overrides it. Synced team repos (.folkways/manifest.json)
-# and repos without folkways.yaml are quiet, except that session-start still runs the binary. The hook names skills as the plugin
-# does (`folkways:start`). Always exits 0: a broken runner must not block the session.
+# folkways-hook from hooks/bin/; FOLKWAYS_HOOK_CMD overrides it. The hook names skills as the plugin
+# does (`folkways:start`). Synced team repos are left to their own settings; a repo without folkways.yaml
+# gets only session-start, for the one-time setup offer. Always exits 0: a broken runner must not block the session.
 
 hook=$1
 root=${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
