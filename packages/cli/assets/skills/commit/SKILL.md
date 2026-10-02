@@ -29,7 +29,7 @@ Read these first. A missing file is normal; skip it.
 
 1. **Find the repo and branch.** Project code is changed only in a worktree under
    `<projects_dir>/.worktrees/<repo>/<branch>`, never in the user's own clone. If you are in the
-   user's clone, stop and say so. In the team repo, see [Where commits go](#where-commits-go).
+   user's clone, stop and say so. In the team or solo repo, see [Where commits go](#where-commits-go).
 2. **Check what is staged.** Read `git status` and `git diff --staged`. Stage files by name; don't stage
    everything blindly. Stop and ask if the diff holds:
    - more than one logical change (propose separate commits),

@@ -34,7 +34,9 @@ Read these first. A missing file is normal; skip it.
    `git rev-parse HEAD`. If there is none, or it covers an older SHA, run
    `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root and
    wait for it. This holds for every trigger setting; the trigger only decides when the review runs
-   on its own.
+   on its own. In a solo repo the review lands in the same repo, and committing it moves HEAD: a review
+   of an earlier commit still counts when every commit after it changes only `work/` and `inbox/`
+   (at most 20 commits; `git-guard` checks the same way). Commit the review file; don't review again.
 3. **Act on the review.** Blocking findings get fixed (then commit, re-review) or the user explicitly
    defers them; deferred ones go in the PR description. Don't open a PR over an unaddressed blocking
    finding without saying so.

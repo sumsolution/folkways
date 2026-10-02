@@ -167,6 +167,15 @@ describe('guided setup', () => {
   });
 });
 
+describe('solo repos', () => {
+  it('commit sends a solo repo to "Where commits go", not "stop in the user\'s clone"', () => {
+    expect(read(skillFile('commit'))).toMatch(/In the team or solo repo, see \[Where commits go\]/);
+  });
+  it('pr accepts a review of an earlier commit when only work/ and inbox/ changed since (spec 7.3)', () => {
+    expect(read(skillFile('pr'))).toMatch(/solo repo[^.]*only `work\/` and `inbox\/`/);
+  });
+});
+
 describe('assets/instructions.md', () => {
   const text = read(join(REPO, 'assets/instructions.md'));
 
