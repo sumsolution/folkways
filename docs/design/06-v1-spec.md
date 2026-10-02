@@ -345,14 +345,15 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 | `context-band` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
 | `precompact` | `PreCompact` | Logs a missed band to `.local/`. | yes |
 | `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". Reminds the `start` procedure. Unconfigured repo: the one-time setup offer (below). | yes |
-| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message per `git.commit_convention` (Angular with allowed scope, `commit_pattern`, or nothing). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
+| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message per `git.commit_convention` (Angular with allowed scope, `commit_pattern`, or nothing). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only), except in the folkways repo itself (the one holding `folkways.yaml`). | yes |
 
 **Config gates every hook.** In an unconfigured repo (§2.3) every hook prints nothing and writes nothing
 in the repo. In a configured one, a hook set to `false` under `hooks:` prints nothing and writes nothing.
 
 **One-time setup offer.** In an unconfigured repo, `session-start` looks up the repo (the git top level of
 the project dir, else the project dir) in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered`, one
-absolute path per line. If it's absent, the hook appends it and injects one line:
+absolute path per line. No offer when that top level holds a `folkways.yaml` (a session opened in a
+subfolder of a configured repo). If it's absent, the hook appends it and injects one line:
 
 > folkways isn't set up in this repo. Run the `setup` skill to set it up, or ignore this; it won't be shown again here.
 
@@ -385,13 +386,17 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
 - `folkways review` starts a **separate headless process** with the fixed prompt `.folkways/prompts/review.md`,
   filled with: repo, branch, base, HEAD SHA, ticket, effort path. The working agent can't frame it.
 - Output: `<effort>/NN-review-<sha7>.md` with frontmatter `sha: <full SHA>`. With no effort:
-  `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`.
+  `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`.
 - `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard` blocks the push
   until a review for HEAD exists. `on-demand`: never automatic.
 - A review covers HEAD when a file under `efforts/**` or `<personal root>/work/**` has frontmatter
   `sha:` equal to the target repo's HEAD, or a file `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
   has `<sha7>` equal to the first 7 characters of HEAD. The personal root is `people/<handle>/` in a
   team repo and the repo root in a solo repo (§2.3).
+- **Solo repos** hold the review in the same repo as the code, so committing it moves HEAD. When the
+  pushed repo is the folkways repo itself, `git-guard` walks back from HEAD over commits that change only
+  `work/` and `inbox/` (at most 20, first parents only) and accepts a review of any commit on that walk,
+  including the first one that changes anything else.
 
 ### 7.4 Knowledge audit (GitHub Action)
 
