@@ -3,6 +3,7 @@ package sessionstart
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -64,6 +65,27 @@ func TestRunNamesTheStartSkill(t *testing.T) {
 	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "")
 	if got := run(t, team.Config{Dir: t.TempDir(), Configured: true}); !strings.Contains(got, "follow the `start` skill") {
 		t.Errorf("session-start printed %q", got)
+	}
+}
+
+func TestNoOfferInASubfolderOfAConfiguredRepo(t *testing.T) {
+	xdg, repo := t.TempDir(), t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", xdg)
+	if err := os.WriteFile(filepath.Join(repo, "folkways.yaml"), []byte("mode: solo\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, err := exec.Command("git", "-C", repo, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	sub := filepath.Join(repo, "docs")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if got := run(t, team.Config{Dir: sub}); got != "" {
+		t.Errorf("subfolder of a configured repo should not offer, got %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(xdg, "folkways", "offered")); err == nil {
+		t.Error("nothing should be recorded")
 	}
 }
 

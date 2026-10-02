@@ -43,6 +43,9 @@ func offer(projectDir string) bool {
 	}
 	file := filepath.Join(base, "folkways", "offered")
 	key := repoKey(projectDir)
+	if info, err := os.Stat(filepath.Join(key, "folkways.yaml")); err == nil && !info.IsDir() {
+		return false // a subfolder of a configured repo
+	}
 	raw, err := os.ReadFile(file)
 	if err != nil && !os.IsNotExist(err) {
 		return false

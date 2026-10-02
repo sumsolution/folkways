@@ -175,6 +175,13 @@ func checkPush(dir string, cfg team.Config) string {
 	if hasReview(cfg.Dir, cfg.PersonalRoot(), head) {
 		return ""
 	}
+	if cfg.Solo() && isFolkwaysRepo(dir, cfg) {
+		for _, sha := range walkBack(dir, head) {
+			if hasReview(cfg.Dir, cfg.PersonalRoot(), sha) {
+				return ""
+			}
+		}
+	}
 	return fmt.Sprintf("Push blocked: review.trigger is pre-push and no review of HEAD %s exists. Run the review first (a file under efforts/ or %s/work/ with frontmatter sha: %s, or %s/inbox/<date>-review-%s.md).", head[:min(7, len(head))], personalHint(cfg), head, personalHint(cfg), head[:min(7, len(head))])
 }
 
@@ -196,10 +203,55 @@ func checkMainClone(sub, dir string, cfg team.Config) string {
 	if info, err := os.Stat(filepath.Join(top, ".git")); err != nil || !info.IsDir() {
 		return ""
 	}
+	if sameDir(top, cfg.Dir) {
+		return "" // the folkways repo itself is never guarded
+	}
 	return fmt.Sprintf("git %s in the main clone %s is not allowed. Create a worktree instead (git worktree add) and work there.", sub, top)
 }
 
 func within(root, p string) bool {
 	rel, err := filepath.Rel(root, p)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// sameDir reports whether two paths name the same directory once symlinks are resolved.
+func sameDir(a, b string) bool {
+	ra, err1 := filepath.EvalSymlinks(a)
+	rb, err2 := filepath.EvalSymlinks(b)
+	return err1 == nil && err2 == nil && ra == rb
+}
+
+// isFolkwaysRepo reports whether dir is inside the repo that holds the folkways config (cfg.Dir is its top level).
+func isFolkwaysRepo(dir string, cfg team.Config) bool {
+	top, err := gitOut(dir, "rev-parse", "--show-toplevel")
+	return err == nil && sameDir(top, cfg.Dir)
+}
+
+// maxWalkBack is how many commits that change only work/ and inbox/ walkBack skips.
+const maxWalkBack = 20
+
+// walkBack returns the commits whose review counts for a push of head in a solo repo (spec 7.3): head, then,
+// while a commit changes only work/ and inbox/ files, its first parent, up to maxWalkBack such commits; the
+// walk ends with (and includes) the first commit that changes anything else, a merge or the root commit.
+func walkBack(dir, head string) []string {
+	var shas []string
+	cur := head
+	for steps := 0; ; steps++ {
+		shas = append(shas, cur)
+		out, err := gitOut(dir, "rev-list", "--parents", "-n", "1", cur)
+		parents := strings.Fields(out)
+		if err != nil || len(parents) != 2 || steps >= maxWalkBack {
+			return shas // root, merge, error or limit
+		}
+		names, err := exec.Command("git", "-C", dir, "diff-tree", "--no-commit-id", "--name-only", "-r", "-z", cur).Output()
+		if err != nil {
+			return shas
+		}
+		for _, n := range strings.Split(strings.TrimRight(string(names), "\x00"), "\x00") {
+			if n != "" && !strings.HasPrefix(n, "work/") && !strings.HasPrefix(n, "inbox/") {
+				return shas
+			}
+		}
+		cur = parents[1]
+	}
 }

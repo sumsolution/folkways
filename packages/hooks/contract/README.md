@@ -26,7 +26,8 @@ FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOK
 | `env.team` | deep-merged into the base `folkways.yaml` (`git.commit_convention: angular`, scopes `web-app, auth, ci`, `review.trigger: pre-push`, bands 125K/150K/200K); `null` writes no `folkways.yaml`: an unconfigured repo |
 | `env.me` | deep-merged into the base `.local/me.yaml` (`handle: alex`, `projects_dir: ${PROJECTS}`); `null` removes it |
 | `env.files` | extra files in the team repo (review files, state) |
-| `env.claudeProjectDir` | default `true`; `false` leaves `CLAUDE_PROJECT_DIR` unset, as Copilot CLI does for repo hooks |
+| `env.claudeProjectDir` | default `true`; `false` leaves `CLAUDE_PROJECT_DIR` unset, as Copilot CLI does for repo hooks; a string sets it to that path (e.g. `${TEAM}/sub`) |
+| `env.commits` | makes the team repo a git repo (branch `main`, `.local/` excluded): an initial commit of everything built so far, then one commit per entry `{ message?, files }`. `${COMMIT_n}` / `${COMMIT_n_7}` (1-based) are their SHAs, `${TEAM_HEAD}` / `${TEAM_HEAD7}` the last one's |
 | `env.offered` | seeds the setup-offer file `${XDG}/folkways/offered` (a list of lines); `"unwritable"` puts a directory there instead |
 | `env.transcript` | transcript lines: a number is a main-chain assistant line with that many tokens in context, `{ "sidechain": n }` a subagent line, an object is written as is |
 | `steps[]` | one or more calls in the same environment: `payload` (stdin), optional `cwd`, optional `transcript` (replaces the file), `expect` |
@@ -89,8 +90,12 @@ change them here and in the fixtures together.
   characters of HEAD. The personal root is `people/<handle>/` (`handle` in `.local/me.yaml`) in a team repo
   and the repo root when `mode: solo` (no handle needed). Only the person's own folder counts; another
   person's `people/<other>/` is ignored, and in a team repo with no handle only `efforts/**` counts.
+- **Solo walk-back** (spec 7.3): in `mode: solo`, when the pushed repo is the folkways repo itself (its top level
+  is the project dir, symlinks resolved), a review of any commit on this walk also covers the push: HEAD, then
+  first parents while a commit changes only `work/` and `inbox/` files (at most 20 such commits), ending with
+  the first commit that changes anything else, a merge or the root commit. Team mode, and other repos, check HEAD only.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
-  directory): deny, and say to use a worktree. Worktrees (`.git` is a file), repos outside `projects_dir`,
+  directory): deny, and say to use a worktree. The folkways repo itself (top level = project dir, in either mode) is never denied. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.
 - The command line is parsed as bash (`mvdan.cc/sh/v3/syntax`); a line that does not parse is allowed. Every
   simple command is walked in source order, also inside `&&`, `||`, `;`, pipelines, `( )`, `{ }`, `if`/`while`/
@@ -114,7 +119,7 @@ change them here and in the fixtures together.
 it when one is.
 
 In an unconfigured repo it makes the one-time offer instead. Key: the git top level of the project dir, else
-the project dir (absolute). Look it up in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered` (one path per
+the project dir (absolute). When that key holds a `folkways.yaml` (a session in a subfolder of a configured repo): no offer, nothing recorded. Look it up in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered` (one path per
 line). Absent: append it (creating directories) and inject the spec §7.1 line, naming the `setup` skill (`folkways:setup`
 in the plugin). Present, or the file can't be read or written: print nothing. Never write in the repo.
 

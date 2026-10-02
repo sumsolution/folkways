@@ -37,8 +37,18 @@ export interface Fixture {
     me?: Record<string, unknown> | null;
     /** Extra files, path relative to the team repo → content. */
     files?: Record<string, string>;
-    /** Default true. False: CLAUDE_PROJECT_DIR is unset (Copilot CLI sets it for plugin hooks only). */
-    claudeProjectDir?: boolean;
+    /**
+     * Default true. False: CLAUDE_PROJECT_DIR is unset (Copilot CLI sets it for plugin hooks only). A string: that
+     * path (placeholders allowed), e.g. a subfolder of the team repo.
+     */
+    claudeProjectDir?: boolean | string;
+    /**
+     * Make the team repo a git repo (branch `main`, `.local/` excluded): an initial commit of everything built so
+     * far, then one commit per entry, in order. `${COMMIT_n}` / `${COMMIT_n_7}` (1-based) are the entries' SHAs
+     * and `${TEAM_HEAD}` / `${TEAM_HEAD7}` the last one's; they are usable in the files of later entries and in
+     * steps. An empty list is just the initial commit.
+     */
+    commits?: { message?: string; files: Record<string, string> }[];
     transcript?: TranscriptLine[];
     /**
      * Seeds `${XDG}/folkways/offered`, the file of repos already offered setup (one path per line, placeholders
@@ -52,6 +62,8 @@ export interface Fixture {
 export type TranscriptLine = number | { sidechain: number } | Record<string, unknown>;
 
 export interface Vars {
+  /** `COMMIT_n`, `COMMIT_n_7`, `TEAM_HEAD`, `TEAM_HEAD7` when the fixture has `env.commits`. */
+  [commit: string]: string;
   TEAM: string;
   PROJECTS: string;
   MAIN: string;
@@ -94,7 +106,7 @@ export function merge(base: Plain, over: Plain): Plain {
 /** Replace `${NAME}` placeholders in every string inside `value`. */
 export function fill<T>(value: T, vars: Vars): T {
   if (typeof value === 'string') {
-    return value.replace(/\$\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k as keyof Vars] : m)) as T;
+    return value.replace(/\$\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k]! : m)) as T;
   }
   if (Array.isArray(value)) return value.map((v) => fill(v, vars)) as T;
   if (isPlain(value)) return Object.fromEntries(Object.entries(value).map(([k, v]) => [fill(k, vars), fill(v, vars)])) as T;
@@ -204,6 +216,26 @@ export function buildEnv(fixture: Fixture): Vars {
     mkdirSync(join(vars.XDG, 'folkways'), { recursive: true });
     writeFileSync(join(vars.XDG, 'folkways', 'offered'), fill(env.offered, vars).map((l) => `${l}\n`).join(''));
   }
+  if (env.commits) {
+    git(team, 'init', '-q', '-b', 'main');
+    mkdirSync(join(team, '.git', 'info'), { recursive: true });
+    writeFileSync(join(team, '.git', 'info', 'exclude'), '.local/\n');
+    git(team, 'add', '-A');
+    git(team, 'commit', '-q', '-m', 'chore: init');
+    env.commits.forEach((c, i) => {
+      for (const [path, content] of Object.entries(fill(c.files, vars))) {
+        mkdirSync(resolve(team, path, '..'), { recursive: true });
+        writeFileSync(join(team, path), content);
+      }
+      git(team, 'add', '-A');
+      git(team, 'commit', '-q', '-m', c.message ?? `chore: commit ${i + 1}`);
+      const sha = git(team, 'rev-parse', 'HEAD');
+      vars[`COMMIT_${i + 1}`] = sha;
+      vars[`COMMIT_${i + 1}_7`] = sha.slice(0, 7);
+    });
+    vars.TEAM_HEAD = git(team, 'rev-parse', 'HEAD');
+    vars.TEAM_HEAD7 = vars.TEAM_HEAD.slice(0, 7);
+  }
   if (env.transcript) writeFileSync(vars.TRANSCRIPT, transcriptJsonl(env.transcript));
   return vars;
 }
@@ -218,18 +250,18 @@ export interface Result {
  * The hook process environment. `HOME` is the temp root that holds the team repo and the projects
  * directory, so fixtures can `cd ~/projects/web-app` or `cd "$HOME/projects/web-app"`.
  */
-export function hookEnv(vars: Vars, claudeProjectDir: boolean): NodeJS.ProcessEnv {
+export function hookEnv(vars: Vars, claudeProjectDir: boolean | string): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
   delete env.CLAUDE_PROJECT_DIR;
-  if (claudeProjectDir) env.CLAUDE_PROJECT_DIR = vars.TEAM;
+  if (claudeProjectDir) env.CLAUDE_PROJECT_DIR = typeof claudeProjectDir === 'string' ? claudeProjectDir : vars.TEAM;
   env.HOME = resolve(vars.PROJECTS, '..');
   env.XDG_CONFIG_HOME = vars.XDG; // never the developer's own offered file
   return env;
 }
 
-export function runHook(command: string, hook: string, step: Step, vars: Vars, claudeProjectDir: boolean): Result {
+export function runHook(command: string, hook: string, step: Step, vars: Vars, claudeProjectDir: boolean | string): Result {
   if (step.transcript) writeFileSync(vars.TRANSCRIPT, transcriptJsonl(step.transcript));
-  const env = hookEnv(vars, claudeProjectDir);
+  const env = hookEnv(vars, fill(claudeProjectDir, vars));
   const r = spawnSync('/bin/sh', ['-c', `${command} ${hook}`], {
     cwd: fill(step.cwd, vars) ?? vars.TEAM,
     env,

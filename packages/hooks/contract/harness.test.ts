@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { read } from './util.ts';
+import { git, read } from './util.ts';
 import { buildEnv, check, fill, hookEnv, merge, mismatch, transcriptJsonl, type Vars } from './harness.ts';
 
 describe('mismatch', () => {
@@ -45,6 +45,13 @@ describe('buildEnv', () => {
     const blocked = buildEnv({ description: '', env: { offered: 'unwritable' }, steps: [] });
     expect(() => read(join(blocked.XDG, 'folkways', 'offered'))).toThrow();
     expect(() => read(join(buildEnv({ description: '', steps: [] }).XDG, 'folkways', 'offered'))).toThrow();
+  });
+  it('makes the team repo a git repo with commits and their SHAs as variables', () => {
+    const vars = buildEnv({ description: '', env: { commits: [{ files: { 'a.md': 'a\n' } }, { files: { 'b-${COMMIT_1_7}.md': 'b\n' } }] }, steps: [] });
+    expect(git(vars.TEAM, 'rev-parse', 'HEAD')).toBe(vars.TEAM_HEAD);
+    expect(git(vars.TEAM, 'rev-parse', 'HEAD~1')).toBe(vars.COMMIT_1);
+    expect(read(join(vars.TEAM, `b-${vars.COMMIT_1_7}.md`))).toBe('b\n');
+    expect(git(vars.TEAM, 'status', '--porcelain')).toBe('');
   });
   it('omits me.yaml when me is null', () => {
     const vars = buildEnv({ description: '', env: { me: null }, steps: [] });
