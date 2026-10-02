@@ -1,7 +1,7 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-10-02 (session 8: `folkways.yaml`, guided setup, solo repos)
+**Last updated:** 2026-10-02 (session 8: `folkways.yaml`, guided setup, solo repos; handoff in [17](17-handoff-pr25-review.md))
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
 **Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow. Claude Code plugin built (`packages/claude-plugin`). `folkways.yaml` (was `team.yaml`) with solo and team modes; the plugin is quiet without it ([16](16-plan-config-and-solo.md)). Nothing published yet.
@@ -33,6 +33,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [14-research-eval-harness.md](14-research-eval-harness.md) | Eval harness: build or adopt (`claude plugin eval`, promptfoo, Inspect, …). Built `packages/evals`, no new dependencies |
 | [15-research-license.md](15-research-license.md) | License options; basis of ADR 0004 |
 | [16-plan-config-and-solo.md](16-plan-config-and-solo.md) | `folkways.yaml`, guided setup, solo repos: the plugin outside a team repo (built with parallel agents) |
+| [17-handoff-pr25-review.md](17-handoff-pr25-review.md) | Handoff after session 8: reviewing #25, addressing findings, next steps |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout, 0004 license (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -130,7 +131,8 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 ## Next step
 
-**Branch:** `ccr-d5e13116-v42x04`: plan 16 ([#25](https://github.com/sumsolution/folkways/pull/25)). `main` has everything through #24.
+**Branch:** `ccr-d5e13116-v42x04`: plan 16 ([#25](https://github.com/sumsolution/folkways/pull/25)), CI green. `main` has everything through #24.
+**Handoff:** [17](17-handoff-pr25-review.md): review #25, address findings, merge; then the list below, starting with `doctor`.
 
 1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli`,
    `@folkways/claude-plugin` and the four `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
