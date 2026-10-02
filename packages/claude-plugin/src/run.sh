@@ -32,7 +32,9 @@ bin=${FOLKWAYS_HOOK_CMD:-$root/hooks/bin/folkways-hook-$os-$cpu}
 [ -f "$bin" ] && [ ! -x "$bin" ] && chmod +x "$bin" 2>/dev/null
 
 if [ ! -x "$bin" ]; then
+  # Without the binary nothing parses folkways.yaml; a line test is enough to honor `session-start: false`.
   [ -n "$configured" ] && [ "$hook" = session-start ] &&
+    ! grep -Eq '^[^#]*session-start[[:space:]]*:[[:space:]]*false' "$project/folkways.yaml" &&
     echo "folkways: no hook binary for $(uname -s)-$(uname -m), so git-guard, context bands and precompact are off. Follow the \`folkways:start\` skill for this session."
   exit 0
 fi

@@ -349,8 +349,6 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 
 **Config gates every hook.** In an unconfigured repo (§2.3) every hook prints nothing and writes nothing
 in the repo. In a configured one, a hook set to `false` under `hooks:` prints nothing and writes nothing.
-The plugin's notice that this platform has no hook binary isn't a hook's output: it prints at session
-start in a configured repo whatever the toggles say, because it reports that `git-guard` is off.
 
 **One-time setup offer.** In an unconfigured repo, `session-start` looks up the repo (the git top level of
 the project dir, else the project dir) in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered`, one
