@@ -273,3 +273,28 @@ func TestCommitCheckIgnoresDirectory(t *testing.T) {
 		t.Errorf("unresolvable message denied: %q", got)
 	}
 }
+
+func TestCommitConvention(t *testing.T) {
+	cases := []struct {
+		convention, pattern, cmd, denied string
+	}{
+		{"pattern", `^[A-Z]+-\d+: .+`, `git commit -m "EX-12: add orders"`, ""},
+		{"pattern", `^[A-Z]+-\d+: .+`, `git commit -m "feat: add orders"`, "git.commit_pattern"},
+		{"pattern", `^[A-Z]+-\d+: .+`, `git commit -m "feat: add orders"`, `^[A-Z]+-\d+: .+`},
+		{"pattern", `^[a-z]`, `git commit -m "lowercase wins"`, ""}, // not Angular, still passes
+		{"pattern", "", `git commit -m "anything"`, ""},             // empty: no check
+		{"pattern", "([", `git commit -m "anything"`, ""},           // invalid: fail open
+		{"none", "", `git commit -m "anything"`, ""},
+		{"angular", "", `git commit -m "anything"`, "not Angular"},
+		{"", "", `git commit -m "anything"`, "not Angular"}, // missing key: angular
+	}
+	for _, c := range cases {
+		var cfg team.Config
+		cfg.Team.Git.CommitConvention, cfg.Team.Git.CommitPattern = c.convention, c.pattern
+		cfg.Team.Git.Scopes = []string{"ci"} // scopes only count for angular
+		got := checkCommand(c.cmd, "/nonexistent", cfg)
+		if (c.denied == "") != (got == "") || !strings.Contains(got, c.denied) {
+			t.Errorf("%s %q %s: reason %q, want substring %q", c.convention, c.pattern, c.cmd, got, c.denied)
+		}
+	}
+}

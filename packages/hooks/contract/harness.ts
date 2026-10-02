@@ -31,8 +31,8 @@ export interface Expect {
 export interface Fixture {
   description: string;
   env?: {
-    /** Deep-merged into the base folkways.yaml. */
-    team?: Record<string, unknown>;
+    /** Deep-merged into the base folkways.yaml; `null` leaves the repo unconfigured (no folkways.yaml). */
+    team?: Record<string, unknown> | null;
     /** Deep-merged into the base .local/me.yaml; `null` removes the file. */
     me?: Record<string, unknown> | null;
     /** Extra files, path relative to the team repo → content. */
@@ -40,6 +40,11 @@ export interface Fixture {
     /** Default true. False: CLAUDE_PROJECT_DIR is unset (Copilot CLI sets it for plugin hooks only). */
     claudeProjectDir?: boolean;
     transcript?: TranscriptLine[];
+    /**
+     * Seeds `${XDG}/folkways/offered`, the file of repos already offered setup (one path per line, placeholders
+     * allowed). `"unwritable"` puts a directory there, so the file can be neither read nor written.
+     */
+    offered?: string[] | 'unwritable';
   };
   steps: Step[];
 }
@@ -56,6 +61,8 @@ export interface Vars {
   OLD_HEAD: string;
   OLD_HEAD7: string;
   TRANSCRIPT: string;
+  /** XDG_CONFIG_HOME of the hook process, one per case. */
+  XDG: string;
 }
 
 const BASE_TEAM = {
@@ -152,7 +159,7 @@ function assistant(tokens: number, sidechain: boolean): Plain {
 }
 
 /**
- * The synthetic environment: a team repo with folkways.yaml and .local/me.yaml, and a projects dir holding a main
+ * The synthetic environment: a team repo with folkways.yaml (unless `env.team` is null) and .local/me.yaml, and a projects dir holding a main
  * clone (`web-app`, two commits on main) and a worktree of it (`.worktrees/web-app/feat-orders`).
  */
 export function buildEnv(fixture: Fixture): Vars {
@@ -179,10 +186,10 @@ export function buildEnv(fixture: Fixture): Vars {
 
   const vars: Vars = {
     TEAM: team, PROJECTS: projects, MAIN: main, WORKTREE: worktree, HEAD: head, HEAD7: head.slice(0, 7), OLD_HEAD: oldHead, OLD_HEAD7: oldHead.slice(0, 7),
-    TRANSCRIPT: join(root, 'transcript.jsonl'),
+    TRANSCRIPT: join(root, 'transcript.jsonl'), XDG: join(root, 'xdg'),
   };
   const env = fixture.env ?? {};
-  writeFileSync(join(team, 'folkways.yaml'), yaml(merge(BASE_TEAM, env.team ?? {})));
+  if (env.team !== null) writeFileSync(join(team, 'folkways.yaml'), yaml(merge(BASE_TEAM, env.team ?? {})));
   if (env.me !== null) {
     const me = merge({ handle: 'alex', projects_dir: projects, tool: 'claude' }, fill(env.me ?? {}, vars));
     mkdirSync(join(team, '.local'), { recursive: true });
@@ -191,6 +198,11 @@ export function buildEnv(fixture: Fixture): Vars {
   for (const [path, content] of Object.entries(fill(env.files ?? {}, vars))) {
     mkdirSync(resolve(team, path, '..'), { recursive: true });
     writeFileSync(join(team, path), content);
+  }
+  if (env.offered === 'unwritable') mkdirSync(join(vars.XDG, 'folkways', 'offered'), { recursive: true });
+  else if (env.offered) {
+    mkdirSync(join(vars.XDG, 'folkways'), { recursive: true });
+    writeFileSync(join(vars.XDG, 'folkways', 'offered'), fill(env.offered, vars).map((l) => `${l}\n`).join(''));
   }
   if (env.transcript) writeFileSync(vars.TRANSCRIPT, transcriptJsonl(env.transcript));
   return vars;
@@ -211,6 +223,7 @@ export function hookEnv(vars: Vars, claudeProjectDir: boolean): NodeJS.ProcessEn
   delete env.CLAUDE_PROJECT_DIR;
   if (claudeProjectDir) env.CLAUDE_PROJECT_DIR = vars.TEAM;
   env.HOME = resolve(vars.PROJECTS, '..');
+  env.XDG_CONFIG_HOME = vars.XDG; // never the developer's own offered file
   return env;
 }
 

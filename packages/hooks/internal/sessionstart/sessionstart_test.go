@@ -2,6 +2,8 @@ package sessionstart
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -10,26 +12,65 @@ import (
 	"github.com/sumsolution/folkways/packages/hooks/internal/team"
 )
 
-func run(t *testing.T) string {
+func run(t *testing.T, cfg team.Config) string {
 	t.Helper()
-	var out bytes.Buffer
-	prev := output.Stdout
-	output.Stdout = &out
-	t.Cleanup(func() { output.Stdout = prev })
-	Run(payload.Payload{}, team.Config{})
-	return out.String()
+	var buf bytes.Buffer
+	output.Stdout = &buf
+	t.Cleanup(func() { output.Stdout = os.Stdout })
+	Run(payload.Payload{}, cfg)
+	return buf.String()
+}
+
+func TestOfferOnce(t *testing.T) {
+	xdg, repo := t.TempDir(), t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", xdg)
+	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "folkways")
+	cfg := team.Config{Dir: repo}
+	if got := run(t, cfg); !strings.Contains(got, "`folkways:setup` skill") {
+		t.Fatalf("first run should offer folkways:setup, got %q", got)
+	}
+	if got := run(t, cfg); got != "" {
+		t.Errorf("second run should be silent, got %q", got)
+	}
+	raw, _ := os.ReadFile(filepath.Join(xdg, "folkways", "offered"))
+	if strings.TrimSpace(string(raw)) != repo {
+		t.Errorf("offered = %q, want %q", raw, repo)
+	}
+	if entries, _ := os.ReadDir(repo); len(entries) != 0 {
+		t.Errorf("the hook wrote into the repo: %v", entries)
+	}
+}
+
+func TestOfferSilentWhenFileUnusable(t *testing.T) {
+	xdg := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", xdg)
+	if err := os.MkdirAll(filepath.Join(xdg, "folkways", "offered"), 0o755); err != nil { // a directory: unreadable
+		t.Fatal(err)
+	}
+	if got := run(t, team.Config{Dir: t.TempDir()}); got != "" {
+		t.Errorf("unusable offered file should mean no offer, got %q", got)
+	}
+}
+
+func TestConfiguredRemindsStart(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if got := run(t, team.Config{Dir: t.TempDir(), Configured: true}); !strings.Contains(got, "`start` skill") {
+		t.Errorf("configured repo should remind start, got %q", got)
+	}
 }
 
 func TestRunNamesTheStartSkill(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "")
-	if got := run(t); !strings.Contains(got, "follow the `start` skill") {
+	if got := run(t, team.Config{Dir: t.TempDir(), Configured: true}); !strings.Contains(got, "follow the `start` skill") {
 		t.Errorf("session-start printed %q", got)
 	}
 }
 
 func TestRunNamesTheStartSkillInANamespace(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "folkways")
-	if got := run(t); !strings.Contains(got, "follow the `folkways:start` skill") {
+	if got := run(t, team.Config{Dir: t.TempDir(), Configured: true}); !strings.Contains(got, "follow the `folkways:start` skill") {
 		t.Errorf("session-start printed %q", got)
 	}
 }

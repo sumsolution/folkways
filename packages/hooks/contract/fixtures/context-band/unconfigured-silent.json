@@ -1,0 +1,27 @@
+{
+  "description": "No folkways.yaml: nothing, and no state file",
+  "env": {
+    "team": null,
+    "transcript": [
+      200000
+    ]
+  },
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "expect": {
+        "stdout": null,
+        "absent": [
+          "${TEAM}/.local/hooks"
+        ]
+      }
+    }
+  ]
+}

@@ -47,5 +47,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, "folkways:", err)
 		return
 	}
-	run(p, team.Load())
+	cfg := team.Load()
+	// No folkways.yaml: nothing runs, except session-start, which makes the one-time offer.
+	if !cfg.Configured && os.Args[1] != "session-start" {
+		return
+	}
+	if cfg.Configured && !cfg.HookEnabled(os.Args[1]) {
+		return
+	}
+	run(p, cfg)
 }

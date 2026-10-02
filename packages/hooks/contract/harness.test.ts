@@ -35,6 +35,17 @@ describe('buildEnv', () => {
     expect(vars.HEAD).not.toBe(vars.OLD_HEAD);
     expect(vars.OLD_HEAD7).toBe(vars.OLD_HEAD.slice(0, 7));
   });
+  it('omits folkways.yaml when team is null', () => {
+    const vars = buildEnv({ description: '', env: { team: null }, steps: [] });
+    expect(() => read(join(vars.TEAM, 'folkways.yaml'))).toThrow();
+  });
+  it('seeds the offered file, or blocks it with a directory', () => {
+    const seeded = buildEnv({ description: '', env: { offered: ['${TEAM}', '/other'] }, steps: [] });
+    expect(read(join(seeded.XDG, 'folkways', 'offered'))).toBe(`${seeded.TEAM}\n/other\n`);
+    const blocked = buildEnv({ description: '', env: { offered: 'unwritable' }, steps: [] });
+    expect(() => read(join(blocked.XDG, 'folkways', 'offered'))).toThrow();
+    expect(() => read(join(buildEnv({ description: '', steps: [] }).XDG, 'folkways', 'offered'))).toThrow();
+  });
   it('omits me.yaml when me is null', () => {
     const vars = buildEnv({ description: '', env: { me: null }, steps: [] });
     expect(() => read(join(vars.TEAM, '.local/me.yaml'))).toThrow();
@@ -50,6 +61,7 @@ describe('hookEnv', () => {
     expect(vars.MAIN.startsWith(`${env.HOME}/`)).toBe(true);
     expect(env.CLAUDE_PROJECT_DIR).toBe(vars.TEAM);
     expect(hookEnv(vars, false).CLAUDE_PROJECT_DIR).toBeUndefined();
+    expect(env.XDG_CONFIG_HOME).toBe(vars.XDG);
   });
 });
 

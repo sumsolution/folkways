@@ -12,18 +12,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// hasReview reports whether the team repo holds a review of head: a file under efforts/** or
-// people/<handle>/work/** with frontmatter `sha: <head>`, or an inbox file people/<handle>/inbox/*-review-<sha7>.md
-// where <sha7> is the first 7 characters of head. Only the person's own folder counts; with no handle
-// only efforts/** does.
-func hasReview(dir, handle, head string) bool {
-	return hasFrontmatterReview(dir, handle, head) || hasInboxReview(dir, handle, head)
+// hasReview reports whether the repo holds a review of head: a file under efforts/** or <personal>/work/**
+// with frontmatter `sha: <head>`, or an inbox file <personal>/inbox/*-review-<sha7>.md where <sha7> is the
+// first 7 characters of head. <personal> is the personal root (Config.PersonalRoot: people/<handle>/ in a team
+// repo, the repo root in a solo repo); only the person's own folder counts. With no personal root only
+// efforts/** does.
+func hasReview(dir, personal, head string) bool {
+	return hasFrontmatterReview(dir, personal, head) || hasInboxReview(personal, head)
 }
 
-func hasFrontmatterReview(dir, handle, head string) bool {
+func hasFrontmatterReview(dir, personal, head string) bool {
 	roots := []string{filepath.Join(dir, "efforts")}
-	if handle != "" {
-		roots = append(roots, filepath.Join(dir, "people", handle, "work"))
+	if personal != "" {
+		roots = append(roots, filepath.Join(personal, "work"))
 	}
 	found := false
 	for _, root := range roots {
@@ -43,12 +44,12 @@ func hasFrontmatterReview(dir, handle, head string) bool {
 
 // hasInboxReview reads the person's inbox directory literally (the handle is never a glob) and matches
 // file names `<YYYY-MM-DD>-review-<sha7>.md`.
-func hasInboxReview(dir, handle, head string) bool {
-	if handle == "" || len(head) < 7 {
+func hasInboxReview(personal, head string) bool {
+	if personal == "" || len(head) < 7 {
 		return false
 	}
 	name := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}-review-` + regexp.QuoteMeta(head[:7]) + `\.md$`)
-	entries, _ := os.ReadDir(filepath.Join(dir, "people", handle, "inbox"))
+	entries, _ := os.ReadDir(filepath.Join(personal, "inbox"))
 	for _, e := range entries {
 		if !e.IsDir() && name.MatchString(e.Name()) {
 			return true
