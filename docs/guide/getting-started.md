@@ -105,10 +105,13 @@ what needs your approval. That part works today.
 ## On your own
 
 Install the Claude Code plugin (`claude plugin marketplace add sumsolution/folkways`, then
-`claude plugin install folkways@folkways`) and open a session in your repo. The first session offers to set
-folkways up; run `/folkways:setup`, choose solo, and answer a few questions: tracker, commit format,
-review gate, which hooks to turn off. It writes `folkways.yaml` and nothing else; commit it. Folders such
-as `work/` and `inbox/` appear when a skill first needs them. Not now? Ignore the offer; it won't repeat.
+`claude plugin install folkways@folkways`) and open a session. The first session offers to set folkways
+up; run `/folkways:setup`, choose solo, and answer a few questions: where your brain repo goes (a new
+folder, never a code repo), where your project clones live, which repos you work on, tracker, commit
+format, review gate, which hooks to turn off. It writes `folkways.yaml`, `.local/me.yaml` and a
+`.gitignore`, and commits `folkways.yaml` and `.gitignore` (`.local/` stays on your machine). From then
+on, start sessions in the brain repo; code changes happen in worktrees of your projects. Folders such as
+`work/` and `inbox/` appear when a skill first needs them. Not now? Ignore the offer; it won't repeat.
 
 **Coming soon:** the plugin isn't on npm yet. Today, build it from a clone of this repo
 (`pnpm --filter "@folkways/claude-plugin..." run build`, needs Go) and start Claude Code with

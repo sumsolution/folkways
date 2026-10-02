@@ -48,8 +48,8 @@ const PREFACE = `# folkways (plugin)
 The folkways plugin is enabled. Its skills are namespaced (\`folkways:start\`, \`folkways:handoff\`, …).
 Team overlays in \`overlays/\` aren't compiled in; that needs a team repo and \`folkways sync\`. Personal
 overlays still attach.
-Without a \`folkways.yaml\` in the repo the plugin stays quiet; the \`folkways:setup\` skill sets up a solo
-or team repo.
+Without a \`folkways.yaml\` in the repo the plugin stays quiet. folkways runs from a brain repo, which
+holds no code; the \`folkways:setup\` skill creates a solo one or sets up a team one.
 
 `;
 

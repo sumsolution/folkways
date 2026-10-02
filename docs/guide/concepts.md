@@ -27,13 +27,14 @@ Direct pushes are rebased and linear. Every push, direct or not, waits for the p
 
 ## Solo repos
 
-One person can use folkways in their own repo, usually a code repo, through the Claude Code plugin. A solo
-repo is the team layout with one layer removed: what lives in `people/<handle>/` in a team repo lives at
-the repo root (`work/`, `inbox/`, `overlays/`). There's no handle, no `efforts/` and nothing to promote.
+One person can use folkways through the Claude Code plugin, from their own **brain repo**: like a team
+repo, it's where sessions start and knowledge, state and efforts build up across every project, and it
+holds no code. Code changes happen in worktrees of the project repos. A solo repo is the team layout
+with one layer removed: what lives in `people/<handle>/` in a team repo lives at the repo root (`work/`, `inbox/`, `overlays/`). There's no handle, no `efforts/` and nothing to promote.
 Skills call that folder the **personal root**.
 
 A repo is set up when it has a `folkways.yaml`. Without one, the plugin stays quiet: the first session
-offers to run `setup` once, and after that it says nothing ([spec §2.3](../design/06-v1-spec.md)).
+points to the brain repo and offers `setup` once, and after that it says nothing ([spec §2.3](../design/06-v1-spec.md)).
 
 ## Knowledge, state, efforts, people
 

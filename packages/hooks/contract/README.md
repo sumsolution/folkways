@@ -90,10 +90,6 @@ change them here and in the fixtures together.
   characters of HEAD. The personal root is `people/<handle>/` (`handle` in `.local/me.yaml`) in a team repo
   and the repo root when `mode: solo` (no handle needed). Only the person's own folder counts; another
   person's `people/<other>/` is ignored, and in a team repo with no handle only `efforts/**` counts.
-- **Solo walk-back** (spec 7.3): in `mode: solo`, when the pushed repo is the folkways repo itself (its top level
-  is the project dir, symlinks resolved), a review of any commit on this walk also covers the push: HEAD, then
-  first parents while a commit changes only `work/` and `inbox/` files (at most 20 such commits), ending with
-  the first commit that changes anything else, a merge or the root commit. Team mode, and other repos, check HEAD only.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. The folkways repo itself (top level = project dir, in either mode) is never denied. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.

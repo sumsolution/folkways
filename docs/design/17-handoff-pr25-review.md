@@ -13,6 +13,7 @@
 | Local checks at HEAD | `pnpm run check`, `pnpm test` (CLI 368, plugin 25, evals 26, hooks 22), `go vet`, `go test`, contract suite 178/178 against the built binary |
 | Already reviewed | One fresh-process review, before the hooks fix (`4dcb34c`) and the smoke fix (`2613d61`). 7 findings: 6 fixed, 1 deferred ([lenient `hooks:` parsing](#carried-over)) |
 | Review round 2 | Summer's review on #25 (4 threads): solo review gate in `pr` and `commit`, `commit` step 1 in a solo repo, `run.sh` no-binary notice ignoring `session-start: false`, a walk-back test that passed without its guard. All fixed and replied to; [step 1](#1-kick-off-code-review-on-25) is for anything further |
+| Round 3 (session 9) | A second fresh review was not clean (`commit` re-reviewed review-only commits in solo). Summer reframed solo: a solo repo is a **brain repo** with no code (plan 16, decision 6), which removed the walk-back and the solo special cases instead of patching them |
 
 The branch carries a merge of `main` (`d41e0fe`): #24 was squash-merged mid-session and a force-push to
 rebase was refused, so squash-merge #25.

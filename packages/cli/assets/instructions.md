@@ -7,9 +7,10 @@ Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `si
 
 ## Session start
 
-- Read `folkways.yaml` and `.local/me.yaml`. No `folkways.yaml`: folkways isn't set up here; offer the
-  `setup` skill. Team repo with no `me.yaml`: run the `onboard` skill first. A solo repo (`mode: solo`)
-  has no handle, no `people/` and no `efforts/`; `me.yaml` is optional.
+- Read `folkways.yaml` and `.local/me.yaml`. No `folkways.yaml`: folkways isn't set up here. It runs
+  from a brain repo, which holds no code: say to start sessions there, or offer the `setup` skill to
+  create one. No `me.yaml`: run the `onboard` skill first. A solo repo (`mode: solo`) has no handle,
+  no `people/` and no `efforts/`; its `me.yaml` holds `projects_dir`.
 - **Resuming an effort:** read its `00-STATUS.md`, check git state, confirm next steps with the user.
 - **New effort:** ask for a ticket or docs, read them, suggest next steps (usually `research`), create
   `00-STATUS.md`. The `start` skill does this.

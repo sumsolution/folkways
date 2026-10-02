@@ -19,7 +19,7 @@ import (
 func Run(p payload.Payload, cfg team.Config) {
 	if !cfg.Configured {
 		if offer(cfg.Dir) {
-			output.Context("SessionStart", "folkways isn't set up in this repo. Run the `"+skill.Name("setup")+"` skill to set it up, or ignore this; it won't be shown again here.")
+			output.Context("SessionStart", "folkways isn't set up in this repo. folkways runs from a brain repo: start sessions there, and code changes happen in worktrees of repos like this one. No brain repo yet? Run the `"+skill.Name("setup")+"` skill to create one. This won't be shown again here.")
 		}
 		return
 	}

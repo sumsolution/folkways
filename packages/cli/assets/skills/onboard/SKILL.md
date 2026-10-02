@@ -28,8 +28,8 @@ Read these first. A missing file is normal; skip it.
 
 ## Workflow
 
-**Solo repo (`mode: solo`):** there's no handle, no `people/` and no install to check. Offer only step 3
-(`.local/me.yaml` with `projects_dir` and `tool`, both optional) and step 5, then stop.
+**Solo repo (`mode: solo`):** there's no handle, no `people/` and no install to check. Do only step 3
+(`.local/me.yaml`: `projects_dir` is required, `tool` optional) and step 5, then stop.
 
 1. **Check the install.** `node_modules/.bin/folkways` must exist. If not, run the team's install
    (`npm ci`, or `pnpm install --frozen-lockfile` when `pnpm-lock.yaml` exists) on approval.
