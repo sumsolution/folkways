@@ -181,7 +181,8 @@ config model with no second root. `team.yaml` is renamed `folkways.yaml` (no fal
 published) and gains `mode: team | solo`. A solo repo is the team layout with `people/<handle>/` removed;
 both read `folkways.yaml` at the project root. A repo without it is unconfigured: the hooks and the plugin
 stay silent except for a one-time setup offer, recorded in the user's config dir, never the repo (spec §2.3,
-§7.1). The CLI stays team-only; solo repos are set up by the plugin's `setup` skill.
+§7.1). The CLI stays team-only; solo repos are set up by the plugin's `setup` skill. Like a team repo, a
+solo repo is a brain repo that holds no project code (plan 16, decision 6).
 
 ## Consequences
 

@@ -81,7 +81,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
    `AGENTS.md` and `CLAUDE.md`, which imports it).
 3. ~~The plugin in a repo that isn't a team repo~~ Decided ([16](16-plan-config-and-solo.md)): without
    `folkways.yaml` the plugin and hooks stay silent except a one-time setup offer; `setup` configures a solo
-   or team repo; solo is the team layout without `people/<handle>/`.
+   or team repo; solo is the team layout without `people/<handle>/`. Both are brain repos: sessions start
+   there and code changes happen in worktrees of project repos.
 
 ## Pending
 
@@ -151,6 +152,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
   fixtures done (`push-me-cannot-loosen-denied`); the Go implementation lands in plan 11, PR 2.
 - [x] Spec §4.1: add `git.commit_pattern` (decided yes). Done in [16](16-plan-config-and-solo.md).
 - [x] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Contract and fixtures done; the Go implementation lands in plan 11, PR 2.
+- [ ] With `review.trigger: pre-push`, `git-guard` denies a direct push of the brain repo itself (team or solo), since no review covers a `state/` commit. Exempt the repo holding `folkways.yaml` from the push gate; about 40 push fixtures use `${TEAM}` as the pushed repo and need a project repo instead.
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../packages/cli/assets/prompts/review.md).
 - [ ] `doctor` checks: non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `no` as off, but `off` and `"false"` leave the hook on), stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
 - [x] [assets/settings.json](../../packages/cli/assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
