@@ -73,7 +73,8 @@ cd example-team
 npm ci                              # or: pnpm install --frozen-lockfile, if there's a pnpm-lock.yaml
 ```
 
-Installing puts the pinned `@folkways/cli` in `node_modules/`, which is where hooks will run from.
+Installing puts the pinned `@folkways/cli` and its `folkways-hook` binary in `node_modules/`, which is
+where hooks run from.
 (**Coming soon:** needs the npm release and a committed lockfile.)
 
 ### 2. Onboard
@@ -119,4 +120,4 @@ Review the branch, push, open a PR. After it merges, everyone pulls and reinstal
 | `folkways: framework files were edited:` | Someone changed a synced file. Move the change into `overlays/`, or rerun with `--force` to discard it |
 | `folkways: team skills clash with new framework skills: ...` | A team skill has a framework skill's name. Rename yours |
 | `warning: AGENTS.md has no '@.folkways/instructions.md' line; agents won't see the framework instructions.` | Agents won't see the framework rules. Put the line back |
-| `folkways: 'doctor' is not built yet (spec §7.2)` | Expected in v0.1.0; same for `hook`, `review`, `run` |
+| `folkways: 'doctor' is not built yet (spec §7.2)` | Expected in v0.1.0; same for `review` and `run` |
