@@ -55,7 +55,7 @@ function stepZero(text: string): string | undefined {
  * must start its line, outside backticks, for Claude Code to attach the file.
  */
 const personalBlock = (skill: string): string => `3. Your personal additions. Team overrides and additions are already compiled into this file by
-   \`folkways sync\`, so don't read \`overlays/\`.
+   \`folkways sync\`, so in a team repo don't read \`overlays/\` (in a solo repo it holds your personal ones).
 
    @\${CLAUDE_PROJECT_DIR}/.local/me/overlays/${skill}/OVERLAY.md
 

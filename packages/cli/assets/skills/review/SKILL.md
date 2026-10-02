@@ -16,7 +16,7 @@ Read these first. A missing file is normal; skip it.
 1. `folkways.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
 2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/review/OVERLAY.md
 

@@ -18,7 +18,7 @@ Read these first. A missing file is normal; skip it.
    the `onboard` skill first; nothing else works without a handle. In a solo repo (`mode: solo`) there is
    no handle and the file is optional.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/start/OVERLAY.md
 

@@ -16,7 +16,7 @@ Read these first. A missing file is normal; skip it.
    missing,** say folkways isn't set up in this repo, offer the `setup` skill, and stop.
 2. `.local/me.yaml`: if it exists, this is a re-run; show its values and change only what the user asks.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/onboard/OVERLAY.md
 
@@ -28,11 +28,12 @@ Read these first. A missing file is normal; skip it.
 
 ## Workflow
 
+**Solo repo (`mode: solo`):** there's no handle, no `people/` and no install to check. Offer only step 3
+(`.local/me.yaml` with `projects_dir` and `tool`, both optional) and step 5, then stop.
+
 1. **Check the install.** `node_modules/.bin/folkways` must exist. If not, run the team's install
    (`npm ci`, or `pnpm install --frozen-lockfile` when `pnpm-lock.yaml` exists) on approval.
-2. **Identify the person.** In a solo repo (`mode: solo`) there is no handle and no `people/`: skip this
-   step and steps 4 and 9, and write only `projects_dir` and `tool` in step 3. Otherwise ask for their
-   handle; it must match a `members` entry in `folkways.yaml`. Not
+2. **Identify the person.** Ask for their handle; it must match a `members` entry in `folkways.yaml`. Not
    listed → they need a PR adding them (offer to draft it); continue with the handle meanwhile.
 3. **Write `.local/me.yaml`** per [me.yaml](#me-yaml). Ask for `projects_dir` as an absolute path; `~`
    is not reliably expanded. Show the file; write on approval. `.local/` is gitignored; check that it is.
