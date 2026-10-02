@@ -144,7 +144,8 @@ jobs:
         run: pnpm --filter @folkways/evals test
 
   # Packs the CLI and the four platform packages, installs them with npm and pnpm, and runs the hook
-  # contract suite against the installed binary, on each platform folkways-hook ships for (ADR 0002).
+  # contract suite against the installed binary (ADR 0002). darwin-x64 ships but has no runner here: Intel
+  # Macs end with macOS 26, and so does GitHub's last Intel image. linux-x64 covers the amd64 build.
   smoke:
     name: smoke (${{ matrix.os }})
     needs: changes
@@ -154,7 +155,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, macos-26-intel]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
