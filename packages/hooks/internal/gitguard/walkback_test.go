@@ -103,11 +103,14 @@ func TestSoloWalkOnlyInTheFolkwaysRepo(t *testing.T) {
 	dir, cfg := soloRepo(t)
 	code := commitFile(t, dir, "src/a.txt", "a")
 	commitFile(t, dir, "work/e1/r.md", "---\nsha: "+code+"\n---\n")
+	// Another repo with a reviewed code commit under a work/-only commit: a walk-back would pass it.
 	other := t.TempDir()
 	gitIn(t, other, "init", "-q", "-b", "main")
-	commitFile(t, other, "src/o.txt", "other")
+	otherCode := commitFile(t, other, "src/o.txt", "other")
+	write(t, dir, "work/e2/r.md", "---\nsha: "+otherCode+"\n---\n")
+	commitFile(t, other, "work/notes.md", "n")
 	if got := checkPush(other, cfg); got == "" {
-		t.Error("another repo has no review and must be denied")
+		t.Error("another repo must not walk back")
 	}
 }
 
