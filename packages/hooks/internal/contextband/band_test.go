@@ -55,3 +55,20 @@ func TestLabel(t *testing.T) {
 		}
 	}
 }
+
+func TestAdviceNamesTheHandoffSkill(t *testing.T) {
+	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "")
+	if got := advice(2, 3); !strings.Contains(got, "(`handoff` skill)") {
+		t.Errorf("advice at the last band = %q", got)
+	}
+	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "folkways")
+	if got := advice(2, 3); !strings.Contains(got, "(`folkways:handoff` skill)") {
+		t.Errorf("advice at the last band in a namespace = %q", got)
+	}
+	if got := advice(0, 3); got != firstText {
+		t.Errorf("advice at the first band = %q", got)
+	}
+	if got := advice(1, 3); got != midText {
+		t.Errorf("advice at a middle band = %q", got)
+	}
+}

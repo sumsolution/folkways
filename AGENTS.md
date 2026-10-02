@@ -35,7 +35,7 @@ From the repo root:
 | `pnpm run build` | build every package (the CLI's `src/` to `dist/`, also on `pnpm pack` / `pnpm publish`; the hook packages to `packages/hooks/npm/`, needs Go) |
 | `pnpm --filter @folkways/cli test` | one package only (same for `check`, `build`, `@folkways/hooks`) |
 | `pnpm run smoke` | pack the CLI and the four hook packages, install them with npm and pnpm, drive `init` and `sync`, run the contract suite through the installed binary (needs Go) |
-| `pnpm --filter @folkways/claude-plugin run build` | build the Claude Code plugin into `packages/claude-plugin/dist/` (needs Go); dogfood with `claude --plugin-dir packages/claude-plugin/dist` |
+| `pnpm --filter "@folkways/claude-plugin..." run build` | build the hooks, then the Claude Code plugin into `packages/claude-plugin/dist/` (needs Go); dogfood with `claude --plugin-dir packages/claude-plugin/dist` |
 | `pnpm --filter @folkways/hooks run build` | cross-compile the `@folkways/hooks-<os>-<cpu>` packages into `packages/hooks/npm/` |
 | `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |

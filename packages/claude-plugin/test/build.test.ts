@@ -8,6 +8,7 @@ import {
   buildPlugin,
   frameworkSkills,
   HOOK_TARGETS,
+  hookBinaries,
   hostTarget,
   pluginHooks,
   rewriteForPlugin,
@@ -23,6 +24,10 @@ describe('rewriteForPlugin', () => {
     expect(rewriteForPlugin('run the `onboard` skill first; the `start` skills', SKILLS)).toBe(
       'run the `folkways:onboard` skill first; the `folkways:start` skills',
     );
+  });
+
+  it('namespaces a skill name wrapped onto the next line', () => {
+    expect(rewriteForPlugin('run the `onboard`\nskill first', SKILLS)).toBe('run the `folkways:onboard`\nskill first');
   });
 
   it('leaves other backticked names alone', () => {
@@ -81,6 +86,18 @@ describe('pluginHooks', () => {
   });
 });
 
+describe('hookBinaries', () => {
+  it("reads every platform's binary from a @folkways/hooks build", () => {
+    const build = join(tmp, 'hooks-build');
+    for (const t of HOOK_TARGETS) mkdirSync(join(build, t, 'bin'), { recursive: true });
+    expect([...hookBinaries(build)]).toEqual(HOOK_TARGETS.map((t) => [t, join(build, t, 'bin', 'folkways-hook')]));
+  });
+
+  it('says how to build the hooks when there is no build', () => {
+    expect(() => hookBinaries(join(tmp, 'no-hooks-build'))).toThrow(/claude-plugin\.\.\." run build/);
+  });
+});
+
 describe('buildPlugin', () => {
   const out = join(tmp, 'dist');
   const bins = join(tmp, 'bins');
@@ -91,7 +108,7 @@ describe('buildPlugin', () => {
     const binaries = new Map<string, string>();
     for (const t of HOOK_TARGETS) {
       const path = join(bins, t);
-      writeFileSync(path, `#!/bin/sh\necho "stub ${t} $1"\n`);
+      writeFileSync(path, `#!/bin/sh\necho "stub ${t} $1 $FOLKWAYS_SKILL_NAMESPACE"\n`);
       chmodSync(path, 0o755);
       binaries.set(t, path);
     }
@@ -131,7 +148,7 @@ describe('buildPlugin', () => {
     for (const skill of skills) {
       const text = read(`skills/${skill}/SKILL.md`);
       for (const s of skills) {
-        expect(text, `${skill} still names the bare \`${s}\` skill`).not.toMatch(new RegExp(`\`${s}\` skill`));
+        expect(text, `${skill} still names the bare \`${s}\` skill`).not.toMatch(new RegExp(`\`${s}\`\\s+skill`));
         expect(text, `${skill} still points at .claude/skills/${s}/`).not.toContain(`.claude/skills/${s}/`);
       }
     }
@@ -142,6 +159,7 @@ describe('buildPlugin', () => {
     const text = read('instructions.md');
     expect(text).toMatch(/^# folkways \(plugin\)/);
     expect(text).toContain('`folkways:onboard` skill');
+    for (const s of frameworkSkills()) expect(text).not.toMatch(new RegExp(`\`${s}\`\\s+skill`));
   });
 
   it('ships a binary per platform, executable', () => {
@@ -165,10 +183,10 @@ describe('buildPlugin', () => {
       expect(r.stdout).toBe(read('instructions.md'));
     });
 
-    it.skipIf(!host)('runs the host binary with the hook name', () => {
+    it.skipIf(!host)('runs the host binary with the hook name, naming skills as the plugin does', () => {
       const r = run('git-guard', plain);
       expect(r.status).toBe(0);
-      expect(r.stdout.trim()).toBe(`stub ${host} git-guard`);
+      expect(r.stdout.trim()).toBe(`stub ${host} git-guard folkways`);
     });
 
     it('stays quiet in a synced team repo', () => {

@@ -71,7 +71,8 @@ function releaseCli(out: string): void {
 function releaseClaudePlugin(out: string): void {
   const build = mkdtempSync(join(tmpdir(), 'folkways-release-plugin-'));
   try {
-    packClaudePlugin(build, out);
+    run(process.execPath, ['scripts/build.ts', join(build, 'hooks')], HOOKS);
+    packClaudePlugin(join(build, 'hooks'), join(build, 'plugin'), out);
   } finally {
     rmSync(build, { recursive: true, force: true });
   }

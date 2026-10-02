@@ -2,8 +2,8 @@
 # Runs one folkways hook for the Claude Code plugin: run.sh <hook> < payload.json
 #
 # `instructions` prints the way of working as session context. Every other hook runs this platform's
-# folkways-hook from hooks/bin/; FOLKWAYS_HOOK_CMD overrides it. Always exits 0: a broken runner must
-# not block the session.
+# folkways-hook from hooks/bin/; FOLKWAYS_HOOK_CMD overrides it. The hook names skills as the plugin
+# does (`folkways:start`). Always exits 0: a broken runner must not block the session.
 
 hook=$1
 root=${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
@@ -30,5 +30,5 @@ if [ ! -x "$bin" ]; then
   exit 0
 fi
 
-"$bin" "$hook"
+FOLKWAYS_SKILL_NAMESPACE=folkways "$bin" "$hook"
 exit 0

@@ -14,15 +14,27 @@ import (
 
 	"github.com/sumsolution/folkways/packages/hooks/internal/output"
 	"github.com/sumsolution/folkways/packages/hooks/internal/payload"
+	"github.com/sumsolution/folkways/packages/hooks/internal/skill"
 	"github.com/sumsolution/folkways/packages/hooks/internal/team"
 )
 
-// What to do at the first band, a middle band and the last band (instructions.md, "Context and handoff").
+// What to do at the first band and a middle band (instructions.md, "Context and handoff"). The last band's
+// text names a skill, so advice builds it.
 const (
 	firstText = "Look for a stopping point."
 	midText   = "Start no new multi-step work. Propose a handoff at the next checkpoint."
-	lastText  = "Write `00-STATUS.md` (`handoff` skill) and end the session."
 )
+
+// advice returns what to do at band i of count.
+func advice(i, count int) string {
+	switch i {
+	case count - 1:
+		return "Write `00-STATUS.md` (`" + skill.Name("handoff") + "` skill) and end the session."
+	case 0:
+		return firstText
+	}
+	return midText
+}
 
 type state struct {
 	Band int `json:"band"` // the threshold last announced, 0 for none
@@ -60,13 +72,7 @@ func Run(p payload.Payload, cfg team.Config) {
 	if os.WriteFile(path, raw, 0o644) != nil || cur < last.Band {
 		return // fell below the last band (compaction): the next crossing is announced again
 	}
-	text := midText
-	switch i {
-	case len(cfg.Team.Handoff.Bands) - 1:
-		text = lastText
-	case 0:
-		text = firstText
-	}
+	text := advice(i, len(cfg.Team.Handoff.Bands))
 	event := p.HookEventName
 	if event == "" {
 		event = "UserPromptSubmit"

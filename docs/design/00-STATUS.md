@@ -109,7 +109,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Claude Code plugin | [packages/claude-plugin/](../../packages/claude-plugin) | Built from the CLI's assets: skills rewritten to `folkways:<name>` and `${CLAUDE_PLUGIN_ROOT}` paths, instructions as session-start context, `hooks.json` generated from `assets/settings.json`, `folkways-hook` for all four platforms. Quiet in synced team repos. No team overlays, no push ask rule. Released as `@folkways/claude-plugin` on its own tag; the root [marketplace](../../.claude-plugin/marketplace.json) installs it from npm. Dogfood from `dist/` |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it); claude-plugin 19 pass |
+| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it); claude-plugin 22 pass |
 
 ## Review follow-ups (PR #1, not blocking)
 

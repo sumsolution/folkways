@@ -107,7 +107,7 @@ try {
   }
 
   step('claude plugin: pack, unpack, run a hook');
-  const pluginTgz = packClaudePlugin(join(root, 'claude-plugin'), join(root, 'pack-plugin'));
+  const pluginTgz = packClaudePlugin(join(root, 'hooks-npm'), join(root, 'claude-plugin'), join(root, 'pack-plugin'));
   const unpacked = join(root, 'plugin-unpacked');
   mkdirSync(unpacked);
   run('tar', ['-xzf', pluginTgz, '-C', unpacked], root);
@@ -118,7 +118,7 @@ try {
     CLAUDE_PLUGIN_ROOT: plugin,
     CLAUDE_PROJECT_DIR: plain,
   });
-  assert(started.includes('`start` skill'), `the packed plugin's session-start hook printed:\n${started}`);
+  assert(started.includes('`folkways:start` skill'), `the packed plugin's session-start hook printed:\n${started}`);
 
   console.log('smoke: ok');
 } catch (error) {

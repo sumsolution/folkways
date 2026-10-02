@@ -171,7 +171,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/claude-plugin run check
       - run: pnpm --filter @folkways/claude-plugin test
-      - run: pnpm --filter @folkways/claude-plugin run build
+      - run: pnpm --filter "@folkways/claude-plugin..." run build
 
   # Packs the CLI and the four platform packages, installs them with npm and pnpm, and runs the hook
   # contract suite against the installed binary (ADR 0002). darwin-x64 ships but has no runner here: Intel

@@ -96,13 +96,13 @@ export function packCli(dest: string): CliPackage {
 }
 
 /**
- * Build `@folkways/claude-plugin` into `build` and `npm pack` it into `dest`. Checks the tarball carries the
- * manifest at the package version and an executable folkways-hook per platform, and leaves out the dev
- * marketplace.
+ * Build `@folkways/claude-plugin` into `build`, with the binaries from the `@folkways/hooks` build in `hooks`,
+ * and `npm pack` it into `dest`. Checks the tarball carries the manifest at the package version and an
+ * executable folkways-hook per platform, and leaves out the dev marketplace.
  */
-export function packClaudePlugin(build: string, dest: string): string {
+export function packClaudePlugin(hooks: string, build: string, dest: string): string {
   const version: string = readJson(join(CLAUDE_PLUGIN, 'package.json')).version;
-  run(process.execPath, ['src/build.ts', build], CLAUDE_PLUGIN);
+  run(process.execPath, ['src/build.ts', build, hooks], CLAUDE_PLUGIN);
   mkdirSync(dest, { recursive: true });
   const before = new Set(tarballs(dest));
   run('npm', ['pack', '--pack-destination', dest], build);

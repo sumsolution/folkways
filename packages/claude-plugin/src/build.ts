@@ -1,16 +1,18 @@
 // Build the folkways Claude Code plugin into dist/: the framework's skills and instructions rewritten for
 // the plugin, hooks generated from the team-repo settings, and folkways-hook for every platform.
-// Usage: node src/build.ts [out-dir]   (default dist/; needs Go)
-import { spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+// The binaries come from `@folkways/hooks`'s own build, which this reads and never runs: `pnpm -r run build`
+// builds the hooks first (a workspace devDependency), and `pnpm --filter "@folkways/claude-plugin..." run build`
+// builds both.
+// Usage: node src/build.ts [out-dir] [hooks-build]   (defaults dist/ and packages/hooks/npm/)
+import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 const PACKAGE = resolve(import.meta.dirname, '..');
 const REPO = resolve(PACKAGE, '..', '..');
 /** The CLI's assets: the files `sync` copies into team repos. Read as data, never imported. */
 export const ASSETS = join(REPO, 'packages', 'cli', 'assets');
-const HOOKS_PACKAGE = join(REPO, 'packages', 'hooks');
+/** Where `@folkways/hooks` builds its platform packages by default. */
+const HOOKS_BUILD = join(REPO, 'packages', 'hooks', 'npm');
 
 /** `<os>-<cpu>` of every folkways-hook build, as `@folkways/hooks` names its platform packages. */
 export const HOOK_TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'] as const;
@@ -35,7 +37,7 @@ const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function rewriteForPlugin(text: string, skills: readonly string[]): string {
   const names = skills.map(escape).join('|');
   return text
-    .replace(new RegExp(`\`(${names})\` skill`, 'g'), '`folkways:$1` skill')
+    .replace(new RegExp(`\`(${names})\`(\\s+)skill`, 'g'), '`folkways:$1`$2skill')
     .replace('Skills in `.claude/skills/` hold', 'The `folkways:` skills hold')
     .replace(new RegExp(`\\.claude/skills/(${names})/`, 'g'), '$${CLAUDE_PLUGIN_ROOT}/skills/$1/')
     .replace(/^Framework skills:[^]*?\.$/m, (list) => list.replace(new RegExp(`\`(${names})\``, 'g'), '`folkways:$1`'));
@@ -155,10 +157,11 @@ export function buildPlugin({ out, version, binaries }: BuildOptions): void {
   copyFileSync(join(REPO, 'LICENSE'), join(out, 'LICENSE'));
 }
 
-/** Cross-compile folkways-hook for every target with `@folkways/hooks`'s own build, into `dir`. */
-export function buildHookBinaries(dir: string): Map<string, string> {
-  const r = spawnSync(process.execPath, ['scripts/build.ts', dir], { cwd: HOOKS_PACKAGE, encoding: 'utf8' });
-  if (r.error || r.status !== 0) throw new Error(`@folkways/hooks build failed: ${r.error?.message ?? r.stderr}`);
+/** The folkways-hook binaries in a `@folkways/hooks` build (`<dir>/<os>-<cpu>/bin/folkways-hook`). */
+export function hookBinaries(dir: string): Map<string, string> {
+  if (!existsSync(dir)) {
+    throw new Error(`no @folkways/hooks build in ${dir}: run \`pnpm --filter "@folkways/claude-plugin..." run build\``);
+  }
   const built = readdirSync(dir).sort();
   if (JSON.stringify(built) !== JSON.stringify([...HOOK_TARGETS])) {
     throw new Error(`@folkways/hooks built ${built.join(', ')}; HOOK_TARGETS lists ${HOOK_TARGETS.join(', ')}`);
@@ -169,11 +172,11 @@ export function buildHookBinaries(dir: string): Map<string, string> {
 if (import.meta.main) {
   const version: string = JSON.parse(readFileSync(join(PACKAGE, 'package.json'), 'utf8')).version;
   const out = resolve(process.argv[2] ?? join(PACKAGE, 'dist'));
-  const bins = mkdtempSync(join(tmpdir(), 'folkways-plugin-hooks-'));
   try {
-    buildPlugin({ out, version, binaries: buildHookBinaries(bins) });
-    console.log(out);
-  } finally {
-    rmSync(bins, { recursive: true, force: true });
+    buildPlugin({ out, version, binaries: hookBinaries(resolve(process.argv[3] ?? HOOKS_BUILD)) });
+  } catch (error) {
+    console.error(`folkways: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
   }
+  console.log(out);
 }
