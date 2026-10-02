@@ -1,5 +1,5 @@
 {
-  "description": "mode: team: no walk-back; a review of the previous commit does not cover HEAD",
+  "description": "a review of the previous commit does not cover HEAD",
   "env": {
     "commits": [
       {

@@ -17,7 +17,7 @@
         "stdout": {
           "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": "re:isn't set up.*setup.*won't be shown again"
+            "additionalContext": "re:isn't set up.*brain repo.*setup.*won't be shown again"
           }
         },
         "contains": {
