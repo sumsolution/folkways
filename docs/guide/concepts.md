@@ -71,14 +71,15 @@ So the team gets one shared baseline, and each person can still add their own to
 
 ## Hooks
 
-Small commands the tools run at set moments: before a shell command, at session start and end, before
-compaction. They live in `.claude/settings.json`, which **both Claude Code and Copilot CLI read**.
+Small commands the tools run at set moments: before a shell command, after each prompt and tool batch,
+at session start, before compaction. They live in `.claude/settings.json`, which **both Claude Code and
+Copilot CLI read**.
 
-**Coming soon.** Each hook will run the pinned framework binary from `node_modules/`. Planned:
-`git-guard` (commit format, review before push, no checkouts in your main clone), `context-band`
-(announces 125K, 150K and 200K tokens so you hand off in time), `session-start` and
-`precompact` ([spec §7.1](../design/06-v1-spec.md)). Today `.claude/settings.json` holds one framework
-rule: `git push` asks first.
+Each hook runs the pinned framework binary, `folkways-hook`, from `node_modules/`
+([spec §7.1](../design/06-v1-spec.md)): `git-guard` (commit format, review before push, no checkouts in
+your main clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time),
+`session-start` (points the agent at the `start` skill) and `precompact` (logs a missed handoff).
+`.claude/settings.json` also holds one framework rule: `git push` asks first.
 
 ## Folkways and mores
 
@@ -94,10 +95,10 @@ PR, so an overlay can't loosen them.
 - Framework files aren't edited. Built: `sync` checks their checksums.
 - Team overlay overrides apply. Built: `sync` compiles them in and fails on an unknown ID.
 - Personal overlays only add. `sync` warns when one doesn't; `doctor` will report it (coming soon).
-- Commits follow the team's format. Coming soon: `git-guard`.
-- A fresh-process review covers the commit before a push, with the `pre-push` trigger. Coming soon:
-  `git-guard`.
-- Agents never check out, pull or reset in your main clones. Coming soon: `git-guard`.
+- Commits follow the team's format. Built: `git-guard`.
+- A fresh-process review covers the commit before a push, with the `pre-push` trigger. Built: `git-guard`
+  blocks the push; `folkways review`, which writes the review, is coming soon.
+- Agents never check out, pull or reset in your main clones. Built: `git-guard`.
 
 The full table is in [ADR 0001](../adr/0001-overlay-enforcement.md). The idea comes from the book the
 project is named after; see [The name](the-name.md).

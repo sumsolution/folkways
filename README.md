@@ -31,8 +31,8 @@ just files in a git repo your team already knows how to review.
 - **Upgrades are PRs.** `folkways upgrade <version>` makes a branch, installs, syncs and commits. You
   read the diff like any other change.
 - **A few rules have teeth.** Pushing asks first (a permission rule, built; Copilot CLI support unverified).
-  Commit format, the fresh-process review gate and "don't touch my main clone" are enforced by hooks
-  (coming soon).
+  Commit format, the fresh-process review gate and "don't touch my main clone" are enforced by the
+  `git-guard` hook (built; the `folkways review` command that writes reviews is coming soon).
 
 More: [How it works](docs/guide/how-it-works.md).
 
@@ -58,6 +58,16 @@ node packages/cli/src/cli.ts init ../my-team --no-install
 That scaffolds the team repo, syncs the framework files and makes the first commit. Full walkthrough:
 [Getting started](docs/guide/getting-started.md).
 
+To use the skills, instructions and hooks in any repo without a team repo, install the Claude Code
+plugin, once `@folkways/claude-plugin` is published:
+
+```bash
+claude plugin marketplace add sumsolution/folkways
+claude plugin install folkways@folkways
+```
+
+From a clone, build it and load it in place: [packages/claude-plugin](packages/claude-plugin/README.md).
+
 ## Status
 
 | Piece | State |
@@ -67,7 +77,8 @@ That scaffolds the team repo, syncs the framework files and makes the first comm
 | Team repo scaffold (`team.yaml`, folders, READMEs) | built |
 | Framework instructions (`.folkways/instructions.md`) | built |
 | 16 skills (`setup`, `onboard`, `start`, `review`, `commit`, `pr`, …) and the review prompt | built; synced with team overlays compiled in |
-| Hooks (`git-guard`, `context-band`, session start and end) | coming soon |
+| Hooks (`git-guard`, `context-band`, `session-start`, `precompact`) | built, wired into `.claude/settings.json` by `sync`; ship with the npm release |
+| Claude Code plugin (skills, instructions, hooks; no team overlays) | built; npm release coming soon |
 | `review`, `run`, `doctor` | coming soon; today they say "not built yet" |
 | npm release | coming soon |
 

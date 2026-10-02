@@ -1,0 +1,22 @@
+{
+  "name": "@folkways/claude-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Builds the folkways Claude Code plugin into dist/, published as @folkways/claude-plugin",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node src/build.ts",
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@folkways/hooks": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.0",
+    "vitest": "^5.0.0"
+  }
+}

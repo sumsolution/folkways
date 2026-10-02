@@ -1,10 +1,10 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-09-30 (session 6: hooks packaging and release)
+**Last updated:** 2026-10-02 (session 7: Claude Code plugin)
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow; nothing published yet.
+**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow. Claude Code plugin built (`packages/claude-plugin`). Nothing published yet.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -77,6 +77,12 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
    the nested `hookSpecificOutput` and runs repo hooks from the project root (ADR 0002, "Still open"); Copilot
    CLI subagent `model:` (not researched); whether Copilot CLI loads the instructions twice (it reads both
    `AGENTS.md` and `CLAUDE.md`, which imports it).
+3. The plugin in a repo that isn't a team repo (Summer to revisit `start`). Every session is told to follow
+   `folkways:start`, whose step 2 stops and runs `onboard` when `.local/me.yaml` is missing; `onboard`
+   assumes the team-repo layout. The hooks there: `git-guard` denies commits that aren't Angular
+   `type(scope): subject` (no `team.yaml` needed); `precompact` writes `.local/precompact.log` into the
+   repo; `context-band` stays off (no `handoff.bands`); the main-clone and pre-push checks stay off (no
+   `me.yaml`). Decide which of these a plain repo should get, alongside ADR 0003's open solo-config question.
 
 ## Pending
 
@@ -86,7 +92,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 - [ ] Decide DCO sign-off before the first outside PR.
 - [x] npm scope `@folkways` (Summer, 2026-09-28). Maybe a dedicated `folkways` GitHub org later.
 - [ ] Later: publish a GitHub Action that runs `folkways sync` on dependency-update PRs (spec §9.7).
-- [ ] Later: solo projects and a Claude Code plugin; other harnesses after that (ADR 0003, Future direction). Not scoped.
+- [ ] Later: solo projects; other harnesses after that (ADR 0003, Future direction). Not scoped. The Claude Code plugin is built (`packages/claude-plugin`); team overlays in it are not.
 - [ ] Dedicated session: architecture knowledge for the `adr` skill.
 - [ ] Trademark check for `folkways` (USPTO/EUIPO); register folkways.dev and a GitHub handle (Summer).
 
@@ -102,13 +108,14 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule, `disableAllHooks: false`, one entry per hook and event, run as `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` |
 | Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
 | Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `precompact`; the Go binary is built against it |
-| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Wired into team repos by `sync`; `init` sets pnpm's `publicHoistPattern`; `sync` warns when the binary or that setting is missing; `folkways hook <name>` runs it by hand. Packaged as `@folkways/hooks-<os>-<cpu>` ([build.ts](../../packages/hooks/scripts/build.ts)); the packed CLI pins them via [.pnpmfile.mjs](../../.pnpmfile.mjs) |
+| Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Wired into team repos by `sync`; `init` sets pnpm's `publicHoistPattern`; `sync` warns when the binary or that setting is missing; `folkways hook <name>` runs it by hand. Packaged as `@folkways/hooks-<os>-<cpu>` ([build.ts](../../packages/hooks/scripts/build.ts)); the packed CLI pins them via [.pnpmfile.mjs](../../.pnpmfile.mjs). `FOLKWAYS_SKILL_NAMESPACE` makes the hooks name skills `folkways:<name>` (the plugin sets it) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
 | CI | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | Jobs filtered by package path, one required `ci` check; Linux and macOS. Smoke ([scripts/smoke.ts](../../scripts/smoke.ts)) on linux x64 and arm64 and macOS arm64 (darwin-x64 ships, untested in CI): packed CLI and hook tarballs, npm and pnpm, contract suite through the installed binary |
 | Release | [.github/workflows/release.yml](../../.github/workflows/release.yml) | One package per changeset tag. Builds and checks the tarballs ([scripts/release.ts](../../scripts/release.ts)), then publishes after approval in the `npm` environment, with trusted publishing and provenance. Never run yet |
+| Claude Code plugin | [packages/claude-plugin/](../../packages/claude-plugin) | Built from the CLI's assets: skills rewritten to `folkways:<name>` and `${CLAUDE_PLUGIN_ROOT}` paths, instructions as session-start context, `hooks.json` generated from `assets/settings.json`, `folkways-hook` for all four platforms, read from `@folkways/hooks`'s build (the plugin build never compiles Go), run by `run.sh`, which sets `FOLKWAYS_SKILL_NAMESPACE=folkways`. Quiet in synced team repos. No team overlays, no push ask rule. Released as `@folkways/claude-plugin` on its own tag; the root [marketplace](../../.claude-plugin/marketplace.json) installs it from npm. Dogfood from `dist/` |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it) |
+| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it), plus `go test`; claude-plugin 22 pass |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -124,17 +131,17 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 ## Next step
 
-**Branch:** `claude/kind-cori-762vho`: hooks PR 5 (packaging, smoke, release). `main` has everything through #19.
+**Branch:** `claude/busy-johnson-imsg4f`: the Claude Code plugin ([#21](https://github.com/sumsolution/folkways/pull/21)). `main` has everything through #22.
 
-1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli` and the four
-   `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
+1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli`,
+   `@folkways/claude-plugin` and the four `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
    `npm`). A package that doesn't exist yet may need a first manual publish, or npm's pending-publisher
    setup, if npm offers it. In GitHub, create the `npm` environment with Summer as required reviewer.
 2. Plan 11 step 6 on real machines: Gatekeeper on an npm-installed darwin binary, Copilot CLI (ADR 0002
    "Still open"), a lockfile made on macOS and installed on Linux.
 3. Next evals: overlay precedence ported to `packages/evals`, trigger evals.
 4. `review` / `run` / `doctor`.
-5. Publish: `@folkways/hooks@0.1.0`, then `@folkways/cli@0.1.0`.
+5. Publish: `@folkways/hooks@0.1.0`, then `@folkways/cli@0.1.0` and `@folkways/claude-plugin@0.1.0`.
 6. Set up the beta team repo.
 
 ## Follow-ups (not ticketed)
@@ -151,6 +158,9 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 - [ ] GitHub ignores `{#id}`, so in-page skill anchors are dead in the web view.
 - [ ] Research 10: a live `@` check (new session, marker-file skill) and Copilot CLI.
 - [ ] Optional: route compiled-file staging through `fsOps` so rollback tests cover it.
+- [ ] ADR 0003 says content moves out of `packages/cli/assets/` when a second distribution needs it. The
+  plugin is that second distribution and reads the assets in place, at build time. Move them to a content
+  package, or amend the ADR (its 2026-10-02 update records the gap).
 
 ## Security (open)
 

@@ -122,6 +122,9 @@ dependencies of `@folkways/cli`. The committed command is `"${CLAUDE_PROJECT_DIR
 - **Hooks must fail open:** they exit 0 on every error. The Go `main` recovers from panics, because a panic exits 2
   and Copilot CLI then denies the tool call.
   A missing binary is loud: Claude Code shows a hook error on every call, and Copilot CLI denies every Bash call.
+- **Claude Code plugin** (2026-10-02, [ADR 0003](0003-repo-layout.md) update): one npm package carrying all four
+  binaries, no optional dependencies. Its `hooks/run.sh` picks the host's binary and stays quiet in synced
+  team repos.
 - **CLI:** `folkways hook <name>` in TypeScript goes away, or delegates to the binary for manual runs. The
   contract suite ([packages/hooks/contract/](../../packages/hooks/contract)) stays in TypeScript and tests the Go binary as a black box.
 - **Contributor cost:** hook changes need Go 1.26+. Everything else stays TypeScript. The Go code is small (the

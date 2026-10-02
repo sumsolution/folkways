@@ -3,14 +3,28 @@
 //   @folkways/hooks@x.y.z → the four @folkways/hooks-<os>-<cpu> packages; the contract suite runs against
 //                           the host's binary
 //   @folkways/cli@x.y.z   → @folkways/cli; every platform package it pins must already be on npm
+//   @folkways/claude-plugin@x.y.z → the Claude Code plugin, with folkways-hook built from this commit
 // Usage: node scripts/release.ts <tag> <out>
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { hostTarget, packageName } from '../packages/hooks/scripts/build.ts';
-import { assert, CLI, HOOKS, packCli, packHooks, PLATFORMS, readJson, run, skippedTests, tarballs } from './pack.ts';
+import {
+  assert,
+  CLAUDE_PLUGIN,
+  CLI,
+  HOOKS,
+  packClaudePlugin,
+  packCli,
+  packHooks,
+  PLATFORMS,
+  readJson,
+  run,
+  skippedTests,
+  tarballs,
+} from './pack.ts';
 
-const PACKAGES = { '@folkways/hooks': HOOKS, '@folkways/cli': CLI } as const;
+const PACKAGES = { '@folkways/hooks': HOOKS, '@folkways/cli': CLI, '@folkways/claude-plugin': CLAUDE_PLUGIN } as const;
 type Released = keyof typeof PACKAGES;
 
 /** `@folkways/cli@1.2.3` → the package and version. Throws on a tag that publishes nothing. */
@@ -54,6 +68,16 @@ function releaseCli(out: string): void {
   );
 }
 
+function releaseClaudePlugin(out: string): void {
+  const build = mkdtempSync(join(tmpdir(), 'folkways-release-plugin-'));
+  try {
+    run(process.execPath, ['scripts/build.ts', join(build, 'hooks')], HOOKS);
+    packClaudePlugin(join(build, 'hooks'), join(build, 'plugin'), out);
+  } finally {
+    rmSync(build, { recursive: true, force: true });
+  }
+}
+
 if (import.meta.main) {
   const [tag, outArg] = process.argv.slice(2);
   try {
@@ -65,7 +89,8 @@ if (import.meta.main) {
     mkdirSync(out, { recursive: true });
     assert(tarballs(out).length === 0, `${out} already holds tarballs`);
     if (name === '@folkways/hooks') releaseHooks(out);
-    else releaseCli(out);
+    else if (name === '@folkways/cli') releaseCli(out);
+    else releaseClaudePlugin(out);
     console.log(`release: ${tag} ready:\n${tarballs(out).map((f) => `  ${join(out, f)}`).join('\n')}`);
   } catch (error) {
     console.error(`release: FAILED\n${error instanceof Error ? error.message : String(error)}`);

@@ -16,7 +16,9 @@ New here? Read Concepts, then Getting started. Evaluating the design? How it wor
 ## Where things stand
 
 folkways is at **v0.1.0 and unpublished**. The CLI's `init`, `sync` and `upgrade` work and are tested, and the 16 skills ship.
-Hooks are being built now. Each page marks what's coming soon, and the
+The hooks are built and `sync` wires them in. There's also a Claude Code plugin with the skills,
+instructions and hooks for repos without a team repo ([packages/claude-plugin](../../packages/claude-plugin/README.md)).
+Each page marks what's coming soon, and the
 [status doc](../design/00-STATUS.md) has the details.
 
 ## Other docs

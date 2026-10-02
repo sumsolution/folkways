@@ -7,6 +7,7 @@ import { packageName, TARGETS } from '../packages/hooks/scripts/build.ts';
 
 export const CLI = resolve(import.meta.dirname, '..', 'packages', 'cli');
 export const HOOKS = resolve(import.meta.dirname, '..', 'packages', 'hooks');
+export const CLAUDE_PLUGIN = resolve(import.meta.dirname, '..', 'packages', 'claude-plugin');
 /** Every `@folkways/hooks-<os>-<cpu>` package, sorted. */
 export const PLATFORMS: readonly string[] = TARGETS.map(packageName).sort();
 
@@ -92,4 +93,31 @@ export function packCli(dest: string): CliPackage {
     `packed CLI optionalDependencies ${JSON.stringify(optional)} should all pin folkways.hooks ${hooks}`,
   );
   return { tarball, hooks };
+}
+
+/**
+ * Build `@folkways/claude-plugin` into `build`, with the binaries from the `@folkways/hooks` build in `hooks`,
+ * and `npm pack` it into `dest`. Checks the tarball carries the manifest at the package version and an
+ * executable folkways-hook per platform, and leaves out the dev marketplace.
+ */
+export function packClaudePlugin(hooks: string, build: string, dest: string): string {
+  const version: string = readJson(join(CLAUDE_PLUGIN, 'package.json')).version;
+  run(process.execPath, ['src/build.ts', build, hooks], CLAUDE_PLUGIN);
+  mkdirSync(dest, { recursive: true });
+  const before = new Set(tarballs(dest));
+  run('npm', ['pack', '--pack-destination', dest], build);
+  const added = tarballs(dest).filter((f) => !before.has(f));
+  assert(added.length === 1, `npm pack in ${build} made ${added.length} tarballs`);
+  const tgz = join(dest, added[0]!);
+  assert(packedManifest(tgz).version === version, `@folkways/claude-plugin packed as ${packedManifest(tgz).version}, expected ${version}`);
+  const plugin = JSON.parse(run('tar', ['-xzOf', tgz, 'package/.claude-plugin/plugin.json'], process.cwd()));
+  assert(plugin.version === version, `plugin.json version is ${plugin.version}, expected ${version}`);
+  const listing = run('tar', ['-tvzf', tgz], process.cwd());
+  assert(!listing.includes('marketplace.json'), 'the packed plugin includes the dev marketplace');
+  for (const target of PLATFORMS.map((p) => p.replace('@folkways/hooks-', ''))) {
+    const line = listing.split('\n').find((l) => l.endsWith(`package/hooks/bin/folkways-hook-${target}`));
+    assert(line !== undefined, `the packed plugin has no folkways-hook for ${target}`);
+    assert(/^-rwx/.test(line), `the packed folkways-hook for ${target} isn't executable: ${line}`);
+  }
+  return tgz;
 }

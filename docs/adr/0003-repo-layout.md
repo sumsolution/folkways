@@ -170,6 +170,12 @@ yet. For now we record the seams, so today's work leaves them open:
   team-repo-only assumption.
 - **Still open for a plugin:** how to ship a per-platform binary without npm optional dependencies.
 
+**Update (2026-10-02).** The Claude Code plugin is built, as `packages/claude-plugin/` (not
+`packages/plugin-claude/`), published as `@folkways/claude-plugin`. The binary question is answered: the
+plugin carries all four `folkways-hook` builds and `hooks/run.sh` picks the host's (about 14 MB). The content
+did not move: the plugin build reads `packages/cli/assets/` as data, so two packages now know that path.
+Moving it to a content package is a follow-up (00-STATUS). The solo-config question stays open.
+
 ## Consequences
 
 - **The restructure** is one PR of `git mv` plus config, planned in
