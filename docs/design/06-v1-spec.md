@@ -89,9 +89,11 @@ approval.
 
 ### 2.3 Solo repo and repo states ([16](16-plan-config-and-solo.md))
 
-A solo repo is a team repo with one layer removed: what lives in `people/<handle>/` in a team repo lives
-at the repo root. It is usually a code repo set up through the plugin's `setup` skill; the CLI stays
-team-only.
+A solo repo is one person's **brain repo**: like a team repo, it is where sessions start and context
+builds up (knowledge, state, efforts across every project), and it holds no project code. Code changes
+happen in worktrees of the project repos under `projects_dir`, as in a team. It is the team layout with
+one layer removed: what lives in `people/<handle>/` in a team repo lives at the repo root. The plugin's
+`setup` skill creates it; the CLI stays team-only.
 
 ```
 solo-repo/
@@ -100,12 +102,11 @@ solo-repo/
 ├── overlays/<skill>/        # personal overlays: add only (no compile)
 ├── inbox/                   # side quests, ticket drafts, reviews with no effort
 ├── work/<KEY>-<slug>/       # efforts; no efforts/, nothing to promote to
-└── .local/                  # gitignored: me.yaml (no handle), hook state
+└── .local/                  # gitignored: me.yaml (projects_dir, no handle), hook state
 ```
 
 Skills and hooks name one **personal root**: `people/<handle>/` in a team repo, the repo root in a solo
-repo. `setup` checks for existing `work/`, `inbox/`, `state/`, `knowledge/` or `overlays/` that aren't
-folkways' and asks before using them.
+repo. `setup` makes a new repo for it, or uses the current one when it is empty; never a code repo.
 
 **Repo states.** What runs depends on what the project root holds:
 
@@ -274,7 +275,7 @@ review gate off; there's no separate key for it.
 ### 4.2 `.local/me.yaml` (gitignored, per machine)
 
 ```yaml
-handle: alex                           # team mode only; solo repos have no handle
+handle: alex                           # team mode only; solo repos have no handle (the file is still required)
 projects_dir: /Users/alex/projects     # absolute; `~` is not reliably expanded
 tool: claude                           # claude | copilot (default for `folkways run`)
 review:
@@ -355,7 +356,9 @@ the project dir, else the project dir) in `${XDG_CONFIG_HOME:-$HOME/.config}/fol
 absolute path per line. No offer when that top level holds a `folkways.yaml` (a session opened in a
 subfolder of a configured repo). If it's absent, the hook appends it and injects one line:
 
-> folkways isn't set up in this repo. Run the `setup` skill to set it up, or ignore this; it won't be shown again here.
+> folkways isn't set up in this repo. folkways runs from a brain repo: start sessions there, and code
+> changes happen in worktrees of repos like this one. No brain repo yet? Run the `setup` skill to create
+> one. This won't be shown again here.
 
 …naming the skill as the plugin does (`folkways:setup`). If the file can't be read or written, no offer:
 silence beats repeating. The hook never writes inside the repo.
@@ -392,11 +395,10 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
 - A review covers HEAD when a file under `efforts/**` or `<personal root>/work/**` has frontmatter
   `sha:` equal to the target repo's HEAD, or a file `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
   has `<sha7>` equal to the first 7 characters of HEAD. The personal root is `people/<handle>/` in a
-  team repo and the repo root in a solo repo (§2.3).
-- **Solo repos** hold the review in the same repo as the code, so committing it moves HEAD. When the
-  pushed repo is the folkways repo itself, `git-guard` walks back from HEAD over commits that change only
-  `work/` and `inbox/` (at most 20, first parents only) and accepts a review of any commit on that walk,
-  including the first one that changes anything else.
+  team repo and the repo root in a solo repo (§2.3). The review lives in the brain repo and the code in
+  the project repo, so committing the review never moves the reviewed HEAD.
+- With no CLI (a solo repo set up through the plugin), the `pr` and `commit` skills run the `review`
+  skill in a fresh subagent instead of `folkways review`.
 
 ### 7.4 Knowledge audit (GitHub Action)
 
@@ -441,14 +443,15 @@ feature branch; the main agent merges. The main clone's checkout is never change
 `npx folkways upgrade 1.1.0` → review the branch diff (framework files only) → PR → merge. Or merge a
 Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates reinstall after pulling.
 
-### 8.5 Solo setup (plugin, once per repo)
+### 8.5 Solo setup (plugin, once per person)
 
-1. Install the plugin; open a session in the repo. With no `folkways.yaml`, the first session shows the
-   setup offer once (§7.1); later sessions are silent.
-2. Run `setup`. It asks solo or team first. Solo: tracker, docs, commit format, review trigger, context
-   bands, which hooks are off. It checks the root folders (§2.3) and writes `folkways.yaml` with
-   `mode: solo`; nothing else until first use.
-3. Commit `folkways.yaml` on approval. From the next session, the plugin runs per the config.
+1. Install the plugin; open a session anywhere. In a repo with no `folkways.yaml` the first session
+   shows the setup offer once (§7.1), pointing to the brain repo; later sessions there are silent.
+2. Run `setup`. It asks solo or team first. Solo: where the brain repo goes (a new folder, or the current
+   one if it's empty; never a code repo), then tracker, docs, commit format, review trigger, context
+   bands, which hooks are off. It writes `folkways.yaml` with `mode: solo`, `.gitignore` (`.local/`) and
+   `.local/me.yaml` (`projects_dir`), and runs `git init` if needed; nothing else until first use.
+3. Commit on approval. Start sessions from the brain repo from then on.
 
 ## 9. Open and deferred
 
