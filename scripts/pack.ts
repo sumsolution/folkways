@@ -23,6 +23,17 @@ export function assert(ok: boolean, message: string): asserts ok {
   if (!ok) throw new Error(message);
 }
 
+/**
+ * Skipped tests in vitest output, from its `Tests` summary line. Test names can say "skipped" (vitest
+ * lists slow tests by name), so only the summary counts.
+ */
+export function skippedTests(output: string): number {
+  const plain = output.replace(/\x1b\[[0-9;]*m/g, '');
+  const summary = /^\s*Tests\s+(.*)$/m.exec(plain);
+  assert(summary !== null, `no vitest Tests summary in:\n${output}`);
+  return Number(/(\d+) skipped/.exec(summary[1]!)?.[1] ?? 0);
+}
+
 export const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
 export const tarballs = (dir: string): string[] => readdirSync(dir).filter((f) => f.endsWith('.tgz'));
 /** package.json inside a packed tarball. */

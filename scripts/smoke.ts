@@ -6,7 +6,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assert, CLI, HOOKS, packCli, packHooks, readJson, run as runIn } from './pack.ts';
+import { assert, CLI, HOOKS, packCli, packHooks, readJson, run as runIn, skippedTests } from './pack.ts';
 
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'folkways-smoke-')));
 const env = {
@@ -103,7 +103,7 @@ try {
 
     step(`${pm}: hook contract suite against the installed binary`);
     const suite = run('pnpm', ['exec', 'vitest', 'run', 'contract'], HOOKS, { FOLKWAYS_HOOK_CMD: hookBin });
-    assert(!/skipped/.test(suite), `the contract suite skipped cases:\n${suite}`);
+    assert(skippedTests(suite) === 0, `the contract suite skipped cases:\n${suite}`);
   }
 
   console.log('smoke: ok');

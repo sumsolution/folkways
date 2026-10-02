@@ -8,7 +8,7 @@ import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { hostTarget, packageName } from '../packages/hooks/scripts/build.ts';
-import { assert, CLI, HOOKS, packCli, packHooks, PLATFORMS, readJson, run, tarballs } from './pack.ts';
+import { assert, CLI, HOOKS, packCli, packHooks, PLATFORMS, readJson, run, skippedTests, tarballs } from './pack.ts';
 
 const PACKAGES = { '@folkways/hooks': HOOKS, '@folkways/cli': CLI } as const;
 type Released = keyof typeof PACKAGES;
@@ -39,7 +39,7 @@ function releaseHooks(out: string): void {
     assert(host !== undefined, `no folkways-hook target for ${process.platform}-${process.arch}`);
     const bin = join(hooks.dirs.get(packageName(host))!, 'bin', 'folkways-hook');
     const suite = run('pnpm', ['exec', 'vitest', 'run', 'contract'], HOOKS, { ...process.env, FOLKWAYS_HOOK_CMD: bin });
-    assert(!/skipped/.test(suite), `the contract suite skipped cases:\n${suite}`);
+    assert(skippedTests(suite) === 0, `the contract suite skipped cases:\n${suite}`);
   } finally {
     rmSync(build, { recursive: true, force: true });
   }
