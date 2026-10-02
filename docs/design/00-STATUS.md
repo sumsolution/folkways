@@ -117,7 +117,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Claude Code plugin | [packages/claude-plugin/](../../packages/claude-plugin) | Built from the CLI's assets: skills rewritten to `folkways:<name>` and `${CLAUDE_PLUGIN_ROOT}` paths, instructions as session-start context, `hooks.json` generated from `assets/settings.json`, `folkways-hook` for all four platforms, read from `@folkways/hooks`'s build (the plugin build never compiles Go), run by `run.sh`, which sets `FOLKWAYS_SKILL_NAMESPACE=folkways`. Quiet in synced team repos. No team overlays, no push ask rule. Released as `@folkways/claude-plugin` on its own tag; the root [marketplace](../../.claude-plugin/marketplace.json) installs it from npm. Dogfood from `dist/` |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 379 pass; evals 26 pass (no model calls); hooks 22 pass, 152 contract cases skipped until a binary exists (all 152 pass against it), plus `go test`; claude-plugin 27 pass |
+| Tests | per package | vitest: CLI 379 pass; evals 26 pass (no model calls); hooks 22 pass, 155 contract cases skipped until a binary exists (all 155 pass against it), plus `go test`; claude-plugin 27 pass |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -134,7 +134,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 ## Next step
 
 **Branch:** none open. `main` has everything through #25 (plan 16, solo brain repos).
-**Handoff:** [18](18-handoff-after-plan-16.md): the brain-repo push gate first, then `doctor` with the cleanup, then the list below.
+**Handoff:** [18](18-handoff-after-plan-16.md): the brain-repo push gate (done), then `doctor` with the cleanup, then the list below.
 
 1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli`,
    `@folkways/claude-plugin` and the four `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
@@ -153,7 +153,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
   fixtures done (`push-me-cannot-loosen-denied`); the Go implementation lands in plan 11, PR 2.
 - [x] Spec §4.1: add `git.commit_pattern` (decided yes). Done in [16](16-plan-config-and-solo.md).
 - [x] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Contract and fixtures done; the Go implementation lands in plan 11, PR 2.
-- [ ] With `review.trigger: pre-push`, `git-guard` denies a direct push of the brain repo itself (team or solo), since no review covers a `state/` commit. Exempt the repo holding `folkways.yaml` from the push gate. Most push fixtures push `${WORKTREE}`; only `team-push-review-then-commit-denied` pushes `${TEAM}`. First task in [18](18-handoff-after-plan-16.md).
+- [x] With `review.trigger: pre-push`, `git-guard` denied a direct push of the brain repo itself (team or solo). The push gate now skips the repo holding `folkways.yaml` (spec §7.3; fixtures `team-`/`solo-push-brain-repo-passes`).
 - [ ] `instructions.md` (Git) says `folkways review` must cover the SHA, with no solo exception; solo runs the `review` skill in a fresh subagent (as `pr` and `commit` say).
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../packages/cli/assets/prompts/review.md).
 - [ ] `doctor` checks: non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `off`, `no` and `False` as false, but quoted `"false"`, `falsey` or `0` leave the hook on; `run.sh`'s no-binary line test disagrees with yaml.v3 on some of these), stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).

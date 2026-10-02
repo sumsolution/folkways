@@ -90,6 +90,8 @@ change them here and in the fixtures together.
   characters of HEAD. The personal root is `people/<handle>/` (`handle` in `.local/me.yaml`) in a team repo
   and the repo root when `mode: solo` (no handle needed). Only the person's own folder counts; another
   person's `people/<other>/` is ignored, and in a team repo with no handle only `efforts/**` counts.
+  The brain repo itself is never gated: when the target repo's git top level is the project dir (symlinks
+  resolved, in either mode), the push passes without a review.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. The folkways repo itself (top level = project dir, in either mode) is never denied. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.

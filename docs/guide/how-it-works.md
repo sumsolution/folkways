@@ -98,7 +98,7 @@ So the review runs in a **fresh process**:
 |---|---|
 | `on-demand` | Only when asked |
 | `after-commit` | The `commit` skill runs it after each commit |
-| `pre-push` | `git-guard` blocks the push until a review covers HEAD |
+| `pre-push` | `git-guard` blocks a project repo's push until a review covers HEAD; the brain repo pushes without one |
 
 **Coming soon:** `folkways review`. The prompt, the `commit` and `review` skills and `git-guard` ship;
 the command says "not built yet", so with `pre-push` the review file has to come from the `review` skill. The gate is agent-side by design: no CI checks in project repos
