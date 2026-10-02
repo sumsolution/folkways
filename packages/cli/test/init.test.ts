@@ -34,6 +34,14 @@ describe('init', () => {
     expect(isClean(team)).toBe(true);
   });
 
+  it('writes folkways.yaml with team mode and every hook on', () => {
+    const yaml = read(join(makeTeam(makePackage('1.0.0')), 'folkways.yaml'));
+    expect(yaml).toMatch(/^mode: team\b/m);
+    expect(yaml).toMatch(/^ {2}commit_convention: angular\s+# angular \| pattern \| none$/m);
+    expect(yaml).toMatch(/^ {2}commit_pattern: ""/m);
+    expect(yaml).toMatch(/^hooks:.*\n {2}git-guard: true\n {2}context-band: true\n {2}precompact: true\n {2}session-start: true$/m);
+  });
+
   it('names the package after the folder', () => {
     const dest = init(join(tmp(), 'My Team'), { install: false, pkg: makePackage('1.0.0') });
     expect(json(join(dest, 'package.json')).name).toBe('my-team');

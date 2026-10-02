@@ -374,6 +374,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   const warnings = [...compiled.warnings, ...lintPersonalOverlays(team), ...hookWarnings(team)];
   const link = linkPersonalFolder(team);
   if (link) warnings.push(link);
+  if (!existsSync(join(team, 'folkways.yaml'))) warnings.push('no folkways.yaml; the hooks stay silent until the repo has one.');
   const agents = join(team, 'AGENTS.md');
   const imports = existsSync(agents) && readFileSync(agents, 'utf8').split('\n').some((l) => l.trim() === INSTRUCTIONS_IMPORT);
   if (!imports) warnings.push(`AGENTS.md has no '${INSTRUCTIONS_IMPORT}' line; agents won't see the framework instructions.`);

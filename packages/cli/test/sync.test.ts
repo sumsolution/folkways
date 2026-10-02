@@ -148,6 +148,11 @@ describe('sync refusals and warnings', () => {
     expect(sync(team, next).warnings).toEqual([]);
   });
 
+  it('warns when folkways.yaml is missing, since the hooks are silent without it', () => {
+    rmSync(join(team, 'folkways.yaml'));
+    expect(sync(team, next).warnings).toEqual([expect.stringMatching(/no folkways\.yaml.*hooks/)]);
+  });
+
   it('warns when AGENTS.md lost the import line', () => {
     put(join(team, 'AGENTS.md'), '# Team\n');
     expect(sync(team, next).warnings[0]).toMatch(/@\.folkways\/instructions\.md/);

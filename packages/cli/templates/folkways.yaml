@@ -1,6 +1,7 @@
 # folkways config. The setup skill fills this in; edit by PR.
 # The framework version is pinned in package.json, not here.
 
+mode: team                     # team | solo; solo has no team or members
 team: { name: Example Team, slug: example }
 
 members:                       # handle = people/<handle>/
@@ -29,8 +30,9 @@ research:
     - { name: web, kind: web }
 
 git:
-  commit_convention: angular   # type(scope): subject
-  scopes: []                   # allowed module scopes; empty = any
+  commit_convention: angular   # angular | pattern | none
+  commit_pattern: ""           # Go (RE2) regex on the subject line; used when commit_convention: pattern
+  scopes: []                   # angular only: allowed module scopes; empty = any
   branch_pattern: "{type}/{ticket}-{slug}"
   merge: squash
 
@@ -59,3 +61,9 @@ handoff:
 knowledge_audit:
   cadence: monthly
   tool: claude                 # claude | copilot (which CLI the Action runs)
+
+hooks:                         # every hook is on unless set to false here
+  git-guard: true
+  context-band: true
+  precompact: true
+  session-start: true
