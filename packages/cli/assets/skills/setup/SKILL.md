@@ -61,16 +61,19 @@ Read these first. A missing file is normal; skip it.
 
 1. **Pick the folder.** The brain repo is never a code repo. If the current folder is empty, offer to
    use it; otherwise ask where the new one goes (for example `~/brain`) and create it on approval.
-   `git init` it if it isn't a repo.
-2. **Interview** the solo rows of [Interview](#interview): tracker and docs, commit format, review
-   trigger, context bands, which hooks to turn off. Skip clusters the user doesn't use.
+   `git init` it if it isn't a repo. Every later step works in that folder, not the session's.
+2. **Interview** the solo rows of [Interview](#interview): tracker and docs, the project repos, research
+   sources, commit format, review trigger, context bands, which hooks to turn off. Skip clusters the
+   user doesn't use.
 3. **Ask for `projects_dir`,** the absolute folder that holds the project clones (`~` is not reliably
    expanded). In a solo repo too, `projects_dir` is required: worktrees and the clone guard depend on it.
-4. **Show the files** in full and write them on approval: `folkways.yaml` with `mode: solo`,
+4. **Show the files** in full and write them on approval, in the brain repo folder from step 1 (the
+   session's folder only if that's the one picked): `folkways.yaml` with `mode: solo`,
    `.local/me.yaml` with `projects_dir` (and `tool` if not `claude`), and a `.gitignore` holding `.local/`.
    Create nothing else; folders appear on first use.
-5. **Commit on approval.** Tell the user to start sessions from the brain repo from now on; the plugin
-   runs per `folkways.yaml` from the next session there. Solo needs no `onboard`.
+5. **Commit `folkways.yaml` and `.gitignore` on approval** with `git -C <brain repo>`. Tell the user to
+   start sessions from the brain repo from now on; the plugin runs per `folkways.yaml` from the next
+   session there. Solo needs no `onboard`.
 
 ## Interview {#interview}
 
@@ -78,8 +81,8 @@ Read these first. A missing file is normal; skip it.
 |---|---|
 | Mode (first question); team and members (team only) | `mode`, `team`, `members` (handle, GitHub user, name) |
 | Tracker and docs (solo and team) | `tracker`, `docs` |
-| Repos | `repos` (name, URL, default branch, owner: team or other) |
-| Research sources, in search order | `research.sources` |
+| Repos (solo and team) | `repos` (name, URL, default branch, owner: team or other) |
+| Research sources, in search order (solo and team) | `research.sources` |
 | Commit format (solo and team): Angular with scopes, Angular, a custom pattern, or none | `git.commit_convention` (`angular`, `pattern`, `none`), `git.scopes`, `git.commit_pattern` (regex on the subject line) |
 | Branches and review (solo and team) | `git.branch_pattern`, `review.trigger` (`on-demand` turns the review gate off) |
 | ADRs | `adr.targets`, `adr.repo_path`, `adr.confluence`, `adr.reviewers` |

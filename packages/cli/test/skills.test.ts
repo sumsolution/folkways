@@ -179,6 +179,15 @@ describe('solo brain repo', () => {
     const commit = read(skillFile('commit'));
     expect(commit).toMatch(/In the team or solo\s+repo, see \[Where commits go\]/);
     expect(commit).not.toMatch(/commit in place/);
+    expect(commit).toMatch(/^\| Solo repo \| `state\/`/m);
+  });
+  it('setup writes and commits in the brain repo folder, not the session folder', () => {
+    const setup = read(skillFile('setup'));
+    expect(setup).toMatch(/in the brain repo folder from step 1/);
+    expect(setup).toMatch(/git -C <brain repo>/);
+  });
+  it('setup asks a solo brain repo for its repos', () => {
+    expect(read(skillFile('setup'))).toMatch(/^\| Repos \(solo and team\)/m);
   });
   it('setup makes a brain repo for solo, never in a code repo, with projects_dir', () => {
     const setup = read(skillFile('setup'));
