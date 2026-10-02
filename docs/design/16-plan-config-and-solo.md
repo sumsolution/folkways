@@ -129,7 +129,8 @@ explain or a second review round in its own code.
 
 - `setup` becomes the guided setup: solo or team first; then tracker, docs, commit format, review trigger,
   context bands, which hooks are off. Works in an empty repo (plugin) and after `folkways init`. Writes
-  `folkways.yaml`; in solo mode creates nothing else until first use.
+  `folkways.yaml`; in solo mode creates nothing else until first use. (Superseded by decision 6: solo
+  setup creates the brain repo and also writes `.local/me.yaml` and `.gitignore`.)
 - `start`, `onboard`: no `folkways.yaml` → say so and offer `setup`; never assume the team layout.
   `onboard` in solo mode: `me.yaml` without `handle`.
 - Every skill path under `people/<handle>/` restated against the personal root (`start`, `status`,

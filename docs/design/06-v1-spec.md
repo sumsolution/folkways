@@ -448,10 +448,10 @@ Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates 
 1. Install the plugin; open a session anywhere. In a repo with no `folkways.yaml` the first session
    shows the setup offer once (§7.1), pointing to the brain repo; later sessions there are silent.
 2. Run `setup`. It asks solo or team first. Solo: where the brain repo goes (a new folder, or the current
-   one if it's empty; never a code repo), then tracker, docs, commit format, review trigger, context
-   bands, which hooks are off. It writes `folkways.yaml` with `mode: solo`, `.gitignore` (`.local/`) and
+   one if it's empty; never a code repo), then tracker, docs, project repos, research sources, commit
+   format, review trigger, context bands, which hooks are off. It writes `folkways.yaml` with `mode: solo`, `.gitignore` (`.local/`) and
    `.local/me.yaml` (`projects_dir`), and runs `git init` if needed; nothing else until first use.
-3. Commit on approval. Start sessions from the brain repo from then on.
+3. Commit `folkways.yaml` and `.gitignore` on approval. Start sessions from the brain repo from then on.
 
 ## 9. Open and deferred
 
