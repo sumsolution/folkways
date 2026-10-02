@@ -248,5 +248,17 @@ describe('buildPlugin', () => {
       expect(guard.status).toBe(0);
       expect(guard.stdout).toBe('');
     });
+
+    it.each([
+      ['block', 'hooks:\n  session-start: false\n'],
+      ['flow', 'hooks: { session-start: false }\n'],
+    ])('without a binary, stays silent when session-start is off (%s style)', (_style, yaml) => {
+      const off = join(tmp, `session-start-off-${_style}`);
+      mkdirSync(off);
+      writeFileSync(join(off, 'folkways.yaml'), yaml);
+      const r = run('session-start', off, { FOLKWAYS_HOOK_CMD: join(tmp, 'nope') });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toBe('');
+    });
   });
 });

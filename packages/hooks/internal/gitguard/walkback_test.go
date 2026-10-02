@@ -105,9 +105,13 @@ func TestSoloWalkOnlyInTheFolkwaysRepo(t *testing.T) {
 	commitFile(t, dir, "work/e1/r.md", "---\nsha: "+code+"\n---\n")
 	other := t.TempDir()
 	gitIn(t, other, "init", "-q", "-b", "main")
-	commitFile(t, other, "src/o.txt", "other")
+	otherCode := commitFile(t, other, "src/o.txt", "other")
+	// A review in the folkways repo covers the other repo's code commit, with a work/-only commit on top:
+	// only the isFolkwaysRepo guard stops the walk from reaching it.
+	commitFile(t, dir, "work/e2/r.md", "---\nsha: "+otherCode+"\n---\n")
+	commitFile(t, other, "work/x.md", "x")
 	if got := checkPush(other, cfg); got == "" {
-		t.Error("another repo has no review and must be denied")
+		t.Error("the walk-back must not apply outside the folkways repo")
 	}
 }
 
