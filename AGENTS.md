@@ -17,7 +17,7 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 | `packages/hooks/` | `@folkways/hooks` (private): the `folkways-hook` binary, shipped as `@folkways/hooks-<os>-<cpu>` (ADR 0002) |
 | `packages/hooks/contract/` | Black-box hook contract suite: fixtures, harness, rules |
 | `packages/evals/` | `@folkways/evals` (private, never published): behavior-eval runner. Builds a team repo per arm, runs `claude -p`, grades blind |
-| `scripts/` | Cross-package scripts: `smoke.ts` (packed-tarball smoke test) |
+| `scripts/` | Cross-package scripts: `smoke.ts` (packed-tarball smoke test), `release.ts` (builds and checks a tag's tarballs), `pack.ts` (shared by both) |
 | `research/` | Benchmarks and evals behind decisions, with their results. Not in the workspace; CI doesn't run it |
 | `docs/design/` | Design record. `00-STATUS.md` is the entry point; `06-v1-spec.md` is the spec |
 | `docs/adr/` | Framework decisions |
@@ -31,9 +31,10 @@ From the repo root:
 | `pnpm install` | install dev dependencies (pnpm version pinned in `packageManager`) |
 | `pnpm test` | every package's tests |
 | `pnpm run check` | every package's `tsc --noEmit` |
-| `pnpm run build` | build every package (the CLI's `src/` to `dist/`; also runs on `pnpm pack` / `pnpm publish`) |
+| `pnpm run build` | build every package (the CLI's `src/` to `dist/`, also on `pnpm pack` / `pnpm publish`; the hook packages to `packages/hooks/npm/`, needs Go) |
 | `pnpm --filter @folkways/cli test` | one package only (same for `check`, `build`, `@folkways/hooks`) |
-| `pnpm run smoke` | pack the CLI, install the tarball, drive `init` and `sync` |
+| `pnpm run smoke` | pack the CLI and the four hook packages, install them with npm and pnpm, drive `init` and `sync`, run the contract suite through the installed binary (needs Go) |
+| `pnpm --filter @folkways/hooks run build` | cross-compile the `@folkways/hooks-<os>-<cpu>` packages into `packages/hooks/npm/` |
 | `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |
 | `node packages/cli/src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
@@ -61,7 +62,11 @@ From the repo root:
   beside the code. Cross-package checks go in `scripts/`. A package never imports another's source.
 - **Versions are per package** (changesets, ADR 0003). A PR that changes a package adds a changeset
   (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one. Release: merge the
-  `changeset version` PR, then `pnpm changeset tag` and push the tags; each tag publishes its package.
+  `changeset version` PR, then `pnpm changeset tag` and push the tags; each tag publishes its package
+  (`.github/workflows/release.yml`, after approval). A CLI release fails until the hooks version it
+  pins is on npm: approve the hooks publish first, then re-run the CLI's release.
+- **The CLI's `optionalDependencies`** are added at pack time by `.pnpmfile.mjs`, never committed. A new hook
+  platform goes in `TARGETS` (`packages/hooks/scripts/build.ts`) and `PLATFORMS` (`.pnpmfile.mjs`); smoke checks they match.
 - **The CLI pins one hooks version** in `folkways.hooks` of `packages/cli/package.json`. Bump it to ship a
   hooks release to team repos. Hook renames, removals and event changes are major hooks bumps.
 - **CI** runs only the jobs for the packages a change touches; the `ci` job is the required check. A new
