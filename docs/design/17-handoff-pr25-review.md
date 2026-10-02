@@ -2,6 +2,8 @@
 
 **Written:** 2026-10-02 (end of session 8) · **For:** the next session · **Index:** [00-STATUS](00-STATUS.md)
 
+**Done (session 9):** #25 merged as `b50d214` after four review rounds; solo became the brain repo (plan 16, decision 6). Next: [18](18-handoff-after-plan-16.md).
+
 ## Where we are (verified)
 
 | What | State |

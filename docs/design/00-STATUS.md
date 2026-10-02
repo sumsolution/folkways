@@ -1,10 +1,10 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-10-02 (session 8: `folkways.yaml`, guided setup, solo repos; handoff in [17](17-handoff-pr25-review.md))
+**Last updated:** 2026-10-02 (session 9: #25 merged with solo brain repos; handoff in [18](18-handoff-after-plan-16.md))
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow. Claude Code plugin built (`packages/claude-plugin`). `folkways.yaml` (was `team.yaml`) with solo and team modes; the plugin is quiet without it ([16](16-plan-config-and-solo.md)). Nothing published yet.
+**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow. Claude Code plugin built (`packages/claude-plugin`). `folkways.yaml` (was `team.yaml`) with solo and team modes, both brain repos that hold no code; the plugin is quiet without it ([16](16-plan-config-and-solo.md), merged in #25). Nothing published yet.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -33,7 +33,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [14-research-eval-harness.md](14-research-eval-harness.md) | Eval harness: build or adopt (`claude plugin eval`, promptfoo, Inspect, …). Built `packages/evals`, no new dependencies |
 | [15-research-license.md](15-research-license.md) | License options; basis of ADR 0004 |
 | [16-plan-config-and-solo.md](16-plan-config-and-solo.md) | `folkways.yaml`, guided setup, solo repos: the plugin outside a team repo (built with parallel agents) |
-| [17-handoff-pr25-review.md](17-handoff-pr25-review.md) | Handoff after session 8: reviewing #25, addressing findings, next steps |
+| [17-handoff-pr25-review.md](17-handoff-pr25-review.md) | Handoff after session 8: reviewing #25, addressing findings, next steps (done) |
+| [18-handoff-after-plan-16.md](18-handoff-after-plan-16.md) | Handoff after session 9: the brain-repo push gate, `doctor`, cleanup, then release prep |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout, 0004 license (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -102,7 +103,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 |---|---|---|
 | CLI `init`, `sync`, `upgrade`, `hook`, `version` | [packages/cli/src/](../../packages/cli/src) | TypeScript, npm package `@folkways/cli`, Node 24+. Sync is staged and atomic and refuses to overwrite. `review`, `run`, `doctor` are stubs |
 | Skills | [assets/skills/](../../packages/cli/assets/skills) | 16: adr, commit, handoff, knowledge-audit, onboard, pr, qa, research, review, session-close, setup, side-quest, start, status, tests, ticket |
-| Config and solo repos | [spec §2.3, §4.1](06-v1-spec.md) | `folkways.yaml` with `mode: team \| solo`, `git.commit_convention` (angular, pattern, none), `hooks:` toggles. Unconfigured repos: hooks and plugin silent except the one-time setup offer (`~/.config/folkways/offered`). Guided `setup`; skills use the personal root. The offer is per git top level, so each worktree of a repo gets its own |
+| Config and solo repos | [spec §2.3, §4.1](06-v1-spec.md) | `folkways.yaml` with `mode: team \| solo`, `git.commit_convention` (angular, pattern, none), `hooks:` toggles. A solo repo is a brain repo like a team repo: no project code, `projects_dir` required. Unconfigured repos: hooks and plugin silent except the one-time offer pointing to the brain repo (`~/.config/folkways/offered`). Guided `setup` (solo: creates the brain repo); skills use the personal root. The offer is per git top level, so each worktree of a repo gets its own |
 | Overlay compile | [src/overlays.ts](../../packages/cli/src/overlays.ts) | `sync` compiles team overlays into skills (`compileSkillFiles`) and lints personal overlays. Personal overlays attach at step 0 via `@` of `.local/me/...`, with a read fallback |
 | `.local/me` link | [src/](../../packages/cli/src) | Symlink to `people/<handle>/`, created by `onboard`, kept by `sync` |
 | Framework instructions | [assets/instructions.md](../../packages/cli/assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
@@ -116,7 +117,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Claude Code plugin | [packages/claude-plugin/](../../packages/claude-plugin) | Built from the CLI's assets: skills rewritten to `folkways:<name>` and `${CLAUDE_PLUGIN_ROOT}` paths, instructions as session-start context, `hooks.json` generated from `assets/settings.json`, `folkways-hook` for all four platforms, read from `@folkways/hooks`'s build (the plugin build never compiles Go), run by `run.sh`, which sets `FOLKWAYS_SKILL_NAMESPACE=folkways`. Quiet in synced team repos. No team overlays, no push ask rule. Released as `@folkways/claude-plugin` on its own tag; the root [marketplace](../../.claude-plugin/marketplace.json) installs it from npm. Dogfood from `dist/` |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 368 pass; evals 26 pass (no model calls); hooks 22 pass, 156 contract cases skipped until a binary exists (all 156 pass against it), plus `go test`; claude-plugin 25 pass |
+| Tests | per package | vitest: CLI 379 pass; evals 26 pass (no model calls); hooks 22 pass, 152 contract cases skipped until a binary exists (all 152 pass against it), plus `go test`; claude-plugin 27 pass |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -132,8 +133,8 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 ## Next step
 
-**Branch:** `ccr-d5e13116-v42x04`: plan 16 ([#25](https://github.com/sumsolution/folkways/pull/25)), CI green. `main` has everything through #24.
-**Handoff:** [17](17-handoff-pr25-review.md): review #25, address findings, merge; then the list below, starting with `doctor`.
+**Branch:** none open. `main` has everything through #25 (plan 16, solo brain repos).
+**Handoff:** [18](18-handoff-after-plan-16.md): the brain-repo push gate first, then `doctor` with the cleanup, then the list below.
 
 1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli`,
    `@folkways/claude-plugin` and the four `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
@@ -142,7 +143,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 2. Plan 11 step 6 on real machines: Gatekeeper on an npm-installed darwin binary, Copilot CLI (ADR 0002
    "Still open"), a lockfile made on macOS and installed on Linux.
 3. Next evals: overlay precedence ported to `packages/evals`, trigger evals.
-4. `review` / `run` / `doctor`.
+4. `review` / `run` / `doctor` (`doctor` first, [18](18-handoff-after-plan-16.md)).
 5. Publish: `@folkways/hooks@0.1.0`, then `@folkways/cli@0.1.0` and `@folkways/claude-plugin@0.1.0`.
 6. Set up the beta team repo.
 
@@ -152,9 +153,10 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
   fixtures done (`push-me-cannot-loosen-denied`); the Go implementation lands in plan 11, PR 2.
 - [x] Spec §4.1: add `git.commit_pattern` (decided yes). Done in [16](16-plan-config-and-solo.md).
 - [x] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Contract and fixtures done; the Go implementation lands in plan 11, PR 2.
-- [ ] With `review.trigger: pre-push`, `git-guard` denies a direct push of the brain repo itself (team or solo), since no review covers a `state/` commit. Exempt the repo holding `folkways.yaml` from the push gate; about 40 push fixtures use `${TEAM}` as the pushed repo and need a project repo instead.
+- [ ] With `review.trigger: pre-push`, `git-guard` denies a direct push of the brain repo itself (team or solo), since no review covers a `state/` commit. Exempt the repo holding `folkways.yaml` from the push gate. Most push fixtures push `${WORKTREE}`; only `team-push-review-then-commit-denied` pushes `${TEAM}`. First task in [18](18-handoff-after-plan-16.md).
+- [ ] `instructions.md` (Git) says `folkways review` must cover the SHA, with no solo exception; solo runs the `review` skill in a fresh subagent (as `pr` and `commit` say).
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../packages/cli/assets/prompts/review.md).
-- [ ] `doctor` checks: non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `no` as off, but `off` and `"false"` leave the hook on), stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
+- [ ] `doctor` checks: non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `off`, `no` and `False` as false, but quoted `"false"`, `falsey` or `0` leave the hook on; `run.sh`'s no-binary line test disagrees with yaml.v3 on some of these), stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
 - [x] [assets/settings.json](../../packages/cli/assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
 - [ ] `scripts/` is not in the `tsconfig.json` `include`; gitignore `.folkways-sync-*` in the team template.
 - [x] Spec §3.1 hook ownership wording (plan 11, PR 4).
