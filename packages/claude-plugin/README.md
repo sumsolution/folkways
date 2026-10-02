@@ -26,13 +26,23 @@ claude plugin install folkways@folkways-dev
 
 Rebuild after changing skills, instructions or hooks; the next session picks it up.
 
+## Repo states
+
+`hooks/run.sh` acts on what the project holds (spec 2.3):
+
+| Repo | Plugin does |
+|---|---|
+| Synced team repo (`.folkways/manifest.json`) | nothing; its own settings run the hooks |
+| Configured (`folkways.yaml`) | prints the instructions and runs every hook |
+| Unconfigured (no `folkways.yaml`) | prints nothing and runs no hook except `session-start`, whose binary decides whether to offer one-time setup (the `folkways:setup` skill). With no binary for the platform it prints nothing |
+
 ## What differs from a team repo
 
 - **Team overlays** in `overlays/` aren't compiled in (that needs `folkways sync`). Personal overlays
   (`.local/me/overlays/`) still attach.
 - **The push ask rule** isn't set: plugins can't add permission rules.
 - **Synced team repos** (with `.folkways/manifest.json`) are left alone: their own settings run the hooks.
-- **Hooks without a team repo** read no `team.yaml` or `me.yaml`. `git-guard` still denies commits that
+- **Hooks without a team repo** read no `folkways.yaml` or `me.yaml`. `git-guard` still denies commits that
   aren't Angular `type(scope): subject`; `precompact` writes `.local/precompact.log` into the repo;
   `context-band` and the main-clone and pre-push checks stay off. Open question 3 in
   [00-STATUS](../../docs/design/00-STATUS.md).

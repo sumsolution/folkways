@@ -45,7 +45,7 @@ func TestLoadDir(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("team.yaml", "git:\n  scopes: [a, b]\nreview:\n  trigger: on-demand\n")
+	write("folkways.yaml", "git:\n  scopes: [a, b]\nreview:\n  trigger: on-demand\n")
 	write(".local/me.yaml", "projects_dir: /p\nreview:\n  trigger: pre-push\n")
 	c := LoadDir(dir)
 	if len(c.Team.Git.Scopes) != 2 || c.Me.ProjectsDir != "/p" || c.ReviewTrigger() != "pre-push" {
@@ -64,5 +64,43 @@ func TestSafeHandle(t *testing.T) {
 		if got := c.SafeHandle(); got != want {
 			t.Errorf("SafeHandle(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestConfiguredAndToggles(t *testing.T) {
+	dir := t.TempDir()
+	if LoadDir(dir).Configured {
+		t.Error("a dir without folkways.yaml must not be configured")
+	}
+	body := "mode: solo\nhooks:\n  precompact: false\n  git-guard: true\ngit: {commit_convention: pattern, commit_pattern: \"^x\"}\n"
+	if err := os.WriteFile(filepath.Join(dir, "folkways.yaml"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c := LoadDir(dir)
+	if !c.Configured || !c.Solo() || c.Team.Git.CommitConvention != "pattern" || c.Team.Git.CommitPattern != "^x" {
+		t.Errorf("config not read: %+v", c.Team)
+	}
+	for name, want := range map[string]bool{"precompact": false, "git-guard": true, "context-band": true} {
+		if got := c.HookEnabled(name); got != want {
+			t.Errorf("HookEnabled(%s) = %v, want %v", name, got, want)
+		}
+	}
+	if c.PersonalRoot() != dir {
+		t.Errorf("solo personal root = %q, want the repo root", c.PersonalRoot())
+	}
+}
+
+func TestPersonalRootTeam(t *testing.T) {
+	c := Config{Dir: "/r"}
+	if c.PersonalRoot() != "" {
+		t.Error("a team repo with no handle has no personal root")
+	}
+	c.Me.Handle = "alex"
+	if c.PersonalRoot() != filepath.Join("/r", "people", "alex") {
+		t.Errorf("team personal root = %q", c.PersonalRoot())
+	}
+	c.Me.Handle = "../x"
+	if c.PersonalRoot() != "" {
+		t.Error("an unsafe handle has no personal root")
 	}
 }

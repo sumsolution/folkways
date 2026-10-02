@@ -12,14 +12,15 @@ those files and `state/`. This skill keeps them current and reads them back.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `members`, `tracker`.
-2. `.local/me.yaml`: `handle`.
+1. `folkways.yaml`: `members`, `tracker`.
+2. `.local/me.yaml`: `handle` (team repos only).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/status/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/status/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/status/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -40,7 +41,7 @@ checkpoint before a risky operation, is the `handoff` skill.
 
 ## Roll-up {#roll-up}
 
-Read, don't write. Sources: `efforts/*/00-STATUS.md`, `people/*/work/*/00-STATUS.md`, and `state/`.
+Read, don't write. Sources: `efforts/*/00-STATUS.md`, `people/*/work/*/00-STATUS.md` (in a solo repo `work/*/00-STATUS.md`), and `state/`.
 
 ```markdown
 ## Team status, 2026-09-29
@@ -61,7 +62,7 @@ Read, don't write. Sources: `efforts/*/00-STATUS.md`, `people/*/work/*/00-STATUS
 
 ## Promote {#promote}
 
-An effort starts in `people/<handle>/work/` and moves to `efforts/` when a second person joins or the
+Team repos only; a solo repo has no `efforts/`. An effort starts in `people/<handle>/work/` and moves to `efforts/` when a second person joins or the
 team needs to see it.
 
 1. Confirm the folder and that no `efforts/<same name>/` exists.

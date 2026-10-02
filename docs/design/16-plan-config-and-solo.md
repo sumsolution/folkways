@@ -1,6 +1,6 @@
 # Plan: `folkways.yaml`, guided setup and solo repos
 
-**Written:** 2026-10-02 (session 8) · **Status:** planned, not started · **Closes:** open question 3 in
+**Written:** 2026-10-02 (session 8) · **Status:** done (W0–W5); in review on [#25](https://github.com/sumsolution/folkways/pull/25) · **Closes:** open question 3 in
 [00-STATUS](00-STATUS.md); the solo-config question in [ADR 0003](../adr/0003-repo-layout.md) ("Future direction")
 
 ## Goal
@@ -29,6 +29,11 @@ Done when:
    team repo lives at the repo root in a solo repo.
 5. **Built with the framework's orchestrator pattern** (instructions, "Subagents"): parallel agents in
    their own worktrees on separate code; the main agent briefs, reviews, merges and asks on judgement calls.
+6. **A solo repo is a brain repo** (Summer, 2026-10-02, after review round 2): like a team repo, it's where
+   sessions start and context builds up across projects, and it holds no project code. This replaced a
+   solo repo being "usually a code repo", and with it `git-guard`'s walk-back over review-only commits,
+   the `commit` skill's solo exception and `setup`'s root-collision check. The setup offer in a code repo
+   points to the brain repo.
 
 ## The shared contract (written first, in spec §2.3, §4.1 and §7.1)
 
@@ -50,11 +55,14 @@ git:
   commit_convention: angular   # angular | pattern | none
   commit_pattern: ""           # regex on the subject line, when commit_convention: pattern
   scopes: []
-hooks:                         # all on by default; `off` turns one off
-  git-guard: on
-  context-band: on
-  precompact: on
+hooks:                         # all on by default; false turns one off
+  git-guard: true
+  context-band: true
+  precompact: true
+  session-start: true
 ```
+
+Booleans, not `on`/`off`: YAML 1.1 parsers read those as booleans and YAML 1.2 parsers as strings.
 
 `review.trigger: on-demand` already turns the review gate off; no new key for it.
 
@@ -62,7 +70,7 @@ hooks:                         # all on by default; `off` turns one off
 
 In an unconfigured repo, `session-start` prints one line:
 
-> folkways isn't set up in this repo. Run `/folkways:setup` to set it up, or ignore this; it won't be shown again here.
+> folkways isn't set up in this repo. folkways runs from a brain repo: start sessions there, and code changes happen in worktrees of repos like this one. No brain repo yet? Run the `folkways:setup` skill to create one. This won't be shown again here.
 
 …and appends the repo's top-level path to `${XDG_CONFIG_HOME:-~/.config}/folkways/offered`. A path
 already in that file gets nothing. The hook writes outside the repo, never in it. If the file can't be
@@ -121,7 +129,8 @@ explain or a second review round in its own code.
 
 - `setup` becomes the guided setup: solo or team first; then tracker, docs, commit format, review trigger,
   context bands, which hooks are off. Works in an empty repo (plugin) and after `folkways init`. Writes
-  `folkways.yaml`; in solo mode creates nothing else until first use.
+  `folkways.yaml`; in solo mode creates nothing else until first use. (Superseded by decision 6: solo
+  setup creates the brain repo and also writes `.local/me.yaml` and `.gitignore`.)
 - `start`, `onboard`: no `folkways.yaml` → say so and offer `setup`; never assume the team layout.
   `onboard` in solo mode: `me.yaml` without `handle`.
 - Every skill path under `people/<handle>/` restated against the personal root (`start`, `status`,
@@ -156,8 +165,7 @@ explain or a second review round in its own code.
 3. Fresh-process review of the whole branch; fix, re-run step 2.
 4. W5, then one PR, squash-merged.
 
-## Open, to confirm before W0
+## Resolved before W0
 
-- **Root collisions in solo repos.** A code repo may already have `work/`, `inbox/` or `state/`. Plan:
-  `setup` checks and stops to ask. Alternative: put the solo folders under one `folkways/` directory
-  (that's two layers removed, not one).
+- **Root collisions in solo repos** (Summer, 2026-10-02): solo folders stay at the root. Superseded by
+  decision 6: the brain repo is new or empty, so there's nothing to collide with.

@@ -1,0 +1,28 @@
+{
+  "description": "Project dir is a subfolder of a repo whose top level holds folkways.yaml: no offer, nothing recorded",
+  "env": {
+    "claudeProjectDir": "${TEAM}/sub",
+    "files": {
+      "sub/readme.md": "x\n"
+    },
+    "commits": []
+  },
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}/sub",
+        "permission_mode": "default",
+        "hook_event_name": "SessionStart",
+        "source": "startup"
+      },
+      "expect": {
+        "stdout": null,
+        "absent": [
+          "${XDG}/folkways/offered"
+        ]
+      }
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # people
 
-One folder per member, named by the `handle` in `team.yaml`. The `onboard` skill creates it.
+One folder per member, named by the `handle` in `folkways.yaml`. The `onboard` skill creates it.
 
 | Path | Holds |
 |---|---|

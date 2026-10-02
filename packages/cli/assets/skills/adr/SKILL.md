@@ -13,14 +13,15 @@ table, and what the choice costs. Show trade-offs honestly; don't pretend the ch
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
-2. `.local/me.yaml`: `handle`.
+1. `folkways.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
+2. `.local/me.yaml`: `handle` (team repos only).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/adr/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/adr/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/adr/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -61,7 +62,7 @@ a session, offer an ADR then, while the options and reasons are fresh; don't wai
    - reviewers and interested parties ([Reviewers](#reviewers)).
 3. **Draft locally** with [references/template.md](references/template.md)
    (`.claude/skills/adr/references/template.md`): `<effort>/NN-adr-<slug>.md`, else
-   `people/<handle>/inbox/<YYYY-MM-DD>-adr-<slug>.md`. Status `draft`. Mark every section you had to
+   `<personal root>/inbox/<YYYY-MM-DD>-adr-<slug>.md`. Status `draft`. Mark every section you had to
    guess with `(unconfirmed)` and list them for the user. For the right altitude, see
    [references/example.md](references/example.md) (`.claude/skills/adr/references/example.md`).
 4. **Run the [done-check](#done-check)** and fix what fails, or say what's missing.
@@ -118,7 +119,7 @@ Repo files are `NNNN-<slug>.md`, the slug from the decided title.
 
 ## Targets {#targets}
 
-From `team.yaml` `adr.targets` (`repo`, `confluence`, or both). If unset, ask; never guess.
+From `folkways.yaml` `adr.targets` (`repo`, `confluence`, or both). If unset, ask; never guess.
 
 - **Repo:** `<adr.repo_path>/NNNN-<slug>.md` (default path `docs/adr`) in the repo the decision
   concerns; ask which when it spans repos. `NNNN` is the next number after the highest on the fetched
@@ -132,7 +133,7 @@ From `team.yaml` `adr.targets` (`repo`, `confluence`, or both). If unset, ask; n
 
 ## Reviewers {#reviewers}
 
-From `team.yaml` `adr.reviewers` (`min`, `outside_team`). Defaults: at least 2, at least 1 from
+From `folkways.yaml` `adr.reviewers` (`min`, `outside_team`). Defaults: at least 2, at least 1 from
 outside the team, no more than about 8.
 
 - Reviewers reflect the decision's scope: at least the tech lead or a senior engineer, plus the

@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { read } from './util.ts';
+import { git, read } from './util.ts';
 import { buildEnv, check, fill, hookEnv, merge, mismatch, transcriptJsonl, type Vars } from './harness.ts';
 
 describe('mismatch', () => {
@@ -28,12 +28,30 @@ describe('fill and merge', () => {
 describe('buildEnv', () => {
   it('builds a team repo, a main clone and a worktree', () => {
     const vars = buildEnv({ description: '', env: { team: { git: { scopes: [] } }, files: { 'efforts/x/r-${HEAD7}.md': 'sha: ${HEAD}\n' } }, steps: [] });
-    expect(read(join(vars.TEAM, 'team.yaml'))).toMatch(/scopes":\[\]/);
+    expect(read(join(vars.TEAM, 'folkways.yaml'))).toMatch(/scopes":\[\]/);
     expect(read(join(vars.TEAM, '.local/me.yaml'))).toContain(`projects_dir: ${JSON.stringify(vars.PROJECTS)}`);
     expect(read(join(vars.TEAM, `efforts/x/r-${vars.HEAD7}.md`))).toBe(`sha: ${vars.HEAD}\n`);
     expect(read(join(vars.WORKTREE, '.git'))).toMatch(/^gitdir:/);
     expect(vars.HEAD).not.toBe(vars.OLD_HEAD);
     expect(vars.OLD_HEAD7).toBe(vars.OLD_HEAD.slice(0, 7));
+  });
+  it('omits folkways.yaml when team is null', () => {
+    const vars = buildEnv({ description: '', env: { team: null }, steps: [] });
+    expect(() => read(join(vars.TEAM, 'folkways.yaml'))).toThrow();
+  });
+  it('seeds the offered file, or blocks it with a directory', () => {
+    const seeded = buildEnv({ description: '', env: { offered: ['${TEAM}', '/other'] }, steps: [] });
+    expect(read(join(seeded.XDG, 'folkways', 'offered'))).toBe(`${seeded.TEAM}\n/other\n`);
+    const blocked = buildEnv({ description: '', env: { offered: 'unwritable' }, steps: [] });
+    expect(() => read(join(blocked.XDG, 'folkways', 'offered'))).toThrow();
+    expect(() => read(join(buildEnv({ description: '', steps: [] }).XDG, 'folkways', 'offered'))).toThrow();
+  });
+  it('makes the team repo a git repo with commits and their SHAs as variables', () => {
+    const vars = buildEnv({ description: '', env: { commits: [{ files: { 'a.md': 'a\n' } }, { files: { 'b-${COMMIT_1_7}.md': 'b\n' } }] }, steps: [] });
+    expect(git(vars.TEAM, 'rev-parse', 'HEAD')).toBe(vars.TEAM_HEAD);
+    expect(git(vars.TEAM, 'rev-parse', 'HEAD~1')).toBe(vars.COMMIT_1);
+    expect(read(join(vars.TEAM, `b-${vars.COMMIT_1_7}.md`))).toBe('b\n');
+    expect(git(vars.TEAM, 'status', '--porcelain')).toBe('');
   });
   it('omits me.yaml when me is null', () => {
     const vars = buildEnv({ description: '', env: { me: null }, steps: [] });
@@ -50,6 +68,7 @@ describe('hookEnv', () => {
     expect(vars.MAIN.startsWith(`${env.HOME}/`)).toBe(true);
     expect(env.CLAUDE_PROJECT_DIR).toBe(vars.TEAM);
     expect(hookEnv(vars, false).CLAUDE_PROJECT_DIR).toBeUndefined();
+    expect(env.XDG_CONFIG_HOME).toBe(vars.XDG);
   });
 });
 

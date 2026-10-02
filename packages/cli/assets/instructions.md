@@ -7,23 +7,30 @@ Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `si
 
 ## Session start
 
-- Read `team.yaml` and `.local/me.yaml`. If `me.yaml` is missing, run the `onboard` skill first.
+- Read `folkways.yaml` and `.local/me.yaml`. No `folkways.yaml`: folkways isn't set up here. It runs
+  from a brain repo, which holds no code: say to start sessions there, or offer the `setup` skill to
+  create one. No `me.yaml`: run the `onboard` skill first. A solo repo (`mode: solo`) has no handle,
+  no `people/` and no `efforts/`; its `me.yaml` holds `projects_dir`.
 - **Resuming an effort:** read its `00-STATUS.md`, check git state, confirm next steps with the user.
 - **New effort:** ask for a ticket or docs, read them, suggest next steps (usually `research`), create
   `00-STATUS.md`. The `start` skill does this.
 
 ## Where things go
 
+The **personal root** is `people/<handle>/` in a team repo and the repo root in a solo repo. Skills write
+personal paths against it.
+
 | What | Where | Lands by |
 |---|---|---|
 | Durable facts | `knowledge/` | PR |
 | Live trackers | `state/` | direct push |
-| Shared efforts | `efforts/<KEY>-<slug>/` | direct push |
-| Personal efforts | `people/<handle>/work/<KEY>-<slug>/` | direct push; promote with `git mv` to `efforts/` |
-| Side quests, drafts with no effort | `people/<handle>/inbox/` | direct push |
+| Shared efforts (team only) | `efforts/<KEY>-<slug>/` | direct push |
+| Personal efforts | `<personal root>/work/<KEY>-<slug>/` | direct push; in a team repo promote with `git mv` to `efforts/` |
+| Side quests, drafts with no effort | `<personal root>/inbox/` | direct push |
 | Machine-local or private | `.local/` | never committed |
 
-Direct pushes are rebased and linear. Every push needs the user's approval.
+Direct pushes are rebased and linear. Every push needs the user's approval. A solo repo's landing is the
+user's choice.
 
 ## Status docs
 
@@ -71,7 +78,7 @@ recommend an option, and include "do less" or "change direction" among the optio
 ## Side quests
 
 Out-of-scope findings don't derail the task. Write a finding or ticket draft when found (`side-quest`
-skill): in the effort if tightly coupled, else in `people/<handle>/inbox/`. Say where you wrote it.
+skill): in the effort if tightly coupled, else in `<personal root>/inbox/`. Say where you wrote it.
 Session close lists them all.
 
 ## Project repos
@@ -85,8 +92,9 @@ Session close lists them all.
 
 ## Git
 
-- Commits: Angular conventional commits with a module scope from `git.scopes`, never a ticket:
-  `fix(auth): handle expired tokens`.
+- Commits follow `git.commit_convention`. `angular` (default): conventional commits with a module scope
+  from `git.scopes`, never a ticket: `fix(auth): handle expired tokens`. `pattern`: the subject matches
+  `git.commit_pattern`. `none`: no format rule.
 - Branches follow `git.branch_pattern`, e.g. `fix/EX-123-handle-expired-tokens`.
 - PRs are squash-merged, so the PR title follows the commit rules.
 - A fresh-process review (`folkways review`) must cover the SHA before a PR opens.
@@ -117,6 +125,7 @@ actions, `main`, external systems. Flag every judgement call in the output with 
 - Never edit `.folkways/` or framework skills in `.claude/skills/`. `folkways sync` and `upgrade` stop if you do.
 - Team changes go in `overlays/<skill>/OVERLAY.md` (add or override). `folkways sync` compiles them into
   the skill, so run it after an overlay change. Personal ones go in
-  `people/<handle>/overlays/<skill>/OVERLAY.md` (add only); each skill attaches them in step 0.
+  `<personal root>/overlays/<skill>/OVERLAY.md` (add only); each skill attaches them in step 0. Solo repos
+  have no team overlays and no compile step.
 - Rules that must hold whatever an overlay says (commit format, push approval, the review gate) live in
-  `team.yaml` and are checked by hooks. Put them there, not in an overlay.
+  `folkways.yaml` and are checked by hooks. Put them there, not in an overlay.

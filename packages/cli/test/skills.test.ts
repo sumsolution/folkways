@@ -12,6 +12,9 @@ const NAME_MAX = 64;
 const DESCRIPTION_MAX = 500; // spec hard limit is 1,024; framework skills share a listing budget
 const SKILL_MD_MAX_LINES = 500;
 
+// Skills that act on the team layout itself: creating `people/<handle>/`, promoting an effort.
+const TEAM_ONLY = ['onboard', 'setup', 'status'];
+
 const skills = existsSync(SKILLS_DIR)
   ? readdirSync(SKILLS_DIR).filter((d) => statSync(join(SKILLS_DIR, d)).isDirectory()).sort()
   : [];
@@ -52,11 +55,12 @@ function stepZero(text: string): string | undefined {
  * must start its line, outside backticks, for Claude Code to attach the file.
  */
 const personalBlock = (skill: string): string => `3. Your personal additions. Team overrides and additions are already compiled into this file by
-   \`folkways sync\`, so don't read \`overlays/\`.
+   \`folkways sync\`, so in a team repo don't read \`overlays/\` (in a solo repo it holds your personal ones).
 
    @\${CLAUDE_PROJECT_DIR}/.local/me/overlays/${skill}/OVERLAY.md
 
-   If that file wasn't attached with this skill, read \`people/<handle>/overlays/${skill}/OVERLAY.md\`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no \`.local/me\`),
+   read \`<personal root>/overlays/${skill}/OVERLAY.md\`.
    Personal overlays may only add. Apply a personal \`## Add\` rule only where it doesn't conflict
    with this file. Ignore a personal \`## Override\`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -96,11 +100,16 @@ describe('framework skills', () => {
     it('has the shared step 0: config, then personal additions under the precedence rule', () => {
       const step = stepZero(text);
       expect(step, 'no "## Step 0" section').toBeDefined();
-      expect(step).toContain('`team.yaml`');
+      expect(step).toContain('`folkways.yaml`');
       expect(step).toContain('`.local/me.yaml`');
       expect(step).toContain(personalBlock(skill));
       // Team overlays are compiled in by sync; the skill must not send the agent to read them.
       expect(step!.replace(personalBlock(skill), '')).not.toMatch(/`overlays\//);
+    });
+
+    it('states personal paths against the personal root', () => {
+      // Only team-mode procedures name `people/<handle>/`; everything else says `<personal root>/`.
+      if (!TEAM_ONLY.includes(skill)) expect(text).not.toContain('people/<handle>');
     });
 
     it('says what it does headless and asks before writing', () => {
@@ -148,8 +157,60 @@ describe('framework skills', () => {
   });
 });
 
+describe('guided setup', () => {
+  const setup = read(skillFile('setup'));
+  it('asks solo or team and writes mode, commit format and hook toggles', () => {
+    for (const word of ['mode: solo', 'solo', 'commit_convention', 'commit_pattern', 'hooks:']) expect(setup).toContain(word);
+  });
+  it.each(['start', 'onboard'])('%s offers setup when folkways.yaml is missing', (skill) => {
+    expect(read(skillFile(skill))).toMatch(/`setup` skill/);
+  });
+});
+
+describe('solo brain repo', () => {
+  // A solo repo is the person's brain repo: no code, so committing a review never moves the reviewed HEAD.
+  it('pr has no walk-back over work/ and inbox/ commits', () => {
+    expect(read(skillFile('pr'))).not.toMatch(/only `work\/` and `inbox\/`/);
+  });
+  it.each(['pr', 'commit'])('%s runs the review in a fresh subagent when there is no CLI', (skill) => {
+    expect(read(skillFile(skill))).toMatch(/In a solo repo there's no CLI: run the `review` skill in a fresh\s+subagent/);
+  });
+  it('commit sends code changes to worktrees in a solo repo too', () => {
+    const commit = read(skillFile('commit'));
+    expect(commit).toMatch(/In the team or solo\s+repo, see \[Where commits go\]/);
+    expect(commit).not.toMatch(/commit in place/);
+    expect(commit).toMatch(/^\| Solo repo \| `state\/`/m);
+  });
+  it('setup writes and commits in the brain repo folder, not the session folder', () => {
+    const setup = read(skillFile('setup'));
+    expect(setup).toMatch(/in the brain repo folder from step 1/);
+    expect(setup).toMatch(/git -C <brain repo>/);
+  });
+  it('setup asks a solo brain repo for its repos', () => {
+    expect(read(skillFile('setup'))).toMatch(/^\| Repos \(solo and team\)/m);
+  });
+  it('setup makes a brain repo for solo, never in a code repo, with projects_dir', () => {
+    const setup = read(skillFile('setup'));
+    expect(setup).toMatch(/brain repo/);
+    expect(setup).toMatch(/never (in )?a code repo/);
+    expect(setup).toContain('projects_dir');
+  });
+  it.each(['start', 'onboard', 'setup'])('%s needs projects_dir in a solo repo', (skill) => {
+    expect(read(skillFile(skill))).toContain('`projects_dir` is required');
+  });
+});
+
 describe('assets/instructions.md', () => {
   const text = read(join(REPO, 'assets/instructions.md'));
+
+  it('points an unconfigured repo to the brain repo', () => {
+    expect(text).toMatch(/No `folkways\.yaml`[^]*?brain repo/);
+  });
+
+  it('defines the personal root and follows git.commit_convention', () => {
+    expect(text).toContain('personal root');
+    expect(text).toContain('git.commit_convention');
+  });
   const listed = [...(/^Framework skills: ([\s\S]*?)\n\n/m.exec(text)?.[1] ?? '').matchAll(/`([a-z-]+)`/g)].map((m) => m[1]);
 
   it('lists exactly the framework skills', () => {

@@ -1,6 +1,7 @@
 # Getting started
 
 Two paths: a **team lead** sets up the team repo once, then each **member** joins it on their machine.
+Working alone? See [On your own](#on-your-own).
 Steps marked **coming soon** depend on pieces that aren't built yet; each says what to do today.
 
 You need Node 24+, git, and Claude Code or Copilot CLI. macOS or Linux (Windows is out of scope for v1).
@@ -27,7 +28,7 @@ node packages/cli/src/cli.ts init ../example-team --no-install
 
 `init` refuses a non-empty directory. It then:
 
-1. Copies the scaffold: `README.md`, `team.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`,
+1. Copies the scaffold: `README.md`, `folkways.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`,
    `.claude/settings.json`, and READMEs for `knowledge/`, `state/`, `efforts/`, `overlays/` and
    `people/`.
 2. Writes a private `package.json` that pins this exact `@folkways/cli` version.
@@ -44,10 +45,10 @@ Your team repo is ready. <(^_^<)
 
 ### 2. Fill in the config
 
-Open Claude Code or Copilot CLI in the new repo and run the `setup` skill. It interviews you for `team.yaml` and moves existing team material into
+Open Claude Code or Copilot CLI in the new repo and run the `setup` skill. It interviews you for `folkways.yaml` and moves existing team material into
 `overlays/` or team skills.
 
-Or edit `team.yaml` by hand. The comments say what each field is for. Keep examples synthetic until
+Or edit `folkways.yaml` by hand. The comments say what each field is for. Keep examples synthetic until
 you're in your own private repo.
 
 ### 3. Push it
@@ -100,6 +101,21 @@ tool: claude                           # claude | copilot
 Start a session in the team repo. The agent reads `AGENTS.md`, which imports
 `.folkways/instructions.md`: session start, where things go, status docs, handoff bands, git rules and
 what needs your approval. That part works today.
+
+## On your own
+
+Install the Claude Code plugin (`claude plugin marketplace add sumsolution/folkways`, then
+`claude plugin install folkways@folkways`) and open a session. The first session offers to set folkways
+up; run `/folkways:setup`, choose solo, and answer a few questions: where your brain repo goes (a new
+folder, never a code repo), where your project clones live, which repos you work on, tracker, commit
+format, review gate, which hooks to turn off. It writes `folkways.yaml`, `.local/me.yaml` and a
+`.gitignore`, and commits `folkways.yaml` and `.gitignore` (`.local/` stays on your machine). From then
+on, start sessions in the brain repo; code changes happen in worktrees of your projects. Folders such as
+`work/` and `inbox/` appear when a skill first needs them. Not now? Ignore the offer; it won't repeat.
+
+**Coming soon:** the plugin isn't on npm yet. Today, build it from a clone of this repo
+(`pnpm --filter "@folkways/claude-plugin..." run build`, needs Go) and start Claude Code with
+`claude --plugin-dir packages/claude-plugin/dist`.
 
 ## Staying current
 

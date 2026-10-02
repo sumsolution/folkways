@@ -13,14 +13,15 @@ and the rules win. A ticket that fills three sections well beats one that fills 
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `tracker` (`type`, `base_url`, `project_key`), `members`, `repos`.
-2. `.local/me.yaml`: `handle`.
+1. `folkways.yaml`: `tracker` (`type`, `base_url`, `project_key`), `members`, `repos`.
+2. `.local/me.yaml`: `handle` (team repos only).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/ticket/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/ticket/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/ticket/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -169,7 +170,7 @@ None by default. Use only labels that already exist in the tracker; never create
 | Context | File |
 |---|---|
 | Inside an effort | `<effort>/NN-ticket-<slug>.md`, `NN` = the effort's next topic number |
-| No effort | `people/<handle>/inbox/<YYYY-MM-DD>-ticket-<slug>.md` |
+| No effort | `<personal root>/inbox/<YYYY-MM-DD>-ticket-<slug>.md` |
 
 A split writes one file holding every ticket in the set, in the order they should ship. After
 creation, add the tracker key under each title.

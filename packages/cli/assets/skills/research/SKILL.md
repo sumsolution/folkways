@@ -13,14 +13,15 @@ you are. The user makes the call.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `research.sources`, `repos`, `docs`, `models`.
-2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`, `models`.
+1. `folkways.yaml`: `research.sources`, `repos`, `docs`, `models`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, `tool`, `models`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/research/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/research/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/research/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -29,7 +30,7 @@ Read these first. A missing file is normal; skip it.
 
 1. **Frame the question.** Write the question, what decision it feeds, and what would count as enough,
    in two or three lines. Ask if you can't tell. Note the effort folder (from the `start` skill) or use
-   `people/<handle>/inbox/`.
+   `<personal root>/inbox/`.
 2. **Plan the sources.** Take them in the [source order](#source-order); drop those that don't apply to
    this topic and say which. Check each tool you need is available (see [Tools](#tools-and-fallbacks)).
 3. **Search, most authoritative first.** Stop when the question is answered with enough confidence.
@@ -46,7 +47,7 @@ Read these first. A missing file is normal; skip it.
 
 ## Source order {#source-order}
 
-Use the order in `team.yaml` `research.sources`; each entry has a `name`, a `kind` (`local`, `repos`,
+Use the order in `folkways.yaml` `research.sources`; each entry has a `name`, a `kind` (`local`, `repos`,
 `url`, `mcp`, `web`) and notes. Without config, use: `knowledge/`, the team's repos, other teams'
 repos, internal docs and API portal, docs wiki, tracker, monitoring, chat, then the web.
 
@@ -61,7 +62,7 @@ repos, internal docs and API portal, docs wiki, tracker, monitoring, chat, then 
 |---|---|---|
 | Understand code in one repo | Local clone (see [clones](#clones)) | Ask |
 | Search many repos | `gh search code`, or local clones | Local clones, else ask |
-| Any source with `kind: mcp` | That server from `team.yaml` | Ask the user to paste, export or link |
+| Any source with `kind: mcp` | That server from `folkways.yaml` | Ask the user to paste, export or link |
 | A source with `kind: url` | Fetch it; note any `notes` (VPN, login) | Ask the user to open it and paste or link |
 | External docs and practice | Web, after team sources | Say the web was not searched |
 
@@ -73,13 +74,13 @@ saying so. If the user can't help, list the source under open questions and lowe
 The user's clones under `projects_dir` belong to the user.
 
 - Never check out, pull, reset or rebase in them.
-- Run `git fetch`, then read `origin/<default>` (default branch from `team.yaml` `repos`) with
+- Run `git fetch`, then read `origin/<default>` (default branch from `folkways.yaml` `repos`) with
   `git grep`, `git show origin/<default>:<path>`, or, for a deep read, a detached worktree at
   `<projects_dir>/.worktrees/<repo>/research-<sha7>`, removed with `git worktree remove` when you
   finish. Record the full SHA you read.
 - **Missing repo:** clone it into `projects_dir` when the search is deep (many files) or the repo will
   be referenced again. Cloning writes to the user's disk: tell them the repo and path and clone on their
-  yes. A repo listed in `team.yaml` `repos` is pre-approved; say so as you clone. Then the same rules apply.
+  yes. A repo listed in `folkways.yaml` `repos` is pre-approved; say so as you clone. Then the same rules apply.
 
 ## Subagents {#subagents}
 
@@ -106,7 +107,7 @@ Say in the file that you escalated and what changed.
 ## Output
 
 Write `NN-<topic>.md` in the effort folder, `NN` being the next topic number (`00-STATUS.md` is 00).
-With no effort, use `people/<handle>/inbox/<YYYY-MM-DD>-research-<slug>.md`. Use the template in
+With no effort, use `<personal root>/inbox/<YYYY-MM-DD>-research-<slug>.md`. Use the template in
 [references/output-template.md](references/output-template.md)
 (`.claude/skills/research/references/output-template.md`); read it before writing.
 

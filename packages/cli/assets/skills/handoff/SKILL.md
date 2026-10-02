@@ -12,14 +12,15 @@ next session starts from the status doc and git instead of from a summary.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `handoff.bands`.
-2. `.local/me.yaml`: `handle`, `projects_dir`.
+1. `folkways.yaml`: `handoff.bands`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/handoff/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/handoff/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/handoff/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -35,8 +36,8 @@ Read these first. A missing file is normal; skip it.
 ## Workflow
 
 1. **Find the effort.** The one this session worked on: `efforts/<KEY>-<slug>/` or
-   `people/<handle>/work/<KEY>-<slug>/`. No effort yet → offer to create one (the `start` skill) or put
-   the handoff in `people/<handle>/inbox/`.
+   `<personal root>/work/<KEY>-<slug>/`. No effort yet → offer to create one (the `start` skill) or put
+   the handoff in `<personal root>/inbox/`.
 2. **Collect state from sources, not memory:** `git status`, current branch and HEAD SHA, unpushed
    commits, and open worktrees for each repo touched. Files written this session.
 3. **Update `00-STATUS.md`** per [Status doc](#status-doc). Change what moved; keep the rest.
@@ -44,9 +45,9 @@ Read these first. A missing file is normal; skip it.
    numbered topic files (`NN-<topic>.md`) linked from the status doc. The status doc stays an index.
 5. **Show the diff** of the status doc and new files. Write on approval.
 6. **Offer to commit** the effort folder (team repo `state/`, `efforts/` and `people/` go straight to the
-   default branch, rebased). Push only on approval.
+   default branch, rebased; in a solo repo, ask where it lands). Push only on approval.
 7. **Give the resume prompt,** one line the user pastes into a fresh session:
-   `Resume people/alex/work/EX-123-handle-expired-tokens: read its 00-STATUS.md and run the start skill.`
+   `Resume <personal root>/work/EX-123-handle-expired-tokens: read its 00-STATUS.md and run the start skill.`
 8. **At band 3,** stop after this. Offer `session-close`; if context is tight, suggest running it in the
    fresh session (its first step handles that).
 

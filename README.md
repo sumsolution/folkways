@@ -46,7 +46,7 @@ cd my-team
 ```
 
 Then open Claude Code or Copilot CLI in `my-team` and run the `setup` skill to fill in
-`team.yaml`.
+`folkways.yaml`.
 
 Today, from a clone of this repo (Node 24+):
 
@@ -74,7 +74,7 @@ From a clone, build it and load it in place: [packages/claude-plugin](packages/c
 |---|---|
 | `init`, `sync`, `upgrade`, `version` | built, tested |
 | Push approval rule in `.claude/settings.json` | built |
-| Team repo scaffold (`team.yaml`, folders, READMEs) | built |
+| Team repo scaffold (`folkways.yaml`, folders, READMEs) | built |
 | Framework instructions (`.folkways/instructions.md`) | built |
 | 16 skills (`setup`, `onboard`, `start`, `review`, `commit`, `pr`, …) and the review prompt | built; synced with team overlays compiled in |
 | Hooks (`git-guard`, `context-band`, `session-start`, `precompact`) | built, wired into `.claude/settings.json` by `sync`; ship with the npm release |

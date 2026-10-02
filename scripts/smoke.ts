@@ -112,13 +112,25 @@ try {
   mkdirSync(unpacked);
   run('tar', ['-xzf', pluginTgz, '-C', unpacked], root);
   const plugin = join(unpacked, 'package');
+  // Spec 2.3: a repo without folkways.yaml gets the setup offer once, a configured one the start reminder.
+  // XDG_CONFIG_HOME stays inside root, so the offer record never touches the runner's home.
+  const sessionStart = (project: string): string =>
+    run('sh', ['-c', 'echo \'{"hook_event_name":"SessionStart"}\' | sh "$0" session-start', join(plugin, 'hooks', 'run.sh')], project, {
+      CLAUDE_PLUGIN_ROOT: plugin,
+      CLAUDE_PROJECT_DIR: project,
+      XDG_CONFIG_HOME: join(root, 'xdg'),
+    });
   const plain = join(root, 'plain-project');
   mkdirSync(plain);
-  const started = run('sh', ['-c', 'echo \'{"hook_event_name":"SessionStart"}\' | sh "$0" session-start', join(plugin, 'hooks', 'run.sh')], plain, {
-    CLAUDE_PLUGIN_ROOT: plugin,
-    CLAUDE_PROJECT_DIR: plain,
-  });
-  assert(started.includes('`folkways:start` skill'), `the packed plugin's session-start hook printed:\n${started}`);
+  const offered = sessionStart(plain);
+  assert(offered.includes('`folkways:setup` skill'), `the packed plugin's session-start hook, unconfigured, printed:\n${offered}`);
+  const again = sessionStart(plain);
+  assert(again.trim() === '', `the packed plugin offered setup twice; second time printed:\n${again}`);
+  const configured = join(root, 'configured-project');
+  mkdirSync(configured);
+  writeFileSync(join(configured, 'folkways.yaml'), 'mode: solo\n');
+  const started = sessionStart(configured);
+  assert(started.includes('`folkways:start` skill'), `the packed plugin's session-start hook, configured, printed:\n${started}`);
 
   console.log('smoke: ok');
 } catch (error) {

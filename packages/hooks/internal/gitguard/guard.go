@@ -111,12 +111,26 @@ func subjectOf(msg string) string {
 	return ""
 }
 
+// personalHint names the personal root in a deny message.
+func personalHint(cfg team.Config) string {
+	if cfg.Solo() {
+		return "the repo root"
+	}
+	return "people/<handle>"
+}
+
 func checkCommit(args []arg, cfg team.Config) string {
 	msg, ok := commitMessage(args)
 	if !ok {
 		return ""
 	}
 	subject := subjectOf(msg)
+	switch cfg.Team.Git.CommitConvention {
+	case "none":
+		return ""
+	case "pattern":
+		return checkPattern(subject, cfg.Team.Git.CommitPattern)
+	}
 	m := header.FindStringSubmatch(subject)
 	if m == nil {
 		return fmt.Sprintf("Commit message is not Angular \"type(scope): subject\": \"%s\".", subject)
@@ -126,14 +140,23 @@ func checkCommit(args []arg, cfg team.Config) string {
 		return ""
 	}
 	if m[1] == "" {
-		return fmt.Sprintf("Commit message needs a scope: \"type(scope): subject\", one of team.yaml git.scopes (%s).", strings.Join(scopes, ", "))
+		return fmt.Sprintf("Commit message needs a scope: \"type(scope): subject\", one of folkways.yaml git.scopes (%s).", strings.Join(scopes, ", "))
 	}
 	for _, s := range scopes {
 		if s == m[1] {
 			return ""
 		}
 	}
-	return fmt.Sprintf("Scope \"%s\" is not in team.yaml git.scopes (%s).", m[1], strings.Join(scopes, ", "))
+	return fmt.Sprintf("Scope \"%s\" is not in folkways.yaml git.scopes (%s).", m[1], strings.Join(scopes, ", "))
+}
+
+// checkPattern checks the subject against git.commit_pattern. An empty or invalid pattern checks nothing.
+func checkPattern(subject, pattern string) string {
+	re, err := regexp.Compile(pattern)
+	if pattern == "" || err != nil || re.MatchString(subject) {
+		return ""
+	}
+	return fmt.Sprintf("Commit subject doesn't match folkways.yaml git.commit_pattern (%s): \"%s\".", pattern, subject)
 }
 
 func gitOut(dir string, args ...string) (string, error) {
@@ -149,10 +172,10 @@ func checkPush(dir string, cfg team.Config) string {
 	if err != nil || head == "" {
 		return "" // not a repo we can read: fail open
 	}
-	if hasReview(cfg.Dir, cfg.SafeHandle(), head) {
+	if hasReview(cfg.Dir, cfg.PersonalRoot(), head) {
 		return ""
 	}
-	return fmt.Sprintf("Push blocked: review.trigger is pre-push and no review of HEAD %s exists. Run the review first (a file under efforts/ or people/<handle>/work/ with frontmatter sha: %s, or people/<handle>/inbox/<date>-review-%s.md).", head[:min(7, len(head))], head, head[:min(7, len(head))])
+	return fmt.Sprintf("Push blocked: review.trigger is pre-push and no review of HEAD %s exists. Run the review first (a file under efforts/ or %s/work/ with frontmatter sha: %s, or %s/inbox/<date>-review-%s.md).", head[:min(7, len(head))], personalHint(cfg), head, personalHint(cfg), head[:min(7, len(head))])
 }
 
 // checkMainClone denies checkout/switch/pull/reset/rebase in a main clone (`.git` is a directory)
@@ -173,10 +196,20 @@ func checkMainClone(sub, dir string, cfg team.Config) string {
 	if info, err := os.Stat(filepath.Join(top, ".git")); err != nil || !info.IsDir() {
 		return ""
 	}
+	if sameDir(top, cfg.Dir) {
+		return "" // the folkways repo itself is never guarded
+	}
 	return fmt.Sprintf("git %s in the main clone %s is not allowed. Create a worktree instead (git worktree add) and work there.", sub, top)
 }
 
 func within(root, p string) bool {
 	rel, err := filepath.Rel(root, p)
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
+// sameDir reports whether two paths name the same directory once symlinks are resolved.
+func sameDir(a, b string) bool {
+	ra, err1 := filepath.EvalSymlinks(a)
+	rb, err2 := filepath.EvalSymlinks(b)
+	return err1 == nil && err2 == nil && ra == rb
 }

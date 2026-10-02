@@ -13,14 +13,15 @@ proposes before writing, and never commits unless asked.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `repos`, `models`, `knowledge_audit`.
-2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`.
+1. `folkways.yaml`: `repos`, `models`, `knowledge_audit`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, `tool`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/session-close/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/session-close/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/session-close/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -48,14 +49,15 @@ Read these first. A missing file is normal; skip it.
 4. **Propose, in one table.** `Target | Action | Why`, grouped by home, then a short **considered and
    dropped** list, one line each. That list is where most of the value shows up: it is the user's chance
    to catch a fact you were about to lose. List every side quest found, with where it lives now (or
-   propose writing it to `people/<handle>/inbox/`). Wait for approval; the user may approve rows
+   propose writing it to `<personal root>/inbox/`). Wait for approval; the user may approve rows
    individually.
 5. **Apply, then report.** Write the approved rows, refresh dates, keep provenance. Report files written,
    what was left out and why, and any side quests still unfiled. Then:
    - If the knowledge audit is due (see `state/knowledge-audit.md`, or no tracker and `knowledge/` is
      non-empty), offer to run `knowledge-audit`. Don't start it unasked.
    - Commit nothing unless asked. Landing paths: `knowledge/` changes go on a branch and a PR;
-     `state/`, efforts and `people/` go straight to the default branch, rebased, after approval.
+     in a team repo, `state/`, efforts and `people/` go straight to the default branch, rebased, after
+     approval; in a solo repo, ask where they land.
 
 ## Homes {#homes}
 
@@ -67,7 +69,7 @@ Each candidate gets one home.
 | `state/` (direct) | The live status of a tracked activity moved | `Last updated:` date. Supersede, don't delete |
 | Effort `00-STATUS.md` (direct) | Where the effort stands, what's next, what's blocked | Readable cold; update via `handoff` if it needs more than a line |
 | Overlays | A procedure will recur, or a skill behaved wrong for this team or person | Amend the existing overlay; a new one needs a real second occasion |
-| `people/<handle>/inbox/` (direct) | Side quest or draft with no effort | Say where you wrote it |
+| `<personal root>/inbox/` (direct) | Side quest or draft with no effort | Say where you wrote it |
 | Tool auto-memory (optional) | A personal preference of the user's, for one tool | Distinct from `knowledge/`: the tool owns it, the team never sees it. Never conflate the two, and never symlink one to the other |
 
 A fact the team needs goes in `knowledge/`, not only in auto-memory.
@@ -95,5 +97,5 @@ A fact the team needs goes in `knowledge/`, not only in auto-memory.
 
 No one can approve, so write nothing to `knowledge/`, `state/` or the effort. Run steps 1 to 4 and write
 the proposal table, the considered-and-dropped list and the side-quest list to
-`people/<handle>/inbox/session-close-<YYYY-MM-DD>.md`, or to a draft PR branch if the prompt asked for
+`<personal root>/inbox/session-close-<YYYY-MM-DD>.md`, or to a draft PR branch if the prompt asked for
 one. Mark each judgment call (a home you weren't sure of, a contradiction) so a reviewer can decide.

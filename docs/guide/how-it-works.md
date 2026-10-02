@@ -25,7 +25,7 @@ flowchart LR
   nm -->|"folkways sync"| synced[".folkways/instructions.md<br/>.folkways/prompts/<br/>.claude/skills/ (framework skills)<br/>.github/workflows/folkways-*.yml"]
   nm -->|"folkways sync<br/>(merge)"| settings[".claude/settings.json"]
   synced --> manifest[".folkways/manifest.json<br/>version + sha256 per file"]
-  team["team-owned<br/>AGENTS.md, team.yaml,<br/>overlays/, people/, team skills"] -. never written .- nm
+  team["team-owned<br/>AGENTS.md, folkways.yaml,<br/>overlays/, people/, team skills"] -. never written .- nm
 ```
 
 ## Who owns what
@@ -39,7 +39,7 @@ flowchart LR
 | `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; never removes |
 | `AGENTS.md` | team | never writes after `init`; warns if the `@.folkways/instructions.md` line is missing |
 | `.local/me` (link to `people/<handle>/`) | person | creates the link or repoints it to `people/<handle>/`; removes a link to someone else only when your own folder is missing, and warns |
-| everything else: `team.yaml`, `overlays/`, `people/`, team skills, `package.json` | team or person | never writes |
+| everything else: `folkways.yaml`, `overlays/`, `people/`, team skills, `package.json` | team or person | never writes |
 
 The team `AGENTS.md` pulls in the framework rules with one line, `@.folkways/instructions.md`. Claude
 Code and Copilot CLI both expand `@` imports there. `CLAUDE.md` is just `@AGENTS.md`.
@@ -92,7 +92,7 @@ So the review runs in a **fresh process**:
 - The reviewer reviews against intent first (ticket, design, knowledge), verifies by running, then writes
   a verdict and a findings table using [Conventional Comments](https://conventionalcomments.org/).
 - Output goes to `<effort>/NN-review-<sha7>.md`, with the full SHA in its frontmatter.
-- The team picks when it runs in `team.yaml` (`review.trigger`), and a person can differ in `me.yaml`:
+- The team picks when it runs in `folkways.yaml` (`review.trigger`), and a person can differ in `me.yaml`:
 
 | Trigger | When |
 |---|---|

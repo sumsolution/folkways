@@ -1,5 +1,5 @@
 {
-  "description": "A scope outside team.yaml git.scopes is denied and named",
+  "description": "A scope outside folkways.yaml git.scopes is denied and named",
   "steps": [
     {
       "payload": {

@@ -20,7 +20,7 @@ folkways the framework is built on that split:
 | | Folkways | Mores |
 |---|---|---|
 | What | Customs the team shapes freely | Norms the team enforces |
-| Examples | Skills, overlays, templates, `team.yaml` | Ask before push, fresh review, commit format, hands off your main clone |
+| Examples | Skills, overlays, templates, `folkways.yaml` | Ask before push, fresh review, commit format, hands off your main clone |
 | Backed by | Instructions and skills | Settings and hooks |
 | Changed by | An overlay or a PR | A team decision |
 

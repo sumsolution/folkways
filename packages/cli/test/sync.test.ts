@@ -148,6 +148,11 @@ describe('sync refusals and warnings', () => {
     expect(sync(team, next).warnings).toEqual([]);
   });
 
+  it('warns when folkways.yaml is missing, since the hooks are silent without it', () => {
+    rmSync(join(team, 'folkways.yaml'));
+    expect(sync(team, next).warnings).toEqual([expect.stringMatching(/no folkways\.yaml.*hooks/)]);
+  });
+
   it('warns when AGENTS.md lost the import line', () => {
     put(join(team, 'AGENTS.md'), '# Team\n');
     expect(sync(team, next).warnings[0]).toMatch(/@\.folkways\/instructions\.md/);
@@ -157,7 +162,7 @@ describe('sync refusals and warnings', () => {
     [{ skills: ['../../outside'], files: {} }, /unsafe skill name "\.\.\/\.\.\/outside"/],
     [{ skills: [], files: { '../../outside': 'a'.repeat(64) } }, /unsafe path "\.\.\/\.\.\/outside"/],
     [{ skills: ['start'], files: { '.claude/skills/other/x.md': 'a'.repeat(64) } }, /unsafe path/],
-    [{ skills: [], files: { 'team.yaml': 'a'.repeat(64) } }, /unsafe path "team\.yaml"/],
+    [{ skills: [], files: { 'folkways.yaml': 'a'.repeat(64) } }, /unsafe path "folkways\.yaml"/],
     [{ skills: [], files: {}, overlays: { '../x': 'a'.repeat(64) } }, /unsafe overlay path "\.\.\/x"/],
     [{ skills: [], files: {}, overlays: { 'overlays/a/b/OVERLAY.md': 'a'.repeat(64) } }, /unsafe overlay path/],
     [{ skills: [], files: {}, overlays: { 'overlays/a/OVERLAY.md': 'nope' } }, /bad checksum for overlays\/a\/OVERLAY\.md/],
@@ -172,7 +177,7 @@ describe('sync refusals and warnings', () => {
     expect(() => sync(team, next, { force: true })).toThrow(message);
     expect(() => sync(team, next, { force: true })).toThrow("Restore it with 'git checkout -- .folkways/manifest.json'");
     expect(read(outside)).toBe('keep\n');
-    expect(existsSync(join(team, 'team.yaml'))).toBe(true);
+    expect(existsSync(join(team, 'folkways.yaml'))).toBe(true);
   });
 
   it('rejects a manifest that is not JSON', () => {

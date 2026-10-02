@@ -12,14 +12,15 @@ title into the commit on the default branch, so the same rules cover PR titles (
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
-2. `.local/me.yaml`: `handle`, `projects_dir`, and `review.trigger` (it overrides the team value).
+1. `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, and `review.trigger` (it overrides the team value).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/commit/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/commit/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/commit/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -28,7 +29,7 @@ Read these first. A missing file is normal; skip it.
 
 1. **Find the repo and branch.** Project code is changed only in a worktree under
    `<projects_dir>/.worktrees/<repo>/<branch>`, never in the user's own clone. If you are in the
-   user's clone, stop and say so. In the team repo, see [Where commits go](#where-commits-go).
+   user's clone, stop and say so. In the team or solo repo, see [Where commits go](#where-commits-go).
 2. **Check what is staged.** Read `git status` and `git diff --staged`. Stage files by name; don't stage
    everything blindly. Stop and ask if the diff holds:
    - more than one logical change (propose separate commits),
@@ -43,9 +44,13 @@ Read these first. A missing file is normal; skip it.
 6. **After the commit:** if the review trigger is `after-commit`, run
    `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root (the
    pinned CLI; never a bare `npx folkways`, which can fetch an unrelated package) and say where the
-   review file landed. Never push; that is the `pr` skill, and every push needs approval.
+   review file landed. In a solo repo there's no CLI: run the `review` skill in a fresh subagent given
+   only the repo, branch, base and HEAD SHA. Never push; that is the `pr` skill, and every push needs approval.
 
 ## Message format {#message-format}
+
+Follow `git.commit_convention` (default `angular`). `pattern`: the subject must match
+`git.commit_pattern`; the rules below don't apply. `none`: any clear, imperative subject. For `angular`:
 
 ```
 <type>(<scope>): <subject>
@@ -102,7 +107,8 @@ Create the branch in a new worktree from a freshly fetched default branch:
 |---|---|---|
 | Project repo | any | a feature branch in a worktree; never the default branch |
 | Team repo | `state/`, `efforts/`, `people/` | the default branch, rebased on push (keep history linear) |
-| Team repo | `knowledge/`, `overlays/`, team skills, `team.yaml`, framework upgrades | a branch and a PR |
+| Solo repo | `state/`, `work/`, `inbox/`, `knowledge/`, `overlays/`, `folkways.yaml` | the user's choice; ask |
+| Team repo | `knowledge/`, `overlays/`, team skills, `folkways.yaml`, framework upgrades | a branch and a PR |
 
 Use `git mv` for moves so history follows the file.
 

@@ -1,0 +1,31 @@
+{
+  "description": "hooks.context-band: false: past a band, still nothing and no state file",
+  "env": {
+    "team": {
+      "hooks": {
+        "context-band": false
+      }
+    },
+    "transcript": [
+      160000
+    ]
+  },
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "next step"
+      },
+      "expect": {
+        "stdout": null,
+        "absent": [
+          "${TEAM}/.local/hooks"
+        ]
+      }
+    }
+  ]
+}

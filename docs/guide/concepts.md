@@ -14,7 +14,7 @@ Set and setting matter: the team repo is where every session starts.
 
 | Path | Holds | Lands by |
 |---|---|---|
-| `team.yaml` | Team config: tracker, repos, research sources, git rules, review trigger, models | PR |
+| `folkways.yaml` | Team config: tracker, repos, research sources, git rules, review trigger, models | PR |
 | `knowledge/` | Durable facts, each with `Last verified:` and how | PR |
 | `state/` | Live trackers, one file per track | direct push |
 | `efforts/<KEY>-<slug>/` | Shared pieces of work, each with a `00-STATUS.md` | direct push |
@@ -24,6 +24,17 @@ Set and setting matter: the team repo is where every session starts.
 | `.local/` | Machine-local config (`me.yaml`), never committed | — |
 
 Direct pushes are rebased and linear. Every push, direct or not, waits for the person's approval.
+
+## Solo repos
+
+One person can use folkways through the Claude Code plugin, from their own **brain repo**: like a team
+repo, it's where sessions start and knowledge, state and efforts build up across every project, and it
+holds no code. Code changes happen in worktrees of the project repos. A solo repo is the team layout
+with one layer removed: what lives in `people/<handle>/` in a team repo lives at the repo root (`work/`, `inbox/`, `overlays/`). There's no handle, no `efforts/` and nothing to promote.
+Skills call that folder the **personal root**.
+
+A repo is set up when it has a `folkways.yaml`. Without one, the plugin stays quiet: the first session
+points to the brain repo and offers `setup` once, and after that it says nothing ([spec §2.3](../design/06-v1-spec.md)).
 
 ## Knowledge, state, efforts, people
 
@@ -62,7 +73,7 @@ overlay has `## Add` for extra rules and `## Override {#commit-format}` to repla
 Team overlays are **compiled in** by `folkways sync`: an override replaces its section in the synced
 skill, and an add goes under `## Team additions`. An unknown ID stops the sync before anything is
 written. Rerun `sync` after you change an overlay. Personal overlays are attached at runtime: each
-skill's step 0 reads `team.yaml` and `.local/me.yaml`, then attaches your overlay through `.local/me`, a
+skill's step 0 reads `folkways.yaml` and `.local/me.yaml`, then attaches your overlay through `.local/me`, a
 link to `people/<handle>/` that `onboard` creates and `sync` keeps. The framework's precedence text says
 personal rules may only add, and `sync` lints them. Reasoning:
 [ADR 0001](../adr/0001-overlay-enforcement.md).
@@ -81,13 +92,16 @@ your main clone), `context-band` (announces 125K, 150K and 200K tokens so you ha
 `session-start` (points the agent at the `start` skill) and `precompact` (logs a missed handoff).
 `.claude/settings.json` also holds one framework rule: `git push` asks first.
 
+`folkways.yaml` decides what they check. `git.commit_convention` picks Angular, your own pattern or no
+commit rule; `hooks:` turns a hook off. Without a `folkways.yaml` the hooks do nothing.
+
 ## Folkways and mores
 
 Most of folkways is **folkways**: customs the team shapes and changes freely. Skills, overlays, templates,
-`team.yaml`. If your team does it differently, write an overlay.
+`folkways.yaml`. If your team does it differently, write an overlay.
 
 A few things are **mores**: norms the team agrees are worth enforcing, so they're backed by settings and
-hooks, not just instructions. They live in config (`team.yaml`, framework settings), which changes by
+hooks, not just instructions. They live in config (`folkways.yaml`, framework settings), which changes by
 PR, so an overlay can't loosen them.
 
 - Ask before every push. Built: a permission rule, enforced in Claude Code (whether Copilot CLI honors
@@ -115,7 +129,7 @@ flagged in the output, so a person decides.
 
 A session has a shape:
 
-1. **Start.** Read `team.yaml` and `.local/me.yaml`. Resume an effort from its `00-STATUS.md`, or start
+1. **Start.** Read `folkways.yaml` and `.local/me.yaml`. Resume an effort from its `00-STATUS.md`, or start
    a new one from a ticket.
 2. **Work.** Subagents for throughput, cheap model first, stronger one for hard calls. Side quests get
    written down, not chased.

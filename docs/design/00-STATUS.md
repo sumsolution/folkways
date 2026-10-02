@@ -1,10 +1,10 @@
 # folkways: status
 
 **Started:** 2026-09-27
-**Last updated:** 2026-10-02 (session 7: Claude Code plugin)
+**Last updated:** 2026-10-02 (session 8: `folkways.yaml`, guided setup, solo repos; handoff in [17](17-handoff-pr25-review.md))
 **Owner:** Summer Jordan
 **Name:** **`folkways`** (pending a trademark check by Summer; see [02-naming.md](02-naming.md)).
-**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow. Claude Code plugin built (`packages/claude-plugin`). Nothing published yet.
+**Stage: building v1.** CLI (`init`, `sync`, `upgrade`), 16 skills and overlay compile done (0.1.0, unpublished). Repo is a pnpm workspace (ADR 0003). Go hooks built, wired into `settings.json`, packaged per platform, with a release workflow. Claude Code plugin built (`packages/claude-plugin`). `folkways.yaml` (was `team.yaml`) with solo and team modes; the plugin is quiet without it ([16](16-plan-config-and-solo.md)). Nothing published yet.
 **Home:** this repo, [sumsolution/folkways](https://github.com/sumsolution/folkways). Design docs live in `docs/design/`.
 
 ## What this is
@@ -32,7 +32,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [13-retro-git-guard-review-rounds.md](13-retro-git-guard-review-rounds.md) | Retro: git-guard grew through three review rounds; root causes, the skill changes (made) and their eval results |
 | [14-research-eval-harness.md](14-research-eval-harness.md) | Eval harness: build or adopt (`claude plugin eval`, promptfoo, Inspect, …). Built `packages/evals`, no new dependencies |
 | [15-research-license.md](15-research-license.md) | License options; basis of ADR 0004 |
-| [16-plan-config-and-solo.md](16-plan-config-and-solo.md) | `folkways.yaml`, guided setup, solo repos: the plugin outside a team repo (planned) |
+| [16-plan-config-and-solo.md](16-plan-config-and-solo.md) | `folkways.yaml`, guided setup, solo repos: the plugin outside a team repo (built with parallel agents) |
+| [17-handoff-pr25-review.md](17-handoff-pr25-review.md) | Handoff after session 8: reviewing #25, addressing findings, next steps |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout, 0004 license (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
@@ -44,7 +45,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
   company-specific content in the framework.** v1 tools: **Claude Code (desktop + CLI) and Copilot CLI
   only** (11). No IDE integrations, no Copilot cloud agent.
 - **Architecture (3, 6, 11):** framework published as npm package `@folkways/cli`, pinned in one team repo; `folkways sync`
-  copies its text files in (12). Team repo: `team.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
+  copies its text files in (12). Team repo: `folkways.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
   skills, committed `people/<handle>/` (`overlays/`, `inbox/`, `work/`), gitignored `.local/` (`me.yaml`).
   **No separate personal repo** (11). Knowledge, skills, overlays via PR; state, efforts, people via direct
   rebased push. Promotion = `git mv` to `efforts/`. Every effort has a `00-STATUS.md`. Agent-space stays as-is.
@@ -78,12 +79,10 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
    the nested `hookSpecificOutput` and runs repo hooks from the project root (ADR 0002, "Still open"); Copilot
    CLI subagent `model:` (not researched); whether Copilot CLI loads the instructions twice (it reads both
    `AGENTS.md` and `CLAUDE.md`, which imports it).
-3. The plugin in a repo that isn't a team repo (Summer to revisit `start`). Every session is told to follow
-   `folkways:start`, whose step 2 stops and runs `onboard` when `.local/me.yaml` is missing; `onboard`
-   assumes the team-repo layout. The hooks there: `git-guard` denies commits that aren't Angular
-   `type(scope): subject` (no `team.yaml` needed); `precompact` writes `.local/precompact.log` into the
-   repo; `context-band` stays off (no `handoff.bands`); the main-clone and pre-push checks stay off (no
-   `me.yaml`). Decide which of these a plain repo should get, alongside ADR 0003's open solo-config question.
+3. ~~The plugin in a repo that isn't a team repo~~ Decided ([16](16-plan-config-and-solo.md)): without
+   `folkways.yaml` the plugin and hooks stay silent except a one-time setup offer; `setup` configures a solo
+   or team repo; solo is the team layout without `people/<handle>/`. Both are brain repos: sessions start
+   there and code changes happen in worktrees of project repos.
 
 ## Pending
 
@@ -93,7 +92,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 - [ ] Decide DCO sign-off before the first outside PR.
 - [x] npm scope `@folkways` (Summer, 2026-09-28). Maybe a dedicated `folkways` GitHub org later.
 - [ ] Later: publish a GitHub Action that runs `folkways sync` on dependency-update PRs (spec §9.7).
-- [ ] Later: solo projects; other harnesses after that (ADR 0003, Future direction). Not scoped. The Claude Code plugin is built (`packages/claude-plugin`); team overlays in it are not.
+- [ ] Later: other harnesses (ADR 0003, Future direction). Not scoped. Solo repos are done ([16](16-plan-config-and-solo.md)); team overlays in the plugin are not.
 - [ ] Dedicated session: architecture knowledge for the `adr` skill.
 - [ ] Trademark check for `folkways` (USPTO/EUIPO); register folkways.dev and a GitHub handle (Summer).
 
@@ -103,11 +102,12 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 |---|---|---|
 | CLI `init`, `sync`, `upgrade`, `hook`, `version` | [packages/cli/src/](../../packages/cli/src) | TypeScript, npm package `@folkways/cli`, Node 24+. Sync is staged and atomic and refuses to overwrite. `review`, `run`, `doctor` are stubs |
 | Skills | [assets/skills/](../../packages/cli/assets/skills) | 16: adr, commit, handoff, knowledge-audit, onboard, pr, qa, research, review, session-close, setup, side-quest, start, status, tests, ticket |
+| Config and solo repos | [spec §2.3, §4.1](06-v1-spec.md) | `folkways.yaml` with `mode: team \| solo`, `git.commit_convention` (angular, pattern, none), `hooks:` toggles. Unconfigured repos: hooks and plugin silent except the one-time setup offer (`~/.config/folkways/offered`). Guided `setup`; skills use the personal root. The offer is per git top level, so each worktree of a repo gets its own |
 | Overlay compile | [src/overlays.ts](../../packages/cli/src/overlays.ts) | `sync` compiles team overlays into skills (`compileSkillFiles`) and lints personal overlays. Personal overlays attach at step 0 via `@` of `.local/me/...`, with a read fallback |
 | `.local/me` link | [src/](../../packages/cli/src) | Symlink to `people/<handle>/`, created by `onboard`, kept by `sync` |
 | Framework instructions | [assets/instructions.md](../../packages/cli/assets/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
 | Settings fragment | [assets/settings.json](../../packages/cli/assets/settings.json) | Push ask rule, `disableAllHooks: false`, one entry per hook and event, run as `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` |
-| Team scaffold | [templates/](../../packages/cli/templates) | `team.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
+| Team scaffold | [templates/](../../packages/cli/templates) | `folkways.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
 | Hook contract suite | [packages/hooks/contract/](../../packages/hooks/contract) | Fixtures and harness for `git-guard`, `context-band`, `session-start`, `precompact`; the Go binary is built against it |
 | Go hooks | [packages/hooks/](../../packages/hooks) | `folkways-hook` binary; all four hooks done: `git-guard` (with the trigger floor and inbox review lookup), `context-band` (state in `.local/hooks/context-band/`), `session-start`, `precompact`. `session-end` and the unclosed-session marker were dropped (too noisy: most sessions aren't worth banking). CI runs the full contract suite. Wired into team repos by `sync`; `init` sets pnpm's `publicHoistPattern`; `sync` warns when the binary or that setting is missing; `folkways hook <name>` runs it by hand. Packaged as `@folkways/hooks-<os>-<cpu>` ([build.ts](../../packages/hooks/scripts/build.ts)); the packed CLI pins them via [.pnpmfile.mjs](../../.pnpmfile.mjs). `FOLKWAYS_SKILL_NAMESPACE` makes the hooks name skills `folkways:<name>` (the plugin sets it) |
 | Hook benchmark | [research/bench/hooks/](../../research/bench/hooks) | Node, Go and Rust candidates; Linux and macOS results |
@@ -116,7 +116,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | Claude Code plugin | [packages/claude-plugin/](../../packages/claude-plugin) | Built from the CLI's assets: skills rewritten to `folkways:<name>` and `${CLAUDE_PLUGIN_ROOT}` paths, instructions as session-start context, `hooks.json` generated from `assets/settings.json`, `folkways-hook` for all four platforms, read from `@folkways/hooks`'s build (the plugin build never compiles Go), run by `run.sh`, which sets `FOLKWAYS_SKILL_NAMESPACE=folkways`. Quiet in synced team repos. No team overlays, no push ask rule. Released as `@folkways/claude-plugin` on its own tag; the root [marketplace](../../.claude-plugin/marketplace.json) installs it from npm. Dogfood from `dist/` |
 | Eval runner | [packages/evals/](../../packages/evals) | Behavior evals: a team repo per arm (git ref) x case x run, `claude -p` isolated, blind LLM judge. Suites in [research/evals/](../../research/evals) ([14](14-research-eval-harness.md)) |
 | Workspace | [packages/](../../packages) | pnpm workspace, per-package versions with changesets ([ADR 0003](../adr/0003-repo-layout.md)) |
-| Tests | per package | vitest: CLI 346 pass; evals 26 pass (no model calls); hooks 19 pass, 111 contract cases skipped until a binary exists (all 111 pass against it), plus `go test`; claude-plugin 22 pass |
+| Tests | per package | vitest: CLI 368 pass; evals 26 pass (no model calls); hooks 22 pass, 156 contract cases skipped until a binary exists (all 156 pass against it), plus `go test`; claude-plugin 25 pass |
 
 ## Review follow-ups (PR #1, not blocking)
 
@@ -132,7 +132,8 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 ## Next step
 
-**Branch:** `claude/busy-johnson-imsg4f`: the Claude Code plugin ([#21](https://github.com/sumsolution/folkways/pull/21)). `main` has everything through #22.
+**Branch:** `ccr-d5e13116-v42x04`: plan 16 ([#25](https://github.com/sumsolution/folkways/pull/25)), CI green. `main` has everything through #24.
+**Handoff:** [17](17-handoff-pr25-review.md): review #25, address findings, merge; then the list below, starting with `doctor`.
 
 1. **Before the first release (Summer):** on npm, add a trusted publisher for `@folkways/cli`,
    `@folkways/claude-plugin` and the four `@folkways/hooks-<os>-<cpu>` packages (repo `sumsolution/folkways`, workflow `release.yml`, environment
@@ -149,10 +150,11 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 
 - [x] Spec §4.2: `review.trigger` becomes a floor a person can only tighten (decided yes). Contract and
   fixtures done (`push-me-cannot-loosen-denied`); the Go implementation lands in plan 11, PR 2.
-- [ ] Spec §4.1: add `git.commit_pattern` (decided yes).
+- [x] Spec §4.1: add `git.commit_pattern` (decided yes). Done in [16](16-plan-config-and-solo.md).
 - [x] Spec §7.3 and `git-guard`: accept `people/<h>/inbox/<date>-review-<sha7>.md` as a review covering HEAD (keep the fallback). Contract and fixtures done; the Go implementation lands in plan 11, PR 2.
+- [ ] With `review.trigger: pre-push`, `git-guard` denies a direct push of the brain repo itself (team or solo), since no review covers a `state/` commit. Exempt the repo holding `folkways.yaml` from the push gate; about 40 push fixtures use `${TEAM}` as the pushed repo and need a project repo instead.
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [assets/prompts/review.md](../../packages/cli/assets/prompts/review.md).
-- [ ] `doctor` checks: stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
+- [ ] `doctor` checks: non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `no` as off, but `off` and `"false"` leave the hook on), stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
 - [x] [assets/settings.json](../../packages/cli/assets/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
 - [ ] `scripts/` is not in the `tsconfig.json` `include`; gitignore `.folkways-sync-*` in the team template.
 - [x] Spec §3.1 hook ownership wording (plan 11, PR 4).

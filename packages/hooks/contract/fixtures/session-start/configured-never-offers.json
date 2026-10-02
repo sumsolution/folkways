@@ -1,0 +1,25 @@
+{
+  "description": "A configured repo gets the start reminder and no offer file",
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "SessionStart",
+        "source": "startup"
+      },
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "additionalContext": "re:start"
+          }
+        },
+        "absent": [
+          "${XDG}/folkways/offered"
+        ]
+      }
+    }
+  ]
+}

@@ -12,14 +12,15 @@ say where it went, and move on. Session close lists them all again.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `tracker` (for the ticket key format).
-2. `.local/me.yaml`: `handle`.
+1. `folkways.yaml`: `tracker` (for the ticket key format).
+2. `.local/me.yaml`: `handle` (team repos only).
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/side-quest/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/side-quest/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/side-quest/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -43,7 +44,7 @@ ticket in the tracker does (the `ticket` skill).
 | Nature | Destination |
 |---|---|
 | Tightly coupled to the current effort | the effort folder, as `NN-side-quest-<slug>.md` |
-| Broad (dependency upgrades, a pattern across repos, another team's bug) | `people/<handle>/inbox/<YYYY-MM-DD>-<slug>.md` |
+| Broad (dependency upgrades, a pattern across repos, another team's bug) | `<personal root>/inbox/<YYYY-MM-DD>-<slug>.md` |
 
 ## Note format {#note-format}
 
@@ -61,5 +62,5 @@ State what you saw and link it. Mark guesses as guesses. No investigation narrat
 
 ## Headless
 
-Write the note to the effort folder, or the inbox of the handle in `.local/me.yaml`; with no handle,
-list the finding in the run output instead. Never create tickets.
+Write the note to the effort folder, or `<personal root>/inbox/` (a team repo needs a handle in `.local/me.yaml`; with none,
+list the finding in the run output instead). Never create tickets.

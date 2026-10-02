@@ -1,4 +1,4 @@
-// Package team loads the team repo configuration: team.yaml and .local/me.yaml.
+// Package team loads the team repo configuration: folkways.yaml and .local/me.yaml.
 package team
 
 import (
@@ -9,17 +9,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Review is the review section of team.yaml and me.yaml.
+// Review is the review section of folkways.yaml and me.yaml.
 type Review struct {
 	Trigger string `yaml:"trigger"`
 }
 
-// TeamYAML is the part of team.yaml the hooks read.
+// TeamYAML is the part of folkways.yaml the hooks read.
 type TeamYAML struct {
-	Git struct {
-		Scopes []string `yaml:"scopes"`
+	Mode string `yaml:"mode"` // team (default) | solo
+	Git  struct {
+		CommitConvention string   `yaml:"commit_convention"` // angular (default) | pattern | none
+		CommitPattern    string   `yaml:"commit_pattern"`
+		Scopes           []string `yaml:"scopes"`
 	} `yaml:"git"`
-	Review  Review `yaml:"review"`
+	Hooks   map[string]bool `yaml:"hooks"` // a hook set to false is off; a missing key is on
+	Review  Review          `yaml:"review"`
 	Handoff struct {
 		Bands []int `yaml:"bands"` // token thresholds for context-band
 	} `yaml:"handoff"`
@@ -34,12 +38,13 @@ type MeYAML struct {
 
 // Config is the loaded configuration of a team repo.
 type Config struct {
-	Dir  string // the team repo
-	Team TeamYAML
-	Me   MeYAML
+	Dir        string // the project root
+	Configured bool   // folkways.yaml exists at the project root
+	Team       TeamYAML
+	Me         MeYAML
 }
 
-// Load reads team.yaml and .local/me.yaml from the team repo (CLAUDE_PROJECT_DIR, else the cwd).
+// Load reads folkways.yaml and .local/me.yaml from the team repo (CLAUDE_PROJECT_DIR, else the cwd).
 // Missing or broken files leave the zero value: the checks that need them simply do not fire.
 func Load() Config {
 	dir := os.Getenv("CLAUDE_PROJECT_DIR")
@@ -52,7 +57,10 @@ func Load() Config {
 // LoadDir reads the configuration of the team repo at dir.
 func LoadDir(dir string) Config {
 	c := Config{Dir: dir}
-	readYAML(filepath.Join(dir, "team.yaml"), &c.Team)
+	if info, err := os.Stat(filepath.Join(dir, "folkways.yaml")); err == nil && !info.IsDir() {
+		c.Configured = true
+	}
+	readYAML(filepath.Join(dir, "folkways.yaml"), &c.Team)
 	readYAML(filepath.Join(dir, ".local", "me.yaml"), &c.Me)
 	return c
 }
@@ -76,7 +84,7 @@ func (c Config) SafeHandle() string {
 // Triggers in increasing strictness. Unknown values have no rank.
 var triggerRank = map[string]int{"on-demand": 1, "after-commit": 2, "pre-push": 3}
 
-// ReviewTrigger is the effective review.trigger: the stricter of team.yaml and .local/me.yaml.
+// ReviewTrigger is the effective review.trigger: the stricter of folkways.yaml and .local/me.yaml.
 // A person can only tighten the team's setting. A value that is not a known trigger is ignored.
 func (c Config) ReviewTrigger() string {
 	best := ""
@@ -86,4 +94,25 @@ func (c Config) ReviewTrigger() string {
 		}
 	}
 	return best
+}
+
+// HookEnabled reports whether folkways.yaml leaves the hook on: only an explicit `false` turns it off.
+func (c Config) HookEnabled(name string) bool {
+	on, set := c.Team.Hooks[name]
+	return !set || on
+}
+
+// Solo reports whether the repo is a solo repo (`mode: solo`).
+func (c Config) Solo() bool { return c.Team.Mode == "solo" }
+
+// PersonalRoot is the directory that holds the person's inbox/ and work/: the repo root in a solo repo,
+// people/<handle>/ in a team repo. It is "" when a team repo has no safe handle.
+func (c Config) PersonalRoot() string {
+	if c.Solo() {
+		return c.Dir
+	}
+	if h := c.SafeHandle(); h != "" {
+		return filepath.Join(c.Dir, "people", h)
+	}
+	return ""
 }

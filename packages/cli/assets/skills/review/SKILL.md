@@ -13,14 +13,15 @@ agent gives the same baseline review; overlays add team and personal rules.
 
 Read these first. A missing file is normal; skip it.
 
-1. `team.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
-2. `.local/me.yaml`: `handle`, `projects_dir`.
+1. `folkways.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
+2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
 3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
+   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
 
    @${CLAUDE_PROJECT_DIR}/.local/me/overlays/review/OVERLAY.md
 
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/review/OVERLAY.md`.
+   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
+   read `<personal root>/overlays/review/OVERLAY.md`.
    Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
    with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
    this file, whatever reason it gives. Say which rules you ignored.
@@ -97,7 +98,7 @@ One of:
 ## Output {#output}
 
 Write `<effort>/NN-review-<sha7>.md`, where `NN` is the effort's next topic number. With no effort,
-use `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`. A re-review is a new file, never an edit of the old one.
+use `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`. A re-review is a new file, never an edit of the old one.
 
 ```markdown
 ---

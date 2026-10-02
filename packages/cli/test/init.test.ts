@@ -20,7 +20,7 @@ describe('templateTarget', () => {
 describe('init', () => {
   it('scaffolds, pins, syncs and commits', () => {
     const team = makeTeam(makePackage('1.2.3'));
-    for (const f of ['team.yaml', '.gitignore', 'CLAUDE.md', 'knowledge/README.md', '.folkways/instructions.md']) {
+    for (const f of ['folkways.yaml', '.gitignore', 'CLAUDE.md', 'knowledge/README.md', '.folkways/instructions.md']) {
       expect(existsSync(join(team, f)), f).toBe(true);
     }
     expect(read(join(team, 'CLAUDE.md'))).toContain('@AGENTS.md');
@@ -32,6 +32,14 @@ describe('init', () => {
     expect(git(team, 'log', '--format=%s')).toBe('chore(folkways): init at 1.2.3');
     expect(git(team, 'branch', '--show-current')).toBe('main');
     expect(isClean(team)).toBe(true);
+  });
+
+  it('writes folkways.yaml with team mode and every hook on', () => {
+    const yaml = read(join(makeTeam(makePackage('1.0.0')), 'folkways.yaml'));
+    expect(yaml).toMatch(/^mode: team\b/m);
+    expect(yaml).toMatch(/^ {2}commit_convention: angular\s+# angular \| pattern \| none$/m);
+    expect(yaml).toMatch(/^ {2}commit_pattern: ""/m);
+    expect(yaml).toMatch(/^hooks:.*\n {2}git-guard: true\n {2}context-band: true\n {2}precompact: true\n {2}session-start: true$/m);
   });
 
   it('names the package after the folder', () => {
