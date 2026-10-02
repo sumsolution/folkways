@@ -25,6 +25,16 @@ Set and setting matter: the team repo is where every session starts.
 
 Direct pushes are rebased and linear. Every push, direct or not, waits for the person's approval.
 
+## Solo repos
+
+One person can use folkways in their own repo, usually a code repo, through the Claude Code plugin. A solo
+repo is the team layout with one layer removed: what lives in `people/<handle>/` in a team repo lives at
+the repo root (`work/`, `inbox/`, `overlays/`). There's no handle, no `efforts/` and nothing to promote.
+Skills call that folder the **personal root**.
+
+A repo is set up when it has a `folkways.yaml`. Without one, the plugin stays quiet: the first session
+offers to run `setup` once, and after that it says nothing ([spec §2.3](../design/06-v1-spec.md)).
+
 ## Knowledge, state, efforts, people
 
 Four kinds of shared memory, split by how long they live and who trusts them:
@@ -80,6 +90,9 @@ Each hook runs the pinned framework binary, `folkways-hook`, from `node_modules/
 your main clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time),
 `session-start` (points the agent at the `start` skill) and `precompact` (logs a missed handoff).
 `.claude/settings.json` also holds one framework rule: `git push` asks first.
+
+`folkways.yaml` decides what they check. `git.commit_convention` picks Angular, your own pattern or no
+commit rule; `hooks:` turns a hook off. Without a `folkways.yaml` the hooks do nothing.
 
 ## Folkways and mores
 

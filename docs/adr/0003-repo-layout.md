@@ -176,6 +176,13 @@ plugin carries all four `folkways-hook` builds and `hooks/run.sh` picks the host
 did not move: the plugin build reads `packages/cli/assets/` as data, so two packages now know that path.
 Moving it to a content package is a follow-up (00-STATUS). The solo-config question stays open.
 
+**Update (2026-10-02, later).** Solo config is decided ([plan 16](../design/16-plan-config-and-solo.md)): one
+config model with no second root. `team.yaml` is renamed `folkways.yaml` (no fallback; nothing was
+published) and gains `mode: team | solo`. A solo repo is the team layout with `people/<handle>/` removed;
+both read `folkways.yaml` at the project root. A repo without it is unconfigured: the hooks and the plugin
+stay silent except for a one-time setup offer, recorded in the user's config dir, never the repo (spec §2.3,
+§7.1). The CLI stays team-only; solo repos are set up by the plugin's `setup` skill.
+
 ## Consequences
 
 - **The restructure** is one PR of `git mv` plus config, planned in

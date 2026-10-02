@@ -1,6 +1,6 @@
 # Plan: `folkways.yaml`, guided setup and solo repos
 
-**Written:** 2026-10-02 (session 8) · **Status:** in progress (W0 done) · **Closes:** open question 3 in
+**Written:** 2026-10-02 (session 8) · **Status:** done (W0–W5); in review on [#25](https://github.com/sumsolution/folkways/pull/25) · **Closes:** open question 3 in
 [00-STATUS](00-STATUS.md); the solo-config question in [ADR 0003](../adr/0003-repo-layout.md) ("Future direction")
 
 ## Goal

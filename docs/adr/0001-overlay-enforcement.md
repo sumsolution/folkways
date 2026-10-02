@@ -52,7 +52,7 @@ them, and how are the remaining rules layered?
 team overrides compiled in and precedence stated by the framework.**
 
 1. **Every rule is either a more or a folkway**, listed below. A new rule is classified when it is added.
-2. **Mores live in config** (`team.yaml`, framework `settings.json`), which changes by PR. They are
+2. **Mores live in config** (`team.yaml`, now `folkways.yaml` ([16](../design/16-plan-config-and-solo.md)), framework `settings.json`), which changes by PR. They are
    enforced by hooks, permission rules and `folkways sync` / `doctor`. Skills may *describe* a more;
    the hook reads the config, so an overlay can't change it.
 3. **Folkways live in skill sections and overlays.** At `sync`, the team overlay is compiled into the
