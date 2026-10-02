@@ -1,13 +1,14 @@
 ---
 name: setup
-description: Guided setup of folkways in a repo, solo or team - asks which, then interviews for folkways.yaml (tracker, docs, commit format, review trigger, hooks). Use when folkways isn't set up here (no folkways.yaml), when `folkways init` has just run, or when the user says "set up folkways", "configure folkways", "fill in folkways.yaml" or "import our existing templates". Not for one person's machine in a team repo (use onboard).
+description: Guided setup of a folkways brain repo, solo or team - asks which, then interviews for folkways.yaml (tracker, docs, commit format, review trigger, hooks). Use when folkways isn't set up here (no folkways.yaml), when `folkways init` has just run, or when the user says "set up folkways", "configure folkways", "fill in folkways.yaml" or "import our existing templates". Not for one person's machine in a team repo (use onboard).
 ---
 
 # setup
 
-Set folkways up in this repo: `folkways.yaml` for a solo repo, or a scaffolded team repo made into this
-team's. Everything repo-specific lives in `folkways.yaml`, `overlays/` and team skills, never in
-framework files.
+Set up a brain repo: the repo sessions start in, where knowledge, state and efforts build up across
+every project. It holds no project code; code changes happen in worktrees of the project repos. Solo:
+a new repo for one person. Team: a scaffolded team repo made into this team's. Everything
+repo-specific lives in `folkways.yaml`, `overlays/` and team skills, never in framework files.
 
 ## Step 0: Load config and overlays
 
@@ -29,9 +30,10 @@ Read these first. A missing file is normal; skip it.
 
 ## Workflow
 
-0. **Solo or team?** Ask first; it decides the rest. Solo: one person, usually a code repo, no handle and no
-   `people/`. Team: the scaffolded team repo. An existing `folkways.yaml` already has a `mode`; confirm
-   it instead of asking. Then follow [Solo](#solo) or the steps below.
+0. **Solo or team?** Ask first; it decides the rest. Solo: one person's brain repo, no handle and no
+   `people/`. Team: the repo `folkways init` scaffolded; if this isn't one, say to run
+   `npx @folkways/cli init <dir>` and start `setup` there. An existing `folkways.yaml` already has a
+   `mode`; confirm it instead of asking. Then follow [Solo](#solo) or the steps below.
 1. **Interview in small clusters,** one topic per turn, per [Interview](#interview). Offer the
    scaffold's value as the default. Prefer links and exact names over descriptions.
 2. **Verify what you can** as you go: repo URLs clone (`git ls-remote`), the tracker project key exists,
@@ -57,15 +59,18 @@ Read these first. A missing file is normal; skip it.
 
 ## Solo {#solo}
 
-1. **Check the root.** Is there already a `work/`, `inbox/`, `state/`, `knowledge/` or `overlays/` that
-   isn't folkways'? List them and ask before using each; if the answer is no, stop and say folkways
-   can't be set up here without them.
+1. **Pick the folder.** The brain repo is never a code repo. If the current folder is empty, offer to
+   use it; otherwise ask where the new one goes (for example `~/brain`) and create it on approval.
+   `git init` it if it isn't a repo.
 2. **Interview** the solo rows of [Interview](#interview): tracker and docs, commit format, review
    trigger, context bands, which hooks to turn off. Skip clusters the user doesn't use.
-3. **Show `folkways.yaml`** with `mode: solo`, in full; write it on approval. Create nothing else:
-   folders appear on first use. Check that `.local/` is gitignored and offer to add it.
-4. **Commit `folkways.yaml` on approval,** and say the plugin runs per it from the next session. Solo
-   needs no `onboard`; `.local/me.yaml` is optional (`projects_dir`, `tool`).
+3. **Ask for `projects_dir`,** the absolute folder that holds the project clones (`~` is not reliably
+   expanded). In a solo repo too, `projects_dir` is required: worktrees and the clone guard depend on it.
+4. **Show the files** in full and write them on approval: `folkways.yaml` with `mode: solo`,
+   `.local/me.yaml` with `projects_dir` (and `tool` if not `claude`), and a `.gitignore` holding `.local/`.
+   Create nothing else; folders appear on first use.
+5. **Commit on approval.** Tell the user to start sessions from the brain repo from now on; the plugin
+   runs per `folkways.yaml` from the next session there. Solo needs no `onboard`.
 
 ## Interview {#interview}
 

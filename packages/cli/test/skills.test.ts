@@ -167,20 +167,36 @@ describe('guided setup', () => {
   });
 });
 
-describe('solo review gate', () => {
-  it('pr accepts the review git-guard accepts in a solo repo (spec 7.3 walk-back)', () => {
-    expect(read(skillFile('pr'))).toMatch(/solo repo[^]*only `work\/` and `inbox\/`/);
+describe('solo brain repo', () => {
+  // A solo repo is the person's brain repo: no code, so committing a review never moves the reviewed HEAD.
+  it('pr has no walk-back over work/ and inbox/ commits', () => {
+    expect(read(skillFile('pr'))).not.toMatch(/only `work\/` and `inbox\/`/);
   });
-  it.each(['pr', 'commit'])('%s runs the review without the CLI in a solo repo', (skill) => {
-    expect(read(skillFile(skill))).toMatch(/solo\s+repo[^]*fresh\s+subagent/);
+  it.each(['pr', 'commit'])('%s runs the review in a fresh subagent when there is no CLI', (skill) => {
+    expect(read(skillFile(skill))).toMatch(/In a solo repo there's no CLI: run the `review` skill in a fresh\s+subagent/);
   });
-  it('commit works in place in a solo repo', () => {
-    expect(read(skillFile('commit'))).toMatch(/In a solo\s+repo, commit in place/);
+  it('commit sends code changes to worktrees in a solo repo too', () => {
+    const commit = read(skillFile('commit'));
+    expect(commit).toMatch(/In the team or solo\s+repo, see \[Where commits go\]/);
+    expect(commit).not.toMatch(/commit in place/);
+  });
+  it('setup makes a brain repo for solo, never in a code repo, with projects_dir', () => {
+    const setup = read(skillFile('setup'));
+    expect(setup).toMatch(/brain repo/);
+    expect(setup).toMatch(/never (in )?a code repo/);
+    expect(setup).toContain('projects_dir');
+  });
+  it.each(['start', 'onboard', 'setup'])('%s needs projects_dir in a solo repo', (skill) => {
+    expect(read(skillFile(skill))).toContain('`projects_dir` is required');
   });
 });
 
 describe('assets/instructions.md', () => {
   const text = read(join(REPO, 'assets/instructions.md'));
+
+  it('points an unconfigured repo to the brain repo', () => {
+    expect(text).toMatch(/No `folkways\.yaml`[^]*?brain repo/);
+  });
 
   it('defines the personal root and follows git.commit_convention', () => {
     expect(text).toContain('personal root');
