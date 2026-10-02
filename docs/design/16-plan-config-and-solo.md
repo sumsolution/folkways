@@ -1,6 +1,6 @@
 # Plan: `folkways.yaml`, guided setup and solo repos
 
-**Written:** 2026-10-02 (session 8) · **Status:** planned, not started · **Closes:** open question 3 in
+**Written:** 2026-10-02 (session 8) · **Status:** in progress (W0 done) · **Closes:** open question 3 in
 [00-STATUS](00-STATUS.md); the solo-config question in [ADR 0003](../adr/0003-repo-layout.md) ("Future direction")
 
 ## Goal
@@ -50,11 +50,14 @@ git:
   commit_convention: angular   # angular | pattern | none
   commit_pattern: ""           # regex on the subject line, when commit_convention: pattern
   scopes: []
-hooks:                         # all on by default; `off` turns one off
-  git-guard: on
-  context-band: on
-  precompact: on
+hooks:                         # all on by default; false turns one off
+  git-guard: true
+  context-band: true
+  precompact: true
+  session-start: true
 ```
+
+Booleans, not `on`/`off`: YAML 1.1 parsers read those as booleans and YAML 1.2 parsers as strings.
 
 `review.trigger: on-demand` already turns the review gate off; no new key for it.
 
@@ -156,8 +159,7 @@ explain or a second review round in its own code.
 3. Fresh-process review of the whole branch; fix, re-run step 2.
 4. W5, then one PR, squash-merged.
 
-## Open, to confirm before W0
+## Resolved before W0
 
-- **Root collisions in solo repos.** A code repo may already have `work/`, `inbox/` or `state/`. Plan:
-  `setup` checks and stops to ask. Alternative: put the solo folders under one `folkways/` directory
-  (that's two layers removed, not one).
+- **Root collisions in solo repos** (Summer, 2026-10-02): solo folders stay at the root; `setup` checks
+  for existing `work/`, `inbox/`, `state/`, `knowledge/` or `overlays/` and asks before using them.

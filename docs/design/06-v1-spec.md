@@ -14,7 +14,7 @@
 | macOS and Linux | Windows (round 12) |
 
 **Hard rule:** the framework repo holds no company-specific content. Company and team values live in the
-team repo (`team.yaml`, `overlays/`, team `skills/`). Examples in the framework are synthetic.
+team repo (`folkways.yaml`, `overlays/`, team `skills/`). Examples in the framework are synthetic.
 
 ## 2. Repos
 
@@ -40,7 +40,7 @@ folkways/
 │   │   │   ├── prompts/*.md     #     fixed prompts for headless runs (review, knowledge-audit)
 │   │   │   ├── settings.json    #     hook entries + permission rules merged into .claude/settings.json
 │   │   │   └── workflows/*.yml  #     GitHub Actions (knowledge-audit)
-│   │   ├── templates/           #   one-time scaffold for `init`: team.yaml, READMEs, .gitignore
+│   │   ├── templates/           #   one-time scaffold for `init`: folkways.yaml, READMEs, .gitignore
 │   │   │                        #     (`dot-x` → `.x`, `name.tmpl` → `name`, so they stay inert here)
 │   │   └── test/                #   vitest
 │   └── hooks/                   # `folkways-hook` (Go, §7.1), published as `@folkways/hooks-<os>-<cpu>`
@@ -63,7 +63,7 @@ team-repo/
 ├── package.json             # private; devDependencies: "@folkways/cli": "<exact version>";
 │                            #   pnpm teams also pin `packageManager: pnpm@<version>`
 ├── package-lock.json        # or pnpm-lock.yaml; committed; install after clone and after upgrades
-├── team.yaml                # team config (§4.1)
+├── folkways.yaml                # team config (§4.1)
 ├── knowledge/               # durable facts, `Last verified:` + method          [PR]
 ├── state/                   # live trackers, one file per track                 [direct push]
 ├── efforts/<KEY>-<slug>/    # shared efforts, each with 00-STATUS.md            [direct push]
@@ -83,9 +83,37 @@ team-repo/
 └── .github/workflows/       # synced knowledge-audit workflow + team workflows
 ```
 
-**Push rules:** `knowledge/`, `overlays/`, team `skills/`, `team.yaml` and framework upgrades go by PR.
+**Push rules:** `knowledge/`, `overlays/`, team `skills/`, `folkways.yaml` and framework upgrades go by PR.
 `state/`, `efforts/`, `people/` are pushed directly, rebased, linear. Every push still needs the user's
 approval.
+
+### 2.3 Solo repo and repo states ([16](16-plan-config-and-solo.md))
+
+A solo repo is a team repo with one layer removed: what lives in `people/<handle>/` in a team repo lives
+at the repo root. It is usually a code repo set up through the plugin's `setup` skill; the CLI stays
+team-only.
+
+```
+solo-repo/
+├── folkways.yaml            # mode: solo (§4.1)
+├── knowledge/  state/       # as in a team repo, created on first use
+├── overlays/<skill>/        # personal overlays: add only (no compile)
+├── inbox/                   # side quests, ticket drafts, reviews with no effort
+├── work/<KEY>-<slug>/       # efforts; no efforts/, nothing to promote to
+└── .local/                  # gitignored: me.yaml (no handle), hook state
+```
+
+Skills and hooks name one **personal root**: `people/<handle>/` in a team repo, the repo root in a solo
+repo. `setup` checks for existing `work/`, `inbox/`, `state/`, `knowledge/` or `overlays/` that aren't
+folkways' and asks before using them.
+
+**Repo states.** What runs depends on what the project root holds:
+
+| State | Detected by | Plugin | Hooks (`folkways-hook`) |
+|---|---|---|---|
+| Synced team repo | `.folkways/manifest.json` | exits; the repo's `.claude/settings.json` runs the hooks | per `folkways.yaml` |
+| Configured | `folkways.yaml` | injects the instructions, runs the hooks | per `folkways.yaml` |
+| Unconfigured | neither | nothing | silent, except `session-start`'s one-time offer (§7.1) |
 
 ## 3. Distribution, sync and overlay isolation
 
@@ -110,7 +138,7 @@ Code and text are delivered differently (round 12):
 | `.claude/settings.json` `disableAllHooks` | framework | set to `false` (ADR 0001 M11) |
 | `.claude/settings.json` `permissions.ask` rules from the framework | framework | added if missing; never removed |
 | `AGENTS.md` | team | never written after `init`; `sync` warns if the `@.folkways/instructions.md` line is missing |
-| Everything else (`overlays/`, `people/`, team skills, `team.yaml`, `package.json`, …) | team / person | never written |
+| Everything else (`overlays/`, `people/`, team skills, `folkways.yaml`, `package.json`, …) | team / person | never written |
 
 `folkways sync` (run from the team repo; copies the **installed** package version):
 
@@ -138,7 +166,7 @@ install. `init` takes `--package-manager`, defaulting to whichever ran it (`npx`
 Rules come in two kinds ([ADR 0001](../adr/0001-overlay-enforcement.md), research in [07](07-research-overlay-enforcement.md)):
 
 - **Mores** must hold whatever the model or an overlay says (commit header format, push approval,
-  review gate, main clone untouched, headless limits). They live in **config** (`team.yaml`, framework
+  review gate, main clone untouched, headless limits). They live in **config** (`folkways.yaml`, framework
   `settings.json`), change by PR, and are enforced by **mechanism**: `git-guard` and other hooks
   (§7.1), permission rules, `sync` and `doctor`. Overlays can't change them. The full list is in the ADR.
 - **Folkways** are everything else (templates, examples, tone, extra checks, commit body style). They
@@ -158,7 +186,7 @@ A skill's folkways = framework skill + team overlay + personal overlay, applied 
   reference file) and records the compiled and overlay checksums in the manifest. **An override of an
   unknown ID stops the sync.** After changing a team overlay, run `folkways sync`. `doctor` (not built
   yet) will flag a stale compile with `staleOverlays`.
-- **Step 0** of every framework skill is one shared, framework-written block: read `team.yaml` and
+- **Step 0** of every framework skill is one shared, framework-written block: read `folkways.yaml` and
   `.local/me.yaml`, then attach the personal overlay with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`
   on its own line, with `people/<handle>/overlays/<skill>/OVERLAY.md` as the read fallback (Copilot CLI,
   after compaction, preloaded subagent skills; [10](10-research-skill-at-imports.md)). `.local/me` is a
@@ -176,10 +204,11 @@ A skill's folkways = framework skill + team overlay + personal overlay, applied 
 
 ## 4. Config
 
-### 4.1 `team.yaml` (committed)
+### 4.1 `folkways.yaml` (committed)
 
 ```yaml
 # The framework version lives in package.json (pinned) and .folkways/manifest.json, not here.
+mode: team                     # team | solo (§2.3); solo has no team or members
 team: { name: Example Team, slug: example }
 members:                       # handle = people/<handle>/
   - { handle: alex, github: alex-gh, name: Alex Doe }
@@ -206,8 +235,9 @@ research:
     - { name: slack, kind: mcp, server: slack }
     - { name: web, kind: web }
 git:
-  commit_convention: angular   # type(scope): subject
-  scopes: [web-app, auth, ci]  # allowed module scopes; empty = any
+  commit_convention: angular   # angular | pattern | none
+  commit_pattern: ""           # Go (RE2) regex on the subject line; used when commit_convention: pattern
+  scopes: [web-app, auth, ci]  # angular only: allowed module scopes; empty = any
   branch_pattern: "{type}/{ticket}-{slug}"
   merge: squash
 review:
@@ -230,17 +260,26 @@ handoff:
 knowledge_audit:
   cadence: monthly
   tool: claude                 # claude | copilot (which CLI the Action runs)
+hooks:                         # every hook is on unless set to false here
+  git-guard: true
+  context-band: true
+  precompact: true
+  session-start: true
 ```
+
+`folkways.yaml` at the project root is what makes a repo configured (§2.3). A missing key takes the
+default shown; a missing `git.commit_convention` is `angular`. `review.trigger: on-demand` turns the
+review gate off; there's no separate key for it.
 
 ### 4.2 `.local/me.yaml` (gitignored, per machine)
 
 ```yaml
-handle: alex
+handle: alex                           # team mode only; solo repos have no handle
 projects_dir: /Users/alex/projects     # absolute; `~` is not reliably expanded
 tool: claude                           # claude | copilot (default for `folkways run`)
 review:
   trigger: pre-push                    # may only tighten the team's value
-models: {}                             # optional override of team.yaml models
+models: {}                             # optional override of folkways.yaml models
 notifications: { slack_user: "@alex" }
 ```
 
@@ -268,8 +307,8 @@ and attaches personal additions (§3.2); writes only after approval; succinct ou
 
 | Skill | From | Changes |
 |---|---|---|
-| `ticket` | beta team's ticket skill | Tracker from `team.yaml`. Team templates and examples → `overlays/ticket/`. Framework ships generic templates + synthetic examples. Drafts go to the effort folder, else `people/<h>/inbox/` (drop `.agents/tickets`). Adds: tables where useful, call out gotchas. |
-| `adr` | `adr` | Method + default template (Issue → Context → Decision → Options → Consequences) + synthetic examples. Targets, group label, reviewers from `team.yaml`; gold-standard examples → `overlays/adr/`. Confluence and `docs/adr/NNNN-*.md`. Architecture knowledge section: **later** (dedicated session). |
+| `ticket` | beta team's ticket skill | Tracker from `folkways.yaml`. Team templates and examples → `overlays/ticket/`. Framework ships generic templates + synthetic examples. Drafts go to the effort folder, else `people/<h>/inbox/` (drop `.agents/tickets`). Adds: tables where useful, call out gotchas. |
+| `adr` | `adr` | Method + default template (Issue → Context → Decision → Options → Consequences) + synthetic examples. Targets, group label, reviewers from `folkways.yaml`; gold-standard examples → `overlays/adr/`. Confluence and `docs/adr/NNNN-*.md`. Architecture knowledge section: **later** (dedicated session). |
 | `session-close` | `session-close` | Homes: `knowledge/` (by PR), `state/`, effort `00-STATUS.md`, overlays, `people/<h>/inbox/`. Lists all side quests found. Claude auto-memory stays optional. |
 | `knowledge-audit` | `knowledge-audit` | Tracker `state/knowledge-audit.md`. Headless mode = open a PR of proposals (§7.4), not a log block. |
 
@@ -279,11 +318,11 @@ and attaches personal additions (§3.2); writes only after approval; succinct ou
 
 | Skill | Purpose | Output |
 |---|---|---|
-| `setup` | Interview a team lead and write `team.yaml`, first `state/` and README files | `team.yaml`, PR |
+| `setup` | Interview a team lead and write `folkways.yaml`, first `state/` and README files | `folkways.yaml`, PR |
 | `onboard` | Set up one person on one machine (§8.2) | `.local/me.yaml`, `people/<h>/`, tool access |
 | `start` | Session start: resume (read `00-STATUS.md` → git state → confirm next steps) or new (ticket/docs → research → create `00-STATUS.md`) | `00-STATUS.md` |
 | `status` | Update an effort's `00-STATUS.md` at milestones; team roll-up and standup from `efforts/*/00-STATUS.md` and `state/`; promote an effort (`git mv` to `efforts/`) | status docs |
-| `research` | Source order from `team.yaml`; clone rules; tool fallback = ask; subagents cheap-first; Opus re-check triggers | `NN-<topic>.md` with confidence and SHAs read |
+| `research` | Source order from `folkways.yaml`; clone rules; tool fallback = ask; subagents cheap-first; Opus re-check triggers | `NN-<topic>.md` with confidence and SHAs read |
 | `review` | Code review method (round 3): intent first, verify by running, verdict + findings table, Conventional Comments | `NN-review-<sha7>.md` in the effort; with no effort, `people/<h>/inbox/<date>-review-<sha7>.md` |
 | `commit` | Angular commit with module scope; branch naming | commit |
 | `pr` | Requires a review covering HEAD; squash-title rules; draft vs ready; asks before push | PR (draft if headless) |
@@ -305,15 +344,27 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 |---|---|---|---|
 | `context-band` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
 | `precompact` | `PreCompact` | Logs a missed band to `.local/`. | yes |
-| `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". Reminds the `start` procedure. | yes |
-| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message format (Angular, allowed scope). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
+| `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". Reminds the `start` procedure. Unconfigured repo: the one-time setup offer (below). | yes |
+| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message per `git.commit_convention` (Angular with allowed scope, `commit_pattern`, or nothing). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only). | yes |
+
+**Config gates every hook.** In an unconfigured repo (§2.3) every hook prints nothing and writes nothing
+in the repo. In a configured one, a hook set to `false` under `hooks:` prints nothing and writes nothing.
+
+**One-time setup offer.** In an unconfigured repo, `session-start` looks up the repo (the git top level of
+the project dir, else the project dir) in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered`, one
+absolute path per line. If it's absent, the hook appends it and injects one line:
+
+> folkways isn't set up in this repo. Run the `setup` skill to set it up, or ignore this; it won't be shown again here.
+
+…naming the skill as the plugin does (`folkways:setup`). If the file can't be read or written, no offer:
+silence beats repeating. The hook never writes inside the repo.
 
 Push approval itself comes from a permission rule: `"ask": ["Bash(git push:*)"]` in `.claude/settings.json`.
 
 **Hook command ([ADR 0002](../adr/0002-hook-runtime.md)):** `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>`. It runs a Go
 binary from a `@folkways/hooks-<os>-<cpu>` optional dependency of `@folkways/cli`; pnpm teams set
 `publicHoistPattern: ["@folkways/hooks-*"]`. The relative form breaks in Claude Code, whose hook cwd follows the Bash
-tool's `cd` ([08 §1](08-research-hook-runtime.md)). Hooks read `team.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd, and
+tool's `cd` ([08 §1](08-research-hook-runtime.md)). Hooks read `folkways.yaml` from `CLAUDE_PROJECT_DIR`, else the cwd, and
 always exit 0: Copilot CLI denies the tool call when a `preToolUse` hook exits nonzero. Behavior details and output shapes:
 the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.md) ([ADR 0002](../adr/0002-hook-runtime.md)).
 
@@ -337,9 +388,10 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
   `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`.
 - `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard` blocks the push
   until a review for HEAD exists. `on-demand`: never automatic.
-- A review covers HEAD when a file under `efforts/**` or `people/<handle>/work/**` has frontmatter
-  `sha:` equal to the target repo's HEAD, or a file `people/<handle>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
-  has `<sha7>` equal to the first 7 characters of HEAD.
+- A review covers HEAD when a file under `efforts/**` or `<personal root>/work/**` has frontmatter
+  `sha:` equal to the target repo's HEAD, or a file `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
+  has `<sha7>` equal to the first 7 characters of HEAD. The personal root is `people/<handle>/` in a
+  team repo and the repo root in a solo repo (§2.3).
 
 ### 7.4 Knowledge audit (GitHub Action)
 
@@ -359,7 +411,7 @@ destructive actions, `main`, external systems. Judgement calls are flagged in th
 
 1. `npx @folkways/cli init example-team` (or `pnpm dlx …`) → scaffold + install + sync + first commit. No framework clone
    needed (works behind a company npm mirror).
-2. Open Claude Code or Copilot CLI in the new repo; run `setup`. It interviews for `team.yaml` fields,
+2. Open Claude Code or Copilot CLI in the new repo; run `setup`. It interviews for `folkways.yaml` fields,
    moves any existing team material into `overlays/` or team `skills/`, writes READMEs.
 3. Push to a new GitHub repo; add the audit secret; protect `main` (linear history).
 
@@ -383,6 +435,15 @@ feature branch; the main agent merges. The main clone's checkout is never change
 
 `npx folkways upgrade 1.1.0` → review the branch diff (framework files only) → PR → merge. Or merge a
 Dependabot/Renovate bump after running `folkways sync` on its branch. Teammates reinstall after pulling.
+
+### 8.5 Solo setup (plugin, once per repo)
+
+1. Install the plugin; open a session in the repo. With no `folkways.yaml`, the first session shows the
+   setup offer once (§7.1); later sessions are silent.
+2. Run `setup`. It asks solo or team first. Solo: tracker, docs, commit format, review trigger, context
+   bands, which hooks are off. It checks the root folders (§2.3) and writes `folkways.yaml` with
+   `mode: solo`; nothing else until first use.
+3. Commit `folkways.yaml` on approval. From the next session, the plugin runs per the config.
 
 ## 9. Open and deferred
 
