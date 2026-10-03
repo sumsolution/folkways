@@ -168,6 +168,9 @@ func checkPush(dir string, cfg team.Config) string {
 	if cfg.ReviewTrigger() != "pre-push" {
 		return ""
 	}
+	if top, err := gitOut(dir, "rev-parse", "--show-toplevel"); err == nil && sameDir(top, cfg.Dir) {
+		return "" // the brain repo itself: knowledge goes by PR, state and work by direct push
+	}
 	head, err := gitOut(dir, "rev-parse", "HEAD")
 	if err != nil || head == "" {
 		return "" // not a repo we can read: fail open

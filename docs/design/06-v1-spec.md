@@ -346,7 +346,7 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 | `context-band` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
 | `precompact` | `PreCompact` | Logs a missed band to `.local/`. | yes |
 | `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". Reminds the `start` procedure. Unconfigured repo: the one-time setup offer (below). | yes |
-| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message per `git.commit_convention` (Angular with allowed scope, `commit_pattern`, or nothing). `git push`: requires a review file for HEAD when trigger is `pre-push`. Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only), except in the folkways repo itself (the one holding `folkways.yaml`). | yes |
+| `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message per `git.commit_convention` (Angular with allowed scope, `commit_pattern`, or nothing). `git push`: requires a review file for HEAD when trigger is `pre-push`, except a push of the folkways repo itself (§7.3). Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only), except in the folkways repo itself (the one holding `folkways.yaml`). | yes |
 
 **Config gates every hook.** In an unconfigured repo (§2.3) every hook prints nothing and writes nothing
 in the repo. In a configured one, a hook set to `false` under `hooks:` prints nothing and writes nothing.
@@ -391,7 +391,12 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
 - Output: `<effort>/NN-review-<sha7>.md` with frontmatter `sha: <full SHA>`. With no effort:
   `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`.
 - `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard` blocks the push
-  until a review for HEAD exists. `on-demand`: never automatic.
+  of a project repo until a review for HEAD exists. A push of the brain repo itself (the git top level
+  holding `folkways.yaml`) is never gated: its direct pushes (§2.2: `state/`, `efforts/`, the personal
+  root) carry no project code, and knowledge and overlays go by PR, where people review them.
+  The exemption is per repo, not per path: a direct push of `knowledge/` or `overlays/` is held only by
+  the push approval and branch protection, not by `git-guard`. It matches the top level exactly, so a
+  repo nested in the brain repo's tree and a `git worktree` of the brain repo are still gated. `on-demand`: never automatic.
 - A review covers HEAD when a file under `efforts/**` or `<personal root>/work/**` has frontmatter
   `sha:` equal to the target repo's HEAD, or a file `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
   has `<sha7>` equal to the first 7 characters of HEAD. The personal root is `people/<handle>/` in a

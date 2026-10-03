@@ -1,18 +1,12 @@
 {
-  "description": "a review of the previous commit does not cover HEAD",
+  "description": "a git brain repo does not exempt a project worktree pushed from it",
   "env": {
     "commits": [
       {
         "files": {
-          "src/app.md": "code\n"
+          "state/now.md": "state\n"
         },
-        "message": "feat: add app"
-      },
-      {
-        "files": {
-          "people/alex/inbox/2026-09-29-review-${COMMIT_1_7}.md": "review\n"
-        },
-        "message": "docs: review"
+        "message": "docs(state): update"
       }
     ]
   },
@@ -26,7 +20,7 @@
         "hook_event_name": "PreToolUse",
         "tool_name": "Bash",
         "tool_input": {
-          "command": "git push -u origin HEAD",
+          "command": "git -C ${WORKTREE} push origin HEAD",
           "description": "Run a command"
         },
         "tool_use_id": "toolu_01"
