@@ -34,7 +34,7 @@ folkways/
 │   │   ├── package.json         #   bin: folkways; engines: node >=24; folkways.hooks: pinned hooks version
 │   │   ├── src/                 #   TypeScript. Compiled to dist/ by tsc on publish
 │   │   │   └── cli.ts           #     init, sync, upgrade, hook, review, run, doctor
-│   │   ├── assets/              #   text files copied into team repos by `sync`
+│   │   ├── assets/              #   text files copied into team repos by `sync`; copied from packages/content at pack time
 │   │   │   ├── instructions.md  #     imported by the team AGENTS.md (§5)
 │   │   │   ├── skills/<name>/   #     SKILL.md + references/
 │   │   │   ├── prompts/*.md     #     fixed prompts for headless runs (review, knowledge-audit)

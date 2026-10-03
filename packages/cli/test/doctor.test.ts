@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { doctor, hookValueFindings } from '../src/doctor.ts';
 import { HOOK_BIN, HOOK_NAMES } from '../src/hooks.ts';
-import { addFrameworkContent, json, makePackage, makeTeam, put, read, REPO, tmp } from './helpers.ts';
+import { addFrameworkContent, json, makePackage, makeTeam, put, read, ASSETS, tmp } from './helpers.ts';
 
 /** What `npm install` leaves: the CLI at `version` and the hook binary. */
 function install(team: string, version = '1.0.0'): void {
@@ -187,7 +187,7 @@ describe('doctor', () => {
 });
 
 it('HOOK_NAMES are the hooks assets/settings.json wires', () => {
-  const commands = JSON.stringify(json(join(REPO, 'assets/settings.json')).hooks);
+  const commands = JSON.stringify(json(join(ASSETS, 'settings.json')).hooks);
   const wired = [...commands.matchAll(/folkways-hook ([a-z-]+)/g)].map((m) => m[1]);
   expect([...new Set(wired)].sort()).toEqual([...HOOK_NAMES]);
 });

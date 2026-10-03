@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
 import { FRAMEWORK_HOOK_PREFIX, isFrameworkHook, mergeSettings } from '../src/settings.ts';
-import { REPO, json } from './helpers.ts';
+import { ASSETS, json } from './helpers.ts';
 
 const ours = (name: string) => ({ type: 'command', command: `${FRAMEWORK_HOOK_PREFIX}${name}` });
 const legacy = (name: string) => ({ type: 'command', command: `node_modules/.bin/folkways hook ${name}` });
@@ -113,7 +113,7 @@ describe('mergeSettings with unexpected shapes', () => {
 });
 
 describe('assets/settings.json', () => {
-  const settings = json(join(REPO, 'assets/settings.json'));
+  const settings = json(join(ASSETS, 'settings.json'));
   const entries = Object.entries(settings.hooks as Record<string, { matcher?: string; hooks: { command: string }[] }[]>).flatMap(
     ([event, groups]) => groups.flatMap((g) => g.hooks.map((h) => ({ event, matcher: g.matcher, command: h.command }))),
   );

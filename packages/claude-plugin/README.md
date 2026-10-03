@@ -8,9 +8,9 @@ takes another one.
 
 | In `dist/` | From |
 |---|---|
-| `skills/` | `packages/cli/assets/skills/`, rewritten for the plugin: `folkways:<name>` skill names, `${CLAUDE_PLUGIN_ROOT}` reference paths |
-| `instructions.md` | `packages/cli/assets/instructions.md`, rewritten the same way; added as context at session start |
-| `hooks/hooks.json` | generated from `packages/cli/assets/settings.json`, so the plugin runs the same hooks on the same events |
+| `skills/` | `packages/content/skills/`, rewritten for the plugin: `folkways:<name>` skill names, `${CLAUDE_PLUGIN_ROOT}` reference paths |
+| `instructions.md` | `packages/content/instructions.md`, rewritten the same way; added as context at session start |
+| `hooks/hooks.json` | generated from `packages/content/settings.json`, so the plugin runs the same hooks on the same events |
 | `hooks/run.sh`, `hooks/bin/` | the runner and `folkways-hook` for darwin and linux, arm64 and x64. The runner sets `FOLKWAYS_SKILL_NAMESPACE=folkways`, so the hooks name skills as `folkways:<name>` |
 | `.claude-plugin/plugin.json` | the manifest, at this package's version |
 | `.claude-plugin/marketplace.json` | a `folkways-dev` marketplace for dogfooding the build in place; not published |

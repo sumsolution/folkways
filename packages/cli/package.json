@@ -27,7 +27,7 @@
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "prepack": "pnpm run build"
+    "prepack": "node scripts/copy-content.ts && pnpm run build"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
