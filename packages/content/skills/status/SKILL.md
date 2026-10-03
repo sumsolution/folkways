@@ -8,22 +8,12 @@ description: Updates an effort's 00-STATUS.md at a milestone, rolls up team stat
 Status lives in files, not in heads: every effort has a `00-STATUS.md`, and team views are read from
 those files and `state/`. This skill keeps them current and reads them back.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `members`, `tracker`.
+- `.local/me.yaml`: `handle`.
 
-1. `folkways.yaml`: `members`, `tracker`.
-2. `.local/me.yaml`: `handle` (team repos only).
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/status/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/status/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 Then pick the task: [Update](#update), [Roll-up](#roll-up), or [Promote](#promote).
 

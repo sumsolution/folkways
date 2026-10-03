@@ -9,22 +9,12 @@ Tests come first. A bug gets a failing test that reproduces it before any fix; a
 its acceptance criteria before the code. Tests describe behavior a user or caller can observe, so they
 survive refactors and fail when the code is wrong.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `repos` (default branches), `git.scopes`.
+- `.local/me.yaml`: `projects_dir`.
 
-1. `folkways.yaml`: `repos` (default branches), `git.scopes`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/tests/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/tests/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## The law
 

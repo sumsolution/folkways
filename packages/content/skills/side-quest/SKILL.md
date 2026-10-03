@@ -8,22 +8,12 @@ description: Parks an out-of-scope finding as a short note or ticket draft so th
 Out-of-scope findings don't derail the task, and they don't get lost. Write one down when found,
 say where it went, and move on. Session close lists them all again.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `tracker` (for the ticket key format).
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `tracker` (for the ticket key format).
-2. `.local/me.yaml`: `handle` (team repos only).
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/side-quest/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/side-quest/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 

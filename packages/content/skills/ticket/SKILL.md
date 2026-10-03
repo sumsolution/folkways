@@ -9,22 +9,12 @@ Write tickets a developer who wasn't in the session can pick up weeks later and 
 what was meant. Templates give a ticket its shape; the writing rules give it its length and altitude,
 and the rules win. A ticket that fills three sections well beats one that fills every section.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `tracker` (`type`, `base_url`, `project_key`), `members`, `repos`.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `tracker` (`type`, `base_url`, `project_key`), `members`, `repos`.
-2. `.local/me.yaml`: `handle` (team repos only).
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/ticket/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/ticket/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 

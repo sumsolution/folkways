@@ -10,23 +10,13 @@ every project. It holds no project code; code changes happen in worktrees of the
 a new repo for one person. Team: a scaffolded team repo made into this team's. Everything
 repo-specific lives in `folkways.yaml`, `overlays/` and team skills, never in framework files.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: missing in a new repo (the plugin case); after `folkways init` the scaffold's example
+  values show every field, and this skill replaces them.
+- `.local/me.yaml`: `handle` (the lead may not have one yet; carry on without it).
 
-1. `folkways.yaml`: missing in a new repo (the plugin case); after `folkways init` the scaffold's example
-   values show every field, and this skill replaces them.
-2. `.local/me.yaml`: `handle` (the lead may not have one yet; carry on without it).
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/setup/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/setup/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 

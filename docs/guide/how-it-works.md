@@ -38,7 +38,6 @@ flowchart LR
 | `.claude/settings.json` hook entries the framework owns | framework | replaces those entries; leaves every other key and entry alone (no hooks ship yet) |
 | `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; never removes |
 | `AGENTS.md` | team | never writes after `init`; warns if the `@.folkways/instructions.md` line is missing |
-| `.local/me` (link to `people/<handle>/`) | person | creates the link or repoints it to `people/<handle>/`; removes a link to someone else only when your own folder is missing, and warns |
 | everything else: `folkways.yaml`, `overlays/`, `people/`, team skills, `package.json` | team or person | never writes |
 
 The team `AGENTS.md` pulls in the framework rules with one line, `@.folkways/instructions.md`. Claude
@@ -58,8 +57,6 @@ Code and Copilot CLI both expand `@` imports there. `CLAUDE.md` is just `@AGENTS
    overriding a section and its subsection, stops the sync before any write. The manifest records a
    checksum per overlay.
 4. **Writes.** Replaces framework files, merges `.claude/settings.json`, writes the new manifest.
-5. **Lints and links.** Personal overlays that try to override get a warning. `.local/me` is pointed at
-   `people/<handle>/` so skills can attach your overlay. Warnings don't fail the sync.
 
 It never commits. You look at `git status`, then commit. Refusing to clobber an edit is the whole point:
 customizations belong in overlays, where upgrades can't reach them. Rerun `sync` after you change a

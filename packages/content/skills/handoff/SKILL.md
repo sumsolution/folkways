@@ -8,22 +8,12 @@ description: Writes the effort's 00-STATUS.md so a fresh session can resume cold
 The file system is the session's memory. A handoff writes down what only this session knows, so the
 next session starts from the status doc and git instead of from a summary.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `handoff.bands`.
+- `.local/me.yaml`: `projects_dir`.
 
-1. `folkways.yaml`: `handoff.bands`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/handoff/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/handoff/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## When
 
