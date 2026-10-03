@@ -1,0 +1,20 @@
+{
+  "name": "@folkways/content",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The framework's content: skills, instructions, prompts, settings fragment, workflows. Distributed by @folkways/cli and @folkways/claude-plugin",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.0",
+    "vitest": "^5.0.0"
+  }
+}

@@ -5,8 +5,11 @@ import { afterEach } from 'vitest';
 import { listFiles } from '../src/files.ts';
 import { git } from '../src/git.ts';
 import { init } from '../src/init.ts';
+import { assetsDir } from '../src/package.ts';
 
 export const REPO = resolve(import.meta.dirname, '..');
+/** The real framework content: `assets/` once packed, else `packages/content`. */
+export const ASSETS = assetsDir(REPO);
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -28,10 +31,8 @@ export function tmp(): string {
 export function makePackage(version: string): string {
   const pkg = join(tmp(), 'pkg');
   mkdirSync(pkg);
-  const content = ['skills', 'prompts', 'workflows'].map((d) => join(REPO, 'assets', d));
-  for (const d of ['assets', 'templates', 'src']) {
-    cpSync(join(REPO, d), join(pkg, d), { recursive: true, filter: (src) => !content.includes(src) });
-  }
+  for (const f of ['instructions.md', 'settings.json']) cpSync(join(ASSETS, f), join(pkg, 'assets', f));
+  for (const d of ['templates', 'src']) cpSync(join(REPO, d), join(pkg, d), { recursive: true });
   writeFileSync(join(pkg, 'package.json'), JSON.stringify({ name: '@folkways/cli', version, type: 'module' }));
   return pkg;
 }

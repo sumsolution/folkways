@@ -1,11 +1,21 @@
-import { cpSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { listFiles } from '../src/files.ts';
-import { makePackage, makeTeam, read, REPO } from './helpers.ts';
+
+const REPO = resolve(import.meta.dirname, '..');
+const read = (path: string): string => readFileSync(path, 'utf8');
+
+/** Files under `dir`, as sorted POSIX paths relative to it. Empty if `dir` is missing. */
+function listFiles(dir: string): string[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((rel) => statSync(join(dir, rel)).isFile())
+    .map((rel) => rel.split(sep).join('/'))
+    .sort();
+}
 
 // Rules from docs/skill-authoring.md. Limits from docs/design/09-research-skill-authoring.md.
-const SKILLS_DIR = join(REPO, 'assets/skills');
+const SKILLS_DIR = join(REPO, 'skills');
 const REQUIRED = ['commit', 'handoff', 'pr', 'review', 'start'];
 const NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const NAME_MAX = 64;
@@ -200,8 +210,8 @@ describe('solo brain repo', () => {
   });
 });
 
-describe('assets/instructions.md', () => {
-  const text = read(join(REPO, 'assets/instructions.md'));
+describe('instructions.md', () => {
+  const text = read(join(REPO, 'instructions.md'));
 
   it('points an unconfigured repo to the brain repo', () => {
     expect(text).toMatch(/No `folkways\.yaml`[^]*?brain repo/);
@@ -228,28 +238,5 @@ describe('shared reference files', () => {
   it.each([['references/status-template.md', ['start', 'handoff', 'status']]] as const)('%s is identical in %j', (file, owners) => {
     const [first, ...rest] = owners.map((s) => read(join(SKILLS_DIR, s, file)));
     for (const other of rest) expect(other).toBe(first);
-  });
-});
-
-/** A package copy with this repo's real skills and prompts (`makePackage` leaves them out). */
-function packageWithSkills(): string {
-  const pkg = makePackage('0.1.0');
-  for (const d of ['skills', 'prompts']) cpSync(join(REPO, 'assets', d), join(pkg, 'assets', d), { recursive: true });
-  return pkg;
-}
-
-describe('sync', () => {
-  it('copies every skill file into .claude/skills/ unchanged', () => {
-    const team = makeTeam(packageWithSkills());
-    const files = listFiles(SKILLS_DIR).filter((f) => f.includes('/'));
-    expect(files.length).toBeGreaterThan(0);
-    for (const f of files) {
-      expect(read(join(team, '.claude/skills', f)), f).toBe(read(join(SKILLS_DIR, f)));
-    }
-  });
-
-  it('copies the review prompt into .folkways/prompts/', () => {
-    const team = makeTeam(packageWithSkills());
-    expect(read(join(team, '.folkways/prompts/review.md'))).toBe(read(join(REPO, 'assets/prompts/review.md')));
   });
 });

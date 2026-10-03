@@ -9,8 +9,8 @@ import { dirname, join, resolve } from 'node:path';
 
 const PACKAGE = resolve(import.meta.dirname, '..');
 const REPO = resolve(PACKAGE, '..', '..');
-/** The CLI's assets: the files `sync` copies into team repos. Read as data, never imported. */
-export const ASSETS = join(REPO, 'packages', 'cli', 'assets');
+/** The framework content (`@folkways/content`): the files `sync` copies into team repos. Read as data, never imported. */
+export const ASSETS = join(REPO, 'packages', 'content');
 /** Where `@folkways/hooks` builds its platform packages by default. */
 const HOOKS_BUILD = join(REPO, 'packages', 'hooks', 'npm');
 
@@ -20,7 +20,7 @@ export const HOOK_TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux
 export const hostTarget = (): string | undefined =>
   HOOK_TARGETS.find((t) => t === `${process.platform}-${process.arch}`);
 
-/** The framework skills: one folder each under the CLI's assets. */
+/** The framework skills: one folder each under the framework content. */
 export function frameworkSkills(): string[] {
   return readdirSync(join(ASSETS, 'skills'), { withFileTypes: true })
     .filter((e) => e.isDirectory())
@@ -78,7 +78,7 @@ export function pluginHooks(settings: { hooks: Record<string, HookGroup[]> }): H
     }));
     hooks[event] = [...(hooks[event] ?? []), ...mapped];
   }
-  return { description: 'Generated from packages/cli/assets/settings.json by @folkways/claude-plugin', hooks };
+  return { description: 'Generated from packages/content/settings.json by @folkways/claude-plugin', hooks };
 }
 
 const json = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;

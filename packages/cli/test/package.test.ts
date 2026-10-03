@@ -1,7 +1,8 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { hooksVersion } from '../src/package.ts';
-import { REPO, json } from './helpers.ts';
+import { assetsDir, hooksVersion } from '../src/package.ts';
+import { REPO, json, put, tmp } from './helpers.ts';
 
 // ADR 0003: the CLI pins one hooks version, in its own package.json, independent of its own version.
 describe('hooksVersion', () => {
@@ -16,5 +17,25 @@ describe('hooksVersion', () => {
     expect(pin.every(Number.isInteger)).toBe(true);
     const cmp = pin.map((n, i) => n - current[i]!).find((d) => d !== 0) ?? 0;
     expect(cmp, `pin ${hooksVersion()} is ahead of packages/hooks`).toBeLessThanOrEqual(0);
+  });
+});
+
+// A packed CLI carries `assets/`; in the workspace the content lives in the sibling `packages/content`.
+describe('assetsDir', () => {
+  it('prefers the package\'s own assets/', () => {
+    const pkg = join(tmp(), 'cli');
+    put(join(pkg, 'assets/instructions.md'), 'packed\n');
+    put(join(pkg, '../content/instructions.md'), 'sibling\n');
+    expect(assetsDir(pkg)).toBe(join(pkg, 'assets'));
+  });
+
+  it('falls back to the sibling content package', () => {
+    const pkg = join(tmp(), 'cli');
+    put(join(pkg, 'package.json'), '{}');
+    expect(assetsDir(pkg)).toBe(join(pkg, '..', 'content'));
+  });
+
+  it('finds the real content from this checkout', () => {
+    expect(existsSync(join(assetsDir(), 'instructions.md'))).toBe(true);
   });
 });

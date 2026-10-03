@@ -17,7 +17,7 @@ import { fsOps, listFiles, pruneEmptyDirs, sha256, sha256Text } from './files.ts
 import { hookWarnings } from './hooks.ts';
 import { MANIFEST, type Manifest, readManifest, writeManifest } from './manifest.ts';
 import { compileSkillFiles, type LintFinding, lintPersonalOverlay } from './overlays.ts';
-import { PACKAGE_ROOT, packageVersion } from './package.ts';
+import { assetsDir, PACKAGE_ROOT, packageVersion } from './package.ts';
 import { mergeSettings, type Settings } from './settings.ts';
 
 export const INSTRUCTIONS_IMPORT = '@.folkways/instructions.md';
@@ -36,7 +36,7 @@ const copyHash = (c: FileCopy): string => (c.content === undefined ? sha256(c.sr
 
 /** Every file `sync` copies from the package into a team repo. */
 export function assetMap(pkg: string): FileCopy[] {
-  const assets = join(pkg, 'assets');
+  const assets = assetsDir(pkg);
   const out: FileCopy[] = [{ src: join(assets, 'instructions.md'), dest: '.folkways/instructions.md' }];
   for (const f of listFiles(join(assets, 'prompts'))) {
     out.push({ src: join(assets, 'prompts', f), dest: `.folkways/prompts/${f}` });
@@ -53,7 +53,7 @@ export function assetMap(pkg: string): FileCopy[] {
 }
 
 export function skillNames(pkg: string): string[] {
-  const dir = join(pkg, 'assets', 'skills');
+  const dir = join(assetsDir(pkg), 'skills');
   if (!existsSync(dir)) return [];
   return readdirSync(dir, { withFileTypes: true })
     .filter((e) => e.isDirectory())
@@ -286,7 +286,7 @@ function mergedSettings(team: string, pkg: string): string {
       throw new FolkwaysError(`${path} is not valid JSON`);
     }
   }
-  const fragment = JSON.parse(readFileSync(join(pkg, 'assets/settings.json'), 'utf8')) as Settings;
+  const fragment = JSON.parse(readFileSync(join(assetsDir(pkg), 'settings.json'), 'utf8')) as Settings;
   return `${JSON.stringify(mergeSettings(current, fragment), null, 2)}\n`;
 }
 

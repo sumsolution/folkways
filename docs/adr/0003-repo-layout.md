@@ -157,7 +157,7 @@ yet. For now we record the seams, so today's work leaves them open:
 - **Core vs distribution.** The core is the content (skills, instructions, prompts) and the behaviour (the
   hook binary and its contract). The npm CLI syncing into a team repo is one distribution; a plugin is
   another. Each distribution is its own package, built from the same content, not a copy.
-- **Content stays in `packages/cli/assets/` for now.** Only `src/sync.ts` and `src/files.ts` may know that
+- **Content stays in `packages/cli/assets/` for now** (moved 2026-10-03, see the last update). Only `src/sync.ts` and `src/files.ts` may know that
   path. When a second distribution needs the content, it moves to its own package (`packages/skills/` or
   `packages/content/`), which independent versioning already allows.
 - **Harness adapters.** Harness specifics stay in named modules: payload shapes in
@@ -201,3 +201,9 @@ solo repo is a brain repo that holds no project code (plan 16, decision 6).
 - **Follow-ups, not in the restructure:** a JSON Schema for `team.yaml` and `.local/me.yaml`, used by the
   CLI to validate and by Go tests as fixtures, so the TypeScript and Go readers can't drift. CLI commands
   move under `src/commands/` when `review`, `run` and `doctor` land.
+
+**Update (2026-10-03).** The content moved to `packages/content/` (`@folkways/content`, private, never
+published), so the CLI and the plugin are both consumers of it. The CLI's `prepack` copies the content into
+`packages/cli/assets/` (gitignored), so the packed tarball is unchanged. In the workspace `src/package.ts`
+resolves the content as `assets/` if present, else the sibling `packages/content`. The follow-up above is
+closed.

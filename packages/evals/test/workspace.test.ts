@@ -16,7 +16,18 @@ describe('armPackage', () => {
   it('extracts the CLI package at a git ref', () => {
     const pkg = armPackage(repoRoot, 'HEAD', scratch());
     expect(existsSync(join(pkg, 'src/cli.ts'))).toBe(true);
-    expect(existsSync(join(pkg, 'assets/instructions.md'))).toBe(true);
+    expect(existsSync(join(pkg, '../content/instructions.md'))).toBe(true);
+  });
+
+  it('extracts a ref from before packages/content existed', () => {
+    const repo = scratch();
+    mkdirSync(join(repo, 'packages/cli/src'), { recursive: true });
+    writeFileSync(join(repo, 'packages/cli/src/cli.ts'), '');
+    const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.com' };
+    for (const args of [['init', '-q'], ['add', '-A'], ['commit', '-q', '-m', 'old']]) execFileSync('git', args, { cwd: repo, env });
+    const pkg = armPackage(repo, 'HEAD', scratch());
+    expect(existsSync(join(pkg, 'src/cli.ts'))).toBe(true);
+    expect(existsSync(join(pkg, '../content'))).toBe(false);
   });
 
   it('rejects a ref that is not a commit', () => {

@@ -23,7 +23,7 @@ function git(cwd: string, ...args: string[]): string {
 
 /**
  * The `packages/cli` directory for an arm: the working tree for `WORKTREE`, else extracted from
- * `ref` into `scratch`. Refs before the workspace move (ADR 0003) have no `packages/cli`.
+ * `ref` into `scratch` (with `packages/content` beside it, if the ref has one). Refs before the workspace move (ADR 0003) have no `packages/cli`.
  */
 export function armPackage(repoRoot: string, ref: string, scratch: string): string {
   if (ref === WORKTREE) return join(repoRoot, 'packages/cli');
@@ -38,8 +38,14 @@ export function armPackage(repoRoot: string, ref: string, scratch: string): stri
   if (!existsSync(join(dest, 'packages/cli/src/cli.ts'))) {
     mkdirSync(dest, { recursive: true });
     let tar: Buffer;
+    // The CLI reads the framework content from its sibling `packages/content`; refs before that move have none.
+    const paths = ['packages/cli'];
     try {
-      tar = execFileSync('git', ['archive', '--format=tar', sha, 'packages/cli'], {
+      git(repoRoot, 'cat-file', '-e', `${sha}:packages/content`);
+      paths.push('packages/content');
+    } catch {}
+    try {
+      tar = execFileSync('git', ['archive', '--format=tar', sha, ...paths], {
         cwd: repoRoot,
         env: GIT_ENV,
         maxBuffer: 1 << 28,
