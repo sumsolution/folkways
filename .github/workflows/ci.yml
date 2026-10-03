@@ -4,6 +4,11 @@ on:
   pull_request:
   push:
     branches: [main]
+    # Pull requests already skip every job for a docs-only change (no filter matches).
+    paths-ignore:
+      - 'docs/**'
+      - 'research/**'
+      - '*.md'
 
 permissions:
   contents: read
@@ -88,7 +93,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -110,7 +115,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -177,8 +182,8 @@ jobs:
       - run: pnpm --filter "@folkways/claude-plugin..." run build
 
   # Packs the CLI and the four platform packages, installs them with npm and pnpm, and runs the hook
-  # contract suite against the installed binary (ADR 0002). darwin-x64 ships but has no runner here: Intel
-  # Macs end with macOS 26, and so does GitHub's last Intel image. linux-x64 covers the amd64 build.
+  # contract suite against the installed binary (ADR 0002). the darwin packages ship but have no runner here:
+  # macOS runners bill at 10x Linux. linux-x64 and linux-arm64 cover the amd64 and arm64 builds.
   smoke:
     name: smoke (${{ matrix.os }})
     needs: changes
@@ -188,7 +193,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
