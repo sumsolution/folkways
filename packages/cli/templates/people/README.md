@@ -4,7 +4,6 @@ One folder per member, named by the `handle` in `folkways.yaml`. The `onboard` s
 
 | Path | Holds |
 |---|---|
-| `overlays/<skill>/OVERLAY.md` | Personal additions to a skill (add only) |
 | `inbox/` | Side quests and ticket drafts with no effort |
 | `work/<KEY>-<slug>/` | Personal efforts; promote with `git mv` to `efforts/` |
 

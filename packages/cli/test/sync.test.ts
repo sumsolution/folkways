@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FolkwaysError } from '../src/errors.ts';
@@ -338,70 +338,6 @@ describe('sync compiles team overlays (ADR 0001)', () => {
     expect(sync(team, next).warnings).toEqual([
       'overlays/nope/OVERLAY.md: no framework skill named nope; the overlay is not applied',
     ]);
-  });
-
-  it('warns about personal overlays that try to override', () => {
-    put(join(team, 'people/alex/overlays/start/OVERLAY.md'), '## Override {#format}\n\nmine\n');
-    expect(sync(team, next).warnings).toEqual([
-      'people/alex/overlays/start/OVERLAY.md: personal overlays may only add; remove ## Override {#format}',
-    ]);
-  });
-});
-
-describe('sync links .local/me to the person\'s folder', () => {
-  const link = () => join(team, '.local/me');
-
-  it('links people/<handle> from .local/me.yaml', () => {
-    put(join(team, '.local/me.yaml'), 'handle: alex # me\nprojects_dir: /tmp\n');
-    mkdirSync(join(team, 'people/alex/overlays'), { recursive: true });
-    sync(team, next);
-    expect(lstatSync(link()).isSymbolicLink()).toBe(true);
-    expect(readlinkSync(link())).toBe('../people/alex');
-  });
-
-  it('repoints a link to another handle', () => {
-    put(join(team, '.local/me.yaml'), 'handle: "sam"\n');
-    mkdirSync(join(team, 'people/sam'), { recursive: true });
-    symlinkSync('../people/alex', link());
-    sync(team, next);
-    expect(readlinkSync(link())).toBe('../people/sam');
-  });
-
-  it('leaves a correct link alone', () => {
-    put(join(team, '.local/me.yaml'), 'handle: alex\n');
-    mkdirSync(join(team, 'people/alex'), { recursive: true });
-    symlinkSync('../people/alex', link());
-    const before = lstatSync(link()).ino;
-    sync(team, next);
-    expect(lstatSync(link()).ino).toBe(before);
-  });
-
-  it('removes a link to another person when this handle has no folder, and warns', () => {
-    put(join(team, '.local/me.yaml'), 'handle: sam\n');
-    mkdirSync(join(team, 'people/alex'), { recursive: true });
-    symlinkSync('../people/alex', link());
-    expect(sync(team, next).warnings).toEqual([
-      "people/sam/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.",
-    ]);
-    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
-  });
-
-  it('does nothing without a handle or a people folder', () => {
-    sync(team, next);
-    expect(existsSync(link())).toBe(false);
-    put(join(team, '.local/me.yaml'), 'handle: alex\n');
-    sync(team, next);
-    expect(lstatSync(link(), { throwIfNoEntry: false })).toBeUndefined();
-  });
-
-  it('warns and leaves a real folder at .local/me', () => {
-    put(join(team, '.local/me.yaml'), 'handle: alex\n');
-    mkdirSync(join(team, 'people/alex'), { recursive: true });
-    put(join(team, '.local/me/keep.md'), 'mine\n');
-    expect(sync(team, next).warnings).toEqual([
-      '.local/me is not a symlink; skills attach personal overlays through it. Move it and rerun sync.',
-    ]);
-    expect(read(join(team, '.local/me/keep.md'))).toBe('mine\n');
   });
 });
 

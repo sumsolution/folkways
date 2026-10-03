@@ -14,5 +14,3 @@ additions are appended as `## Team additions`. Run it after changing an overlay 
 An override of an ID the skill doesn't have stops the sync. Inside an override, use `###` and deeper
 headings: a `##` heading ends the override. Don't override a section and one of its subsections. Rules that must hold whatever an overlay
 says belong in `folkways.yaml`, where hooks check them.
-
-Personal overlays live in `people/<handle>/overlays/<skill>/OVERLAY.md` and may only add.
