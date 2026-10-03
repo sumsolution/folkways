@@ -57,7 +57,7 @@ func TestLoadDir(t *testing.T) {
 }
 
 func TestSafeHandle(t *testing.T) {
-	cases := map[string]string{"alex": "alex", "": "", "..": "", "a/b": "", `a\b`: "", "../x": "", ".": "", "a..b": ""}
+	cases := map[string]string{"alex": "alex", "": "", "..": "", "a/b": "", `a\b`: "", "../x": "", ".": "", "a..b": "", "a b": "", "a\nb": "", "a\tb": ""}
 	for in, want := range cases {
 		var c Config
 		c.Me.Handle = in

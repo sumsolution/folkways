@@ -112,6 +112,11 @@ describe('framework skills', () => {
       if (!TEAM_ONLY.includes(skill)) expect(text).not.toContain('people/<handle>');
     });
 
+    it('names the personal root in Config when it uses <personal root> paths', () => {
+      const uses = markdownFiles(skill).some((f) => read(join(SKILLS_DIR, skill, f)).includes('<personal root>/'));
+      if (uses) expect(configSection(text)).toMatch(/personal root/i);
+    });
+
     it('says what it does headless and asks before writing', () => {
       expect(text).toMatch(/^## Headless\b/m);
       expect(text).toMatch(/approv/i);

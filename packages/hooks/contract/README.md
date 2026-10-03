@@ -139,14 +139,15 @@ folkways.yaml:
 ````
 
 - `<root>`: the personal root relative to the project dir, with `/` separators: `people/<handle>` in a team
-  repo, `.` when `mode: solo`, `none` in a team repo without a safe handle (missing, `.`, `..` or a separator).
+  repo, `.` when `mode: solo`, `none` in a team repo without a safe handle (missing, `.`, containing `..`, a separator or whitespace).
 - `<trigger>`: the effective `review.trigger` (the stricter of the two files, as `git-guard` uses it), or
   `none` when neither holds a known value.
 - A file larger than 4096 bytes is not printed: its section is the one line `<name>: over 4096 bytes, not
   shown. Read the file.` A missing `.local/me.yaml` is the line ``.local/me.yaml: missing. Run the `onboard`
   skill to create it.``, naming the skill as the plugin does (`folkways:onboard`).
+- A file that exists but can't be read (a directory, no permission) is the line `<name>: can't be read. Check the file.`
 - The derived values come from the hook's existing config reader; the files are printed as read, never
-  re-serialized.
+  re-serialized. A file holding a ```` ``` ```` line closes the fence early; accepted, as config files don't.
 
 In an unconfigured repo it makes the one-time offer instead. Key: the git top level of the project dir, else
 the project dir (absolute). When that key holds a `folkways.yaml` (a session in a subfolder of a configured repo): no offer, nothing recorded. Look it up in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered` (one path per

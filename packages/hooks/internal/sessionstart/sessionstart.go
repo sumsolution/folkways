@@ -14,8 +14,8 @@ import (
 	"github.com/sumsolution/folkways/packages/hooks/internal/team"
 )
 
-// Run injects the start reminder, plus a 00-STATUS.md update after a compaction. In an unconfigured repo it
-// offers setup once instead.
+// Run injects the start reminder, plus a 00-STATUS.md update after a compaction, then the config block.
+// In an unconfigured repo it offers setup once instead.
 func Run(p payload.Payload, cfg team.Config) {
 	if !cfg.Configured {
 		if offer(cfg.Dir) {
@@ -47,15 +47,17 @@ func configBlock(cfg team.Config) string {
 	return "\n\nfolkways config (from the session-start hook; skills use these values instead of reading the files):\n" +
 		"- personal root: " + root + "\n- review trigger: " + trigger + "\n\n" +
 		section(cfg.Dir, "folkways.yaml", "") + "\n\n" +
-		section(cfg.Dir, ".local/me.yaml", "Run the `"+skill.Name("onboard")+"` skill to create it.")
+		section(cfg.Dir, ".local/me.yaml", " Run the `"+skill.Name("onboard")+"` skill to create it.")
 }
 
 // section is one file as a yaml block, or a one-line pointer when it is missing or too large to print.
 func section(dir, name, ifMissing string) string {
 	raw, err := os.ReadFile(filepath.Join(dir, filepath.FromSlash(name)))
 	switch {
+	case os.IsNotExist(err):
+		return name + ": missing." + ifMissing
 	case err != nil:
-		return name + ": missing. " + ifMissing
+		return name + ": can't be read. Check the file."
 	case len(raw) > maxFile:
 		return name + ": over 4096 bytes, not shown. Read the file."
 	}

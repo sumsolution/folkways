@@ -1,5 +1,5 @@
 {
-  "description": "mode\\W+solo: the personal root is the repo root",
+  "description": "mode: solo: the personal root is the repo root",
   "env": {
     "team": {
       "mode": "solo"

@@ -12,6 +12,7 @@ next session starts from the status doc and git instead of from a summary.
 
 - `folkways.yaml`: `handoff.bands`.
 - `.local/me.yaml`: `projects_dir`.
+- The personal root, for `<personal root>` paths.
 
 The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 

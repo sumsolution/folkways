@@ -12,6 +12,7 @@ table, and what the choice costs. Show trade-offs honestly; don't pretend the ch
 ## Config
 
 - `folkways.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
+- The personal root, for `<personal root>` paths.
 
 The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 

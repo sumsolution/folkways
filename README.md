@@ -26,7 +26,7 @@ just files in a git repo your team already knows how to review.
   into the team repo, compiles team overlays into the skills and writes a checksummed manifest. If someone edited a framework file, sync stops
   and names it instead of overwriting it.
 - **Overlays, not forks.** Teams change framework skills through `overlays/<skill>/OVERLAY.md` (add or
-  override a section), which `sync` compiles in. People add their own in `people/<handle>/overlays/`.
+  override a section), which `sync` compiles in.
   Upgrades never touch them.
 - **Upgrades are PRs.** `folkways upgrade <version>` makes a branch, installs, syncs and commits. You
   read the diff like any other change.

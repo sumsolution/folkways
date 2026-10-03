@@ -89,7 +89,7 @@ So the review runs in a **fresh process**:
 - The reviewer reviews against intent first (ticket, design, knowledge), verifies by running, then writes
   a verdict and a findings table using [Conventional Comments](https://conventionalcomments.org/).
 - Output goes to `<effort>/NN-review-<sha7>.md`, with the full SHA in its frontmatter.
-- The team picks when it runs in `folkways.yaml` (`review.trigger`), and a person can differ in `me.yaml`:
+- The team picks when it runs in `folkways.yaml` (`review.trigger`), and a person can only tighten it in `me.yaml`:
 
 | Trigger | When |
 |---|---|

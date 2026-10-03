@@ -31,28 +31,25 @@ interface Heading {
   title: string;
 }
 
-/** Markdown headings outside fenced code blocks, and the line numbers inside fences (delimiters included). */
-function scan(lines: string[]): { headings: Heading[]; fenced: Set<number> } {
+/** Markdown headings outside fenced code blocks. */
+function scan(lines: string[]): { headings: Heading[] } {
   const headings: Heading[] = [];
-  const fenced = new Set<number>();
   let open: string | undefined;
   lines.forEach((line, i) => {
     const fence = FENCE.exec(line)?.[1];
     if (open !== undefined) {
-      fenced.add(i);
       // A fence closes on the same character, at least as long, with nothing after it.
       if (fence && fence[0] === open[0] && fence.length >= open.length && line.trim() === fence) open = undefined;
       return;
     }
     if (fence) {
       open = fence;
-      fenced.add(i);
       return;
     }
     const m = HEADING.exec(line);
     if (m) headings.push({ line: i, level: m[1]!.length, title: m[2]! });
   });
-  return { headings, fenced };
+  return { headings };
 }
 
 /** Index of the line that ends the section starting at `h` (next heading at the same or a higher level). */

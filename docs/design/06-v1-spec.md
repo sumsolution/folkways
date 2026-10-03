@@ -173,7 +173,7 @@ Rules come in two kinds ([ADR 0001](../adr/0001-overlay-enforcement.md), researc
 
 A skill's folkways = framework skill + team overlay, compiled by `folkways sync` into
 `.claude/skills/<skill>/` from `overlays/<skill>/OVERLAY.md` (+ any reference files). Personal overlays
-were removed in PR 2 ([ADR 0001](../adr/0001-overlay-enforcement.md), 2026-10-03 update): a person's
+were removed ([ADR 0001](../adr/0001-overlay-enforcement.md), 2026-10-03 update): a person's
 preferences go in their own user-level instructions, and a solo repo has no overlays until the plugin can
 compile them.
 
@@ -386,7 +386,7 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
 | `hook <name>` | run a hook by hand (§7.1); delegates to `folkways-hook <name>`, reads the payload on stdin |
 | `review [--repo <worktree>] [--effort <path>]` | §7.3 |
 | `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
-| `doctor` | checks the team repo and prints each problem with its fix; exits 1 on an error. Errors: `hooks:` values other than `true`/`false` (the binary reads YAML 1.1 words and empty values as booleans, other values leave the hook on), CLI not pinned to an exact version, not installed, or `node_modules` on another version than the pin (a failed `upgrade`), a sync from another version, edited framework files (`sync` refuses them), missing or invalid manifest, stale team overlay compiles, `.claude/settings.json` without `disableAllHooks: false` or a local `true` (ADR 0001 M11), a missing hook binary or pnpm hoisting. Warnings: the running CLI is neither the pinned nor the installed one (`npx` drift), unknown hook names, overlay wording hints, personal skills in `~/.claude/skills`, `~/.agents/skills` or `~/.copilot/skills` that shadow a repo skill (M10). A repo without `package.json` (set up by the plugin, no CLI) gets only the `hooks:` and shadowing checks. Tool access (MCP servers, CLIs) stays with the `onboard` skill |
+| `doctor` | checks the team repo and prints each problem with its fix; exits 1 on an error. Errors: `hooks:` values other than `true`/`false` (the binary reads YAML 1.1 words and empty values as booleans, other values leave the hook on), CLI not pinned to an exact version, not installed, or `node_modules` on another version than the pin (a failed `upgrade`), a sync from another version, edited framework files (`sync` refuses them), missing or invalid manifest, stale team overlay compiles, `.claude/settings.json` without `disableAllHooks: false` or a local `true` (ADR 0001 M11), a missing hook binary or pnpm hoisting. Warnings: the running CLI is neither the pinned nor the installed one (`npx` drift), unknown hook names, personal skills in `~/.claude/skills`, `~/.agents/skills` or `~/.copilot/skills` that shadow a repo skill (M10). A repo without `package.json` (set up by the plugin, no CLI) gets only the `hooks:` and shadowing checks. Tool access (MCP servers, CLIs) stays with the `onboard` skill |
 
 ### 7.3 Review gate
 

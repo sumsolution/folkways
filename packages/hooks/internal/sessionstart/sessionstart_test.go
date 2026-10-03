@@ -152,4 +152,12 @@ func TestConfigBlock(t *testing.T) {
 			t.Errorf("big: missing %q in %q", want, got)
 		}
 	}
+
+	unreadable := t.TempDir()
+	write(unreadable, "folkways.yaml", "mode: solo\n")
+	write(unreadable, ".local/me.yaml/x", "")
+	got = load(unreadable)
+	if want := ".local/me.yaml: can't be read. Check the file."; !strings.Contains(got, want) {
+		t.Errorf("unreadable: missing %q in %q", want, got)
+	}
 }
