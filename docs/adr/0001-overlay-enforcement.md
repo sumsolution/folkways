@@ -140,3 +140,22 @@ where side quests go.
   floor: `.local/me.yaml` can only tighten the team's value (spec §4.2).
 - **Open:** interactive bypass mode and push-ruleset behaviour on PR merges are untested
   ([07, unknowns](../design/07-research-overlay-enforcement.md#unknown-or-unverified)).
+
+**Update (2026-10-03): personal overlays removed.** The personal layer cost more than it gave. Every
+framework skill opened with a 16-line step 0 that read `folkways.yaml`, `.local/me.yaml` and the
+personal overlay on every run, the `.local/me` link had to be made by `onboard` and kept by `sync`, and
+M8 was detect-only: the lint misses a quiet contradiction, so the precedence paragraph was the real
+guard, and it is a folkway. No team asked for per-person skill changes; a person's preferences fit in
+their own user-level instructions, which already sit below the team's. So:
+
+- Overlays are team-only: framework skill + team overlay, compiled at `sync` (M9 unchanged). Option 3
+  stands for mores and team folkways; its "personal at runtime" half is withdrawn.
+- **M8 is withdrawn**, with `lintPersonalOverlay`, the `doctor` check, the `.local/me` link and
+  `compileSkill`'s personal branch (and `compileSkill` itself, which only tests and the 07 eval used).
+- Step 0 is replaced by a `## Config` section per skill: the fields it uses. The `session-start` hook
+  prints `folkways.yaml`, `.local/me.yaml`, the personal root and the effective review trigger once per
+  session and after each compaction (spec §7.1); a skill reads the files only when that block is missing.
+- **Accepted gap:** a solo repo's `overlays/` held personal overlays (the plugin can't compile). Solo repos
+  have no overlays until the Go CLI brings compile to the plugin.
+- The eval in [07 §6](../design/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)
+  stays as the record of why the precedence text mattered; its personal arm is historical.
