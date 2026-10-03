@@ -22,17 +22,18 @@ describe('hooksVersion', () => {
 
 // A packed CLI carries `assets/`; in the workspace the content lives in the sibling `packages/content`.
 describe('assetsDir', () => {
-  it('prefers the package\'s own assets/', () => {
+  // A local pack leaves a copy in assets/; it must not hide later edits to packages/content.
+  it('prefers the sibling content package over a packed copy', () => {
     const pkg = join(tmp(), 'cli');
     put(join(pkg, 'assets/instructions.md'), 'packed\n');
     put(join(pkg, '../content/instructions.md'), 'sibling\n');
-    expect(assetsDir(pkg)).toBe(join(pkg, 'assets'));
+    expect(assetsDir(pkg)).toBe(join(pkg, '..', 'content'));
   });
 
-  it('falls back to the sibling content package', () => {
+  it('uses the package\'s own assets/ when there is no sibling content', () => {
     const pkg = join(tmp(), 'cli');
-    put(join(pkg, 'package.json'), '{}');
-    expect(assetsDir(pkg)).toBe(join(pkg, '..', 'content'));
+    put(join(pkg, 'assets/instructions.md'), 'packed\n');
+    expect(assetsDir(pkg)).toBe(join(pkg, 'assets'));
   });
 
   it('finds the real content from this checkout', () => {

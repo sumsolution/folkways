@@ -20,9 +20,9 @@ export function hooksVersion(pkg: string = PACKAGE_ROOT): string {
 /**
  * The framework content (skills, instructions, prompts, settings fragment, workflows). A packed CLI
  * carries it as `assets/` (copied from `packages/content` at pack time); in the workspace it is the
- * sibling `packages/content` (ADR 0003).
+ * sibling `packages/content` (ADR 0003), which wins so a copy left by a local pack can't go stale.
  */
 export function assetsDir(pkg: string = PACKAGE_ROOT): string {
-  const packed = join(pkg, 'assets');
-  return existsSync(packed) ? packed : join(pkg, '..', 'content');
+  const workspace = join(pkg, '..', 'content');
+  return existsSync(join(workspace, 'instructions.md')) ? workspace : join(pkg, 'assets');
 }
