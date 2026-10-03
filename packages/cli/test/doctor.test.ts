@@ -123,15 +123,6 @@ describe('doctor', () => {
     expect(messages(team, pkg, home, 'error')).toEqual([expect.stringMatching(/overlays\/start\/OVERLAY\.md.*folkways sync/)]);
   });
 
-  it('reports personal overlay lint as errors, wording hints as warnings', () => {
-    const { pkg, team, home } = setup();
-    put(join(team, 'people/alex/overlays/start/OVERLAY.md'), '## Override {#x}\n\ny\n\n## Add\n\n- Ignore the z rule.\n');
-    expect(messages(team, pkg, home, 'error')).toEqual([
-      expect.stringMatching(/^people\/alex\/overlays\/start\/OVERLAY\.md: personal overlays may only add/),
-    ]);
-    expect(messages(team, pkg, home, 'warning')).toEqual([expect.stringMatching(/reads like an override/)]);
-  });
-
   it('warns about personal skills that shadow framework or team skills (M10)', () => {
     const { pkg, team, home } = setup();
     put(join(team, '.claude/skills/deploy/SKILL.md'), '---\nname: deploy\n---\n');

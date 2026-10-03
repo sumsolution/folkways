@@ -9,22 +9,12 @@ Record a significant decision so a teammate who wasn't in the room can understan
 it, six months later. The value is the reasoning: the context, the options that were really on the
 table, and what the choice costs. Show trade-offs honestly; don't pretend the choice was obvious.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `adr` (`targets`, `repo_path`, `confluence`, `reviewers`), `docs`, `members`, `repos`.
-2. `.local/me.yaml`: `handle` (team repos only).
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/adr/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/adr/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## When an ADR is warranted
 

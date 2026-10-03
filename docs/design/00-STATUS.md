@@ -47,12 +47,12 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
   only** (11). No IDE integrations, no Copilot cloud agent.
 - **Architecture (3, 6, 11):** framework published as npm package `@folkways/cli`, pinned in one team repo; `folkways sync`
   copies its text files in (12). Team repo: `folkways.yaml`, `knowledge/`, `state/`, `efforts/`, `overlays/`, team
-  skills, committed `people/<handle>/` (`overlays/`, `inbox/`, `work/`), gitignored `.local/` (`me.yaml`).
+  skills, committed `people/<handle>/` (`inbox/`, `work/`), gitignored `.local/` (`me.yaml`).
   **No separate personal repo** (11). Knowledge, skills, overlays via PR; state, efforts, people via direct
   rebased push. Promotion = `git mv` to `efforts/`. Every effort has a `00-STATUS.md`. Agent-space stays as-is.
 - **Overlays (10, 11; ADR 0001):** mores are enforced by mechanism, folkways are layered by overlays. Team
-  overlays can add and override and are compiled into skills by `folkways sync`; personal overlays can only
-  add and are attached at runtime by step 0. **Overlays never touch framework files;** upgrades can't
+  overlays can add and override and are compiled into skills by `folkways sync`. Personal overlays were
+  removed (2026-10-03); skills take config from the `session-start` hook's context. **Overlays never touch framework files;** upgrades can't
   clobber customizations.
 - **Hook runtime (ADR 0002):** hooks are a Go binary, `folkways-hook`, shipped as per-platform optional
   dependencies. It replaces the Node `folkways hook <name>` path (macOS arm64: Go about 2 ms npm / 9 ms pnpm,
@@ -84,6 +84,10 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
    `folkways.yaml` the plugin and hooks stay silent except a one-time setup offer; `setup` configures a solo
    or team repo; solo is the team layout without `people/<handle>/`. Both are brain repos: sessions start
    there and code changes happen in worktrees of project repos.
+4. **Push approval mode** (Summer, 2026-10-03): a config choice between asking before every push (today's
+   M2 `ask` rule), never asking, and asking only for a push to a default branch. Open: where it lives
+   (`folkways.yaml` as a more, `.local/me.yaml` only tightening it, like `review.trigger`) and how `sync`
+   writes the matching permission rule. Becomes an effort in the command repo.
 
 ## Pending
 
@@ -104,8 +108,8 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | CLI `init`, `sync`, `upgrade`, `doctor`, `hook`, `version` | [packages/cli/src/](../../packages/cli/src) | TypeScript, npm package `@folkways/cli`, Node 24+. Sync is staged and atomic and refuses to overwrite. `doctor` checks config, versions, overlays, shadowing skills, `disableAllHooks` and the hook install (spec §7.2). `review`, `run` are stubs |
 | Skills | [skills/](../../packages/content/skills) | 16: adr, commit, handoff, knowledge-audit, onboard, pr, qa, research, review, session-close, setup, side-quest, start, status, tests, ticket |
 | Config and solo repos | [spec §2.3, §4.1](06-v1-spec.md) | `folkways.yaml` with `mode: team \| solo`, `git.commit_convention` (angular, pattern, none), `hooks:` toggles. A solo repo is a brain repo like a team repo: no project code, `projects_dir` required. Unconfigured repos: hooks and plugin silent except the one-time offer pointing to the brain repo (`~/.config/folkways/offered`). Guided `setup` (solo: creates the brain repo); skills use the personal root. The offer is per git top level, so each worktree of a repo gets its own |
-| Overlay compile | [src/overlays.ts](../../packages/cli/src/overlays.ts) | `sync` compiles team overlays into skills (`compileSkillFiles`) and lints personal overlays. Personal overlays attach at step 0 via `@` of `.local/me/...`, with a read fallback |
-| `.local/me` link | [src/](../../packages/cli/src) | Symlink to `people/<handle>/`, created by `onboard`, kept by `sync` |
+| Overlay compile | [src/overlays.ts](../../packages/cli/src/overlays.ts) | `sync` compiles team overlays into skills (`compileSkillFiles`) |
+| Config in context | [sessionstart.go](../../packages/hooks/internal/sessionstart/sessionstart.go) | `session-start` prints `folkways.yaml`, `.local/me.yaml`, the personal root and the review trigger; skills have a `## Config` section instead of a step 0 |
 | Framework instructions | [instructions.md](../../packages/content/instructions.md) | Team `AGENTS.md` imports it via `@.folkways/instructions.md` |
 | Settings fragment | [settings.json](../../packages/content/settings.json) | Push ask rule, `disableAllHooks: false`, one entry per hook and event, run as `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook <name>` |
 | Team scaffold | [templates/](../../packages/cli/templates) | `folkways.yaml`, READMEs, `.gitignore`, `CLAUDE.md`, `AGENTS.md` |
@@ -156,7 +160,7 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 - [x] With `review.trigger: pre-push`, `git-guard` denied a direct push of the brain repo itself (team or solo). The push gate now skips the repo holding `folkways.yaml` (spec §7.3; fixtures `team-`/`solo-push-brain-repo-passes`).
 - [x] `instructions.md` (Git) says `folkways review` must cover the SHA, with no solo exception; solo runs the `review` skill in a fresh subagent (as `pr` and `commit` say).
 - [ ] `folkways review` / `run`: fill `{{repo}}`, `{{branch}}`, `{{base}}`, `{{sha}}`, `{{ticket}}`, `{{effort}}`, `{{output}}` in [prompts/review.md](../../packages/content/prompts/review.md).
-- [x] `doctor` checks (done; also: an empty or `~` value turns a hook off, and a quoted `"off"` reads as false): non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `off`, `no` and `False` as false, but quoted `"false"`, `falsey` or `0` leave the hook on; `run.sh`'s no-binary line test disagrees with yaml.v3 on some of these), stale compiles (`staleOverlays`), personal overlay lint as errors, shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
+- [x] `doctor` checks (done; also: an empty or `~` value turns a hook off, and a quoted `"off"` reads as false): non-boolean `hooks:` values in `folkways.yaml` (yaml.v3 reads `off`, `no` and `False` as false, but quoted `"false"`, `falsey` or `0` leave the hook on; `run.sh`'s no-binary line test disagrees with yaml.v3 on some of these), stale compiles (`staleOverlays`), shadowing skills (ADR 0001 M10), `disableAllHooks` (M11), `node_modules` left on the new version after a failed `upgrade` (`abandon()` restores package files only).
 - [x] [settings.json](../../packages/content/settings.json): add `"disableAllHooks": false`, carried by `mergeSettings` (M11). Plan 11, PR 4.
 - [x] `scripts/` is not in the `tsconfig.json` `include` (root `tsconfig.json`, checked by `pnpm run check` and CI); gitignore `.folkways-sync-*` in the team template.
 - [x] Spec §3.1 hook ownership wording (plan 11, PR 4).

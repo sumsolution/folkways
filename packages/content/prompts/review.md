@@ -15,7 +15,7 @@ on purpose. `folkways review` filled in the values below; don't ask anyone to ch
 
 ## Instructions
 
-1. Load the `review` skill (`.claude/skills/review/SKILL.md`) and follow it, including step 0.
+1. Load the `review` skill (`.claude/skills/review/SKILL.md`) and follow it, including its Config section.
 2. Review exactly `{{sha}}` against `{{base}}`. Work in a detached worktree; never check out, pull, reset
    or rebase in the main clone.
 3. Load intent from the ticket and the effort folder before reading the diff. If the ticket says

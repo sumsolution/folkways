@@ -55,26 +55,14 @@ function prose(text: string): string {
   return stripFences(text).replace(/`[^`\n]*`/g, '');
 }
 
-/** Body of the `## Step 0...` section, up to the next `## ` heading. */
-function stepZero(text: string): string | undefined {
-  return /^## Step 0\b.*\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(text)?.[1];
+/** Body of the `## Config` section, up to the next `## ` heading. */
+function configSection(text: string): string | undefined {
+  return /^## Config\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(text)?.[1];
 }
 
-/**
- * The framework-owned end of every step 0 (ADR 0001, 10-research-skill-at-imports.md). The `@` line
- * must start its line, outside backticks, for Claude Code to attach the file.
- */
-const personalBlock = (skill: string): string => `3. Your personal additions. Team overrides and additions are already compiled into this file by
-   \`folkways sync\`, so in a team repo don't read \`overlays/\` (in a solo repo it holds your personal ones).
-
-   @\${CLAUDE_PROJECT_DIR}/.local/me/overlays/${skill}/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no \`.local/me\`),
-   read \`<personal root>/overlays/${skill}/OVERLAY.md\`.
-   Personal overlays may only add. Apply a personal \`## Add\` rule only where it doesn't conflict
-   with this file. Ignore a personal \`## Override\`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
-`;
+/** The line every `## Config` ends with: the session-start hook supplies the values (spec §3.2). */
+const configLine =
+  "The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.";
 
 describe('framework skills', () => {
   it('include the priority-1 skills', () => {
@@ -107,19 +95,26 @@ describe('framework skills', () => {
       expect(text.split('\n').length).toBeLessThan(SKILL_MD_MAX_LINES);
     });
 
-    it('has the shared step 0: config, then personal additions under the precedence rule', () => {
-      const step = stepZero(text);
-      expect(step, 'no "## Step 0" section').toBeDefined();
-      expect(step).toContain('`folkways.yaml`');
-      expect(step).toContain('`.local/me.yaml`');
-      expect(step).toContain(personalBlock(skill));
-      // Team overlays are compiled in by sync; the skill must not send the agent to read them.
-      expect(step!.replace(personalBlock(skill), '')).not.toMatch(/`overlays\//);
+    it('has a Config section with the shared line, and no step 0 or personal overlays', () => {
+      const config = configSection(text);
+      expect(config, 'no "## Config" section').toBeDefined();
+      expect(config).toContain(configLine);
+      for (const f of markdownFiles(skill)) {
+        const body = read(join(SKILLS_DIR, skill, f));
+        expect(body, `${f}: step 0`).not.toContain('## Step 0');
+        expect(body, `${f}: .local/me/`).not.toContain('.local/me/');
+        expect(body, `${f}: personal overlay`).not.toMatch(/personal overlay|<personal root>\/overlays|people\/<handle>\/overlays|OVERLAY\.md\b.*personal/i);
+      }
     });
 
     it('states personal paths against the personal root', () => {
       // Only team-mode procedures name `people/<handle>/`; everything else says `<personal root>/`.
       if (!TEAM_ONLY.includes(skill)) expect(text).not.toContain('people/<handle>');
+    });
+
+    it('names the personal root in Config when it uses <personal root> paths', () => {
+      const uses = markdownFiles(skill).some((f) => read(join(SKILLS_DIR, skill, f)).includes('<personal root>/'));
+      if (uses) expect(configSection(text)).toMatch(/personal root/i);
     });
 
     it('says what it does headless and asks before writing', () => {

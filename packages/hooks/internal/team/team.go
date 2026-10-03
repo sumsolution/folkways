@@ -72,10 +72,11 @@ func readYAML(path string, out any) {
 }
 
 // SafeHandle returns the person's handle, or "" when there is none or it is not a plain directory name
-// (a separator or ".." would let it point outside people/<handle>/).
+// (a separator or ".." would let it point outside people/<handle>/; whitespace could forge lines in the
+// session-start context).
 func (c Config) SafeHandle() string {
 	h := c.Me.Handle
-	if h == "" || h == "." || strings.Contains(h, "..") || strings.ContainsAny(h, `/\`) {
+	if h == "" || h == "." || strings.Contains(h, "..") || strings.ContainsAny(h, "/\\ \t\r\n\v\f") {
 		return ""
 	}
 	return h

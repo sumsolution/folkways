@@ -117,6 +117,38 @@ change them here and in the fixtures together.
 `00-STATUS.md` now. It doesn't offer `session-close`: most sessions aren't worth banking, and the person runs
 it when one is.
 
+Then, on every `source` (`compact` too: it puts back what compaction dropped), the config block, so skills
+don't read the files. One `additionalContext` string, the reminder first:
+
+````
+folkways: follow the `start` skill for this session.[ compaction sentence]
+
+folkways config (from the session-start hook; skills use these values instead of reading the files):
+- personal root: <root>
+- review trigger: <trigger>
+
+folkways.yaml:
+```yaml
+<file, verbatim>
+```
+
+.local/me.yaml:
+```yaml
+<file, verbatim>
+```
+````
+
+- `<root>`: the personal root relative to the project dir, with `/` separators: `people/<handle>` in a team
+  repo, `.` when `mode: solo`, `none` in a team repo without a safe handle (missing, `.`, containing `..`, a separator or whitespace).
+- `<trigger>`: the effective `review.trigger` (the stricter of the two files, as `git-guard` uses it), or
+  `none` when neither holds a known value.
+- A file larger than 4096 bytes is not printed: its section is the one line `<name>: over 4096 bytes, not
+  shown. Read the file.` A missing `.local/me.yaml` is the line ``.local/me.yaml: missing. Run the `onboard`
+  skill to create it.``, naming the skill as the plugin does (`folkways:onboard`).
+- A file that exists but can't be read (a directory, no permission) is the line `<name>: can't be read. Check the file.`
+- The derived values come from the hook's existing config reader; the files are printed as read, never
+  re-serialized. A file holding a ```` ``` ```` line closes the fence early; accepted, as config files don't.
+
 In an unconfigured repo it makes the one-time offer instead. Key: the git top level of the project dir, else
 the project dir (absolute). When that key holds a `folkways.yaml` (a session in a subfolder of a configured repo): no offer, nothing recorded. Look it up in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered` (one path per
 line). Absent: append it (creating directories) and inject the spec §7.1 line, naming the `setup` skill (`folkways:setup`

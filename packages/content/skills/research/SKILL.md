@@ -9,22 +9,13 @@ Answer a question well enough that the user can decide with little or well-under
 team's own knowledge and precedent before the web, check every claim against a source, and say how sure
 you are. The user makes the call.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `research.sources`, `repos`, `docs`, `models`.
+- `.local/me.yaml`: `projects_dir`, `tool`, `models`.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `research.sources`, `repos`, `docs`, `models`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, `tool`, `models`.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/research/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/research/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 

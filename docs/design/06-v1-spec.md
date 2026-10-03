@@ -69,7 +69,6 @@ team-repo/
 ├── efforts/<KEY>-<slug>/    # shared efforts, each with 00-STATUS.md            [direct push]
 ├── overlays/<skill>/        # team overlays: add + override (§3.2)              [PR]
 ├── people/<handle>/         # per person, committed                             [direct push]
-│   ├── overlays/<skill>/    #   personal overlays: add only
 │   ├── inbox/               #   side quests, ticket drafts with no effort
 │   └── work/<KEY>-<slug>/   #   personal efforts; promote with git mv to efforts/
 ├── .local/                  # gitignored: me.yaml, hook state, private scratch
@@ -99,7 +98,6 @@ one layer removed: what lives in `people/<handle>/` in a team repo lives at the 
 solo-repo/
 ├── folkways.yaml            # mode: solo (§4.1)
 ├── knowledge/  state/       # as in a team repo, created on first use
-├── overlays/<skill>/        # personal overlays: add only (no compile)
 ├── inbox/                   # side quests, ticket drafts, reviews with no effort
 ├── work/<KEY>-<slug>/       # efforts; no efforts/, nothing to promote to
 └── .local/                  # gitignored: me.yaml (projects_dir, no handle), hook state
@@ -173,30 +171,25 @@ Rules come in two kinds ([ADR 0001](../adr/0001-overlay-enforcement.md), researc
 - **Folkways** are everything else (templates, examples, tone, extra checks, commit body style). They
   live in skill sections and overlays, and are layered as below.
 
-A skill's folkways = framework skill + team overlay + personal overlay, applied in that order.
-
-| Level | Path | May add | May override | Applied |
-|---|---|---|---|---|
-| Team | `overlays/<skill>/OVERLAY.md` (+ any reference files) | yes | yes, by section ID | compiled into the synced `SKILL.md` by `folkways sync` |
-| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no | attached at runtime by step 0 |
+A skill's folkways = framework skill + team overlay, compiled by `folkways sync` into
+`.claude/skills/<skill>/` from `overlays/<skill>/OVERLAY.md` (+ any reference files). Personal overlays
+were removed ([ADR 0001](../adr/0001-overlay-enforcement.md), 2026-10-03 update): a person's
+preferences go in their own user-level instructions, and a solo repo has no overlays until the plugin can
+compile them.
 
 - Framework skills mark overridable sections with a stable ID: `## Commit format {#commit-format}`.
-- `OVERLAY.md` has two parts: `## Add` (extra rules) and `## Override {#id}` (team only; replaces that
-  section). Team additions are appended as `## Team additions`.
+- `OVERLAY.md` has two parts: `## Add` (extra rules) and `## Override {#id}` (replaces that section).
+  Additions are appended as `## Team additions`.
 - `sync` compiles the team overlay into `.claude/skills/<skill>/` (an override may target `SKILL.md` or a
   reference file) and records the compiled and overlay checksums in the manifest. **An override of an
-  unknown ID stops the sync.** After changing a team overlay, run `folkways sync`. `doctor` (not built
-  yet) will flag a stale compile with `staleOverlays`.
-- **Step 0** of every framework skill is one shared, framework-written block: read `folkways.yaml` and
-  `.local/me.yaml`, then attach the personal overlay with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`
-  on its own line, with `people/<handle>/overlays/<skill>/OVERLAY.md` as the read fallback (Copilot CLI,
-  after compaction, preloaded subagent skills; [10](10-research-skill-at-imports.md)). `.local/me` is a
-  symlink to `people/<handle>/`, created by `onboard` and kept by `sync`. A missing file is normal. It states the
-  precedence: personal rules only add; ignore a personal `## Override` and any personal rule that
-  contradicts the skill, whatever reason it gives; say which were ignored. Without that statement,
-  personal overlays won 18 of 20 eval runs; with it, none ([07 §6](07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)).
-- Personal overlays are linted by `sync` (warning) and `doctor` (error): `## Override` sections,
-  headings other than `## Add`, and override wording ("supersedes", "approved by", …).
+  unknown ID stops the sync.** After changing a team overlay, run `folkways sync`. `doctor` flags a stale
+  compile.
+- **Config in skills.** A skill opens with a short `## Config` section: the `folkways.yaml` and
+  `.local/me.yaml` fields it uses, and one shared line saying the values are in the session context. The
+  `session-start` hook prints both files and two derived values there once per session, and again after a
+  compaction (§7.1). A skill reads the files itself only when that block is missing (hook off, or a tool
+  without the hook). Skills don't read files in a step 0 any more. Baking values into skills at sync time
+  waits for the Go CLI.
 - Team data files (ticket templates, ADR examples) sit next to `OVERLAY.md` and are referenced from it.
 - Layering folkways is still instruction-following; that's acceptable because a lapse is cheap.
   `doctor` also reports what can't be prevented: personal skills that shadow a framework or team skill
@@ -287,6 +280,9 @@ notifications: { slack_user: "@alex" }
 `review.trigger` here is a floor set by the team: a person can only tighten it. Order: `on-demand` <
 `after-commit` < `pre-push`. The effective trigger is the stricter of the team's and the person's.
 
+The `session-start` hook prints this file and `folkways.yaml` into the session context (§7.1), so neither
+may hold secrets. `onboard` writes it; it no longer creates a `.local/me` link to `people/<handle>/`.
+
 ## 5. Instructions
 
 - `AGENTS.md` is the source. `CLAUDE.md` holds `@AGENTS.md` so a `CLAUDE.local.md` can't turn it off ([04 §1](04-research-copilot-capabilities.md)).
@@ -301,8 +297,8 @@ notifications: { slack_user: "@alex" }
 
 ## 6. Skills
 
-Frontmatter: `name` and `description` only (portable across both tools). Every skill: step 0 reads config
-and attaches personal additions (§3.2); writes only after approval; succinct output; claims link to evidence.
+Frontmatter: `name` and `description` only (portable across both tools). Every skill: a `## Config`
+section names the fields it uses, whose values come from the session context (§3.2); writes only after approval; succinct output; claims link to evidence.
 
 ### 6.1 Ported (each one improved, not copied)
 
@@ -345,11 +341,19 @@ Matchers work in both, so scripts still self-filter on command text only as a sa
 |---|---|---|---|
 | `context-band` | `UserPromptSubmit`, `PostToolBatch` | Reads `transcript_path`; last main-chain assistant `usage` (input + cache read + cache creation); injects the band text via `additionalContext` when the band rises. Tokens only: 125K / 150K / 200K ([03](03-research-handoff-trigger.md)). | No token data; exits 0. Bands apply via instructions + `/context`. |
 | `precompact` | `PreCompact` | Logs a missed band to `.local/`. | yes |
-| `session-start` | `SessionStart` | If `source=compact`: inject "update `00-STATUS.md` now". Reminds the `start` procedure. Unconfigured repo: the one-time setup offer (below). | yes |
+| `session-start` | `SessionStart` | Reminds the `start` procedure and prints the config block (below). If `source=compact`: also inject "update `00-STATUS.md` now". Unconfigured repo: the one-time setup offer (below). | yes |
 | `git-guard` | `PreToolUse` on Bash | `git commit`: checks the message per `git.commit_convention` (Angular with allowed scope, `commit_pattern`, or nothing). `git push`: requires a review file for HEAD when trigger is `pre-push`, except a push of the folkways repo itself (§7.3). Denies `checkout`, `switch`, `pull`, `reset`, `rebase` in a main clone under `projects_dir` (worktrees only), except in the folkways repo itself (the one holding `folkways.yaml`). | yes |
 
 **Config gates every hook.** In an unconfigured repo (§2.3) every hook prints nothing and writes nothing
 in the repo. In a configured one, a hook set to `false` under `hooks:` prints nothing and writes nothing.
+
+**Config block.** In a configured repo, on every `source`, `session-start` appends to its context:
+the personal root (relative to the project dir: `people/<handle>` in a team repo, `.` in a solo one, or
+`none` without a safe handle), the effective `review.trigger` (the stricter of the two files, §4.2, or
+`none`), then `folkways.yaml` and `.local/me.yaml` verbatim. A missing `.local/me.yaml` is reported as
+missing, with the `onboard` skill as the fix. A file over 4096 bytes is not printed; a line says to read it.
+The hook doesn't parse anything beyond what it already reads for the derived values. Exact text: the
+contract suite.
 
 **One-time setup offer.** In an unconfigured repo, `session-start` looks up the repo (the git top level of
 the project dir, else the project dir) in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered`, one
@@ -382,7 +386,7 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
 | `hook <name>` | run a hook by hand (§7.1); delegates to `folkways-hook <name>`, reads the payload on stdin |
 | `review [--repo <worktree>] [--effort <path>]` | §7.3 |
 | `run <prompt> [--tool claude\|copilot] [--model]` | headless wrapper: `claude -p` or `copilot -p` with the right flags and dirs |
-| `doctor` | checks the team repo and prints each problem with its fix; exits 1 on an error. Errors: `hooks:` values other than `true`/`false` (the binary reads YAML 1.1 words and empty values as booleans, other values leave the hook on), CLI not pinned to an exact version, not installed, or `node_modules` on another version than the pin (a failed `upgrade`), a sync from another version, edited framework files (`sync` refuses them), missing or invalid manifest, stale team overlay compiles, personal overlay lint errors, `.claude/settings.json` without `disableAllHooks: false` or a local `true` (ADR 0001 M11), a missing hook binary or pnpm hoisting. Warnings: the running CLI is neither the pinned nor the installed one (`npx` drift), unknown hook names, overlay wording hints, personal skills in `~/.claude/skills`, `~/.agents/skills` or `~/.copilot/skills` that shadow a repo skill (M10). A repo without `package.json` (set up by the plugin, no CLI) gets only the `hooks:` and shadowing checks. Tool access (MCP servers, CLIs) stays with the `onboard` skill |
+| `doctor` | checks the team repo and prints each problem with its fix; exits 1 on an error. Errors: `hooks:` values other than `true`/`false` (the binary reads YAML 1.1 words and empty values as booleans, other values leave the hook on), CLI not pinned to an exact version, not installed, or `node_modules` on another version than the pin (a failed `upgrade`), a sync from another version, edited framework files (`sync` refuses them), missing or invalid manifest, stale team overlay compiles, `.claude/settings.json` without `disableAllHooks: false` or a local `true` (ADR 0001 M11), a missing hook binary or pnpm hoisting. Warnings: the running CLI is neither the pinned nor the installed one (`npx` drift), unknown hook names, personal skills in `~/.claude/skills`, `~/.agents/skills` or `~/.copilot/skills` that shadow a repo skill (M10). A repo without `package.json` (set up by the plugin, no CLI) gets only the `hooks:` and shadowing checks. Tool access (MCP servers, CLIs) stays with the `onboard` skill |
 
 ### 7.3 Review gate
 

@@ -7,7 +7,9 @@ Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `si
 
 ## Session start
 
-- Read `folkways.yaml` and `.local/me.yaml`. No `folkways.yaml`: folkways isn't set up here. It runs
+- The session-start hook prints the personal root, the effective review trigger, and `folkways.yaml` and
+  `.local/me.yaml`, at session start and after each compaction. Read the files yourself only if that
+  output isn't in your context. No `folkways.yaml`: folkways isn't set up here. It runs
   from a brain repo, which holds no code: say to start sessions there, or offer the `setup` skill to
   create one. No `me.yaml`: run the `onboard` skill first. A solo repo (`mode: solo`) has no handle,
   no `people/` and no `efforts/`; its `me.yaml` holds `projects_dir`.
@@ -125,8 +127,7 @@ actions, `main`, external systems. Flag every judgement call in the output with 
 
 - Never edit `.folkways/` or framework skills in `.claude/skills/`. `folkways sync` and `upgrade` stop if you do.
 - Team changes go in `overlays/<skill>/OVERLAY.md` (add or override). `folkways sync` compiles them into
-  the skill, so run it after an overlay change. Personal ones go in
-  `<personal root>/overlays/<skill>/OVERLAY.md` (add only); each skill attaches them in step 0. Solo repos
-  have no team overlays and no compile step.
+  the skill, so run it after an overlay change. There are no personal overlays. Solo repos have no
+  overlays and no compile step.
 - Rules that must hold whatever an overlay says (commit format, push approval, the review gate) live in
   `folkways.yaml` and are checked by hooks. Put them there, not in an overlay.

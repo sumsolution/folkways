@@ -2,6 +2,7 @@ package sessionstart
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -94,5 +95,69 @@ func TestRunNamesTheStartSkillInANamespace(t *testing.T) {
 	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "folkways")
 	if got := run(t, team.Config{Dir: t.TempDir(), Configured: true}); !strings.Contains(got, "follow the `folkways:start` skill") {
 		t.Errorf("session-start printed %q", got)
+	}
+}
+
+func TestConfigBlock(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("FOLKWAYS_SKILL_NAMESPACE", "")
+	write := func(dir, name, body string) {
+		t.Helper()
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(dir, name)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	load := func(dir string) string {
+		var out struct {
+			AdditionalContext string `json:"additionalContext"`
+		}
+		if err := json.Unmarshal([]byte(run(t, team.LoadDir(dir))), &out); err != nil {
+			t.Fatal(err)
+		}
+		return out.AdditionalContext
+	}
+
+	d := t.TempDir()
+	write(d, "folkways.yaml", "review:\n  trigger: after-commit\n")
+	write(d, ".local/me.yaml", "handle: alex\n")
+	got := load(d)
+	for _, want := range []string{
+		"for this session.\n\nfolkways config (",
+		"- personal root: people/alex\n- review trigger: after-commit\n",
+		"folkways.yaml:\n```yaml\nreview:\n  trigger: after-commit\n```\n\n.local/me.yaml:\n```yaml\nhandle: alex\n```",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in %q", want, got)
+		}
+	}
+
+	solo := t.TempDir()
+	write(solo, "folkways.yaml", "mode: solo\n")
+	got = load(solo)
+	for _, want := range []string{"- personal root: .\n", "- review trigger: none\n", ".local/me.yaml: missing. Run the `onboard` skill to create it."} {
+		if !strings.Contains(got, want) {
+			t.Errorf("solo: missing %q in %q", want, got)
+		}
+	}
+
+	big := t.TempDir()
+	write(big, "folkways.yaml", "# "+strings.Repeat("x", 4096)+"\n")
+	write(big, ".local/me.yaml", "handle: ../x\n")
+	got = load(big)
+	for _, want := range []string{"- personal root: none\n", "folkways.yaml: over 4096 bytes, not shown. Read the file.", "handle: ../x"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("big: missing %q in %q", want, got)
+		}
+	}
+
+	unreadable := t.TempDir()
+	write(unreadable, "folkways.yaml", "mode: solo\n")
+	write(unreadable, ".local/me.yaml/x", "")
+	got = load(unreadable)
+	if want := ".local/me.yaml: can't be read. Check the file."; !strings.Contains(got, want) {
+		t.Errorf("unreadable: missing %q in %q", want, got)
 	}
 }

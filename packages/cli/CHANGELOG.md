@@ -9,10 +9,7 @@
   Overrides replace sections by ID in `SKILL.md` or a reference file; additions are appended as
   `## Team additions`. An unknown ID stops the sync before anything is written. The manifest records
   overlay checksums (`overlays`), and `staleOverlays` lists overlays changed since the last sync.
-- `sync` warns about personal overlays that try to override, and about team overlays for skills the
-  framework doesn't ship.
-- `sync` links `.local/me` to `people/<handle>/` (handle from `.local/me.yaml`). Step 0 of every skill
-  attaches the person's overlay through it with `@${CLAUDE_PROJECT_DIR}/.local/me/overlays/<skill>/OVERLAY.md`.
+- `sync` warns about team overlays for skills the framework doesn't ship.
 - `sync` refuses to overwrite team files that differ at framework paths the manifest doesn't track,
   including every path when there is no manifest (adopting a repo). `--force` overwrites them and lists
   them as `replaced`. Adopting a repo whose framework skill folders already match now works.
