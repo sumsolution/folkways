@@ -8,7 +8,7 @@ import { init } from '../src/init.ts';
 import { assetsDir } from '../src/package.ts';
 
 export const REPO = resolve(import.meta.dirname, '..');
-/** The real framework content: `assets/` once packed, else `packages/content`. */
+/** The real framework content: `packages/content` in the workspace, else the packed `assets/`. */
 export const ASSETS = assetsDir(REPO);
 
 const dirs: string[] = [];

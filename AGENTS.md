@@ -58,7 +58,7 @@ From the repo root:
 - **TDD:** write a failing test first, then fix. Run `pnpm run check && pnpm test` before every commit.
 - **Expected failures** throw `FolkwaysError`; the CLI prints `folkways: <message>` with no stack trace.
 - **Skills:** follow [docs/skill-authoring.md](docs/skill-authoring.md) (skeleton, overlay IDs, headless
-  rules, trigger eval). `packages/cli/test/skills.test.ts` checks the mechanical rules.
+  rules, trigger eval). `packages/content/test/skills.test.ts` checks the mechanical rules.
 - **Commits:** Angular conventional commits, module scope (`cli`, `content`, `templates`, `skills`, `hooks`, `evals`,
   `docs`, `test`, `build`, `research`). Squash PRs.
 - **Tests live with their package:** TypeScript in `packages/<pkg>/test/` (or `contract/`), Go as `*_test.go`

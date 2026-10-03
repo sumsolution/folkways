@@ -53,6 +53,7 @@ jobs:
             evals:
               - 'packages/evals/**'
               - 'packages/cli/**'     # the runner builds team repos with the CLI's init
+              - 'packages/content/**' # and with the framework content
             claude-plugin:
               - 'packages/claude-plugin/**'
               - 'packages/content/**'     # the plugin's skills, instructions and hooks come from here

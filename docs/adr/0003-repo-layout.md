@@ -205,5 +205,5 @@ solo repo is a brain repo that holds no project code (plan 16, decision 6).
 **Update (2026-10-03).** The content moved to `packages/content/` (`@folkways/content`, private, never
 published), so the CLI and the plugin are both consumers of it. The CLI's `prepack` copies the content into
 `packages/cli/assets/` (gitignored), so the packed tarball is unchanged. In the workspace `src/package.ts`
-resolves the content as `assets/` if present, else the sibling `packages/content`. The follow-up above is
+resolves the content as the sibling `packages/content` if present, else `assets/`. The follow-up above is
 closed.
