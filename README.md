@@ -3,8 +3,8 @@
 Your team's way of working, written down once and shared by every teammate's agent.
 Shared skills, instructions and hooks for Claude Code and Copilot CLI, versioned like code.
 
-> **Status: pre-release.** v0.1.0, not on npm yet. `init`, `sync` and `upgrade` work. Skills and prompts sync too.
-> Hooks, `review`, `run` and `doctor` are next. [What works today](#status).
+> **Status: pre-release.** v0.1.0, not on npm yet. `init`, `sync`, `upgrade` and `doctor` work. Skills, prompts and hooks sync too.
+> `review` and `run` are next. [What works today](#status).
 
 ## What it is
 
@@ -72,14 +72,14 @@ From a clone, build it and load it in place: [packages/claude-plugin](packages/c
 
 | Piece | State |
 |---|---|
-| `init`, `sync`, `upgrade`, `version` | built, tested |
+| `init`, `sync`, `upgrade`, `doctor`, `version` | built, tested |
 | Push approval rule in `.claude/settings.json` | built |
 | Team repo scaffold (`folkways.yaml`, folders, READMEs) | built |
 | Framework instructions (`.folkways/instructions.md`) | built |
 | 16 skills (`setup`, `onboard`, `start`, `review`, `commit`, `pr`, …) and the review prompt | built; synced with team overlays compiled in |
 | Hooks (`git-guard`, `context-band`, `session-start`, `precompact`) | built, wired into `.claude/settings.json` by `sync`; ship with the npm release |
 | Claude Code plugin (skills, instructions, hooks; no team overlays) | built; npm release coming soon |
-| `review`, `run`, `doctor` | coming soon; today they say "not built yet" |
+| `review`, `run` | coming soon; today they say "not built yet" |
 | npm release | coming soon |
 
 The design record is in [docs/design/](docs/design/00-STATUS.md).

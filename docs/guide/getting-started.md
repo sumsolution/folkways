@@ -86,7 +86,7 @@ Open Claude Code or Copilot CLI in the team repo and run the `onboard` skill. It
 - creates `people/<handle>/`,
 - with your approval, gives the tool access to your projects directory,
 - checks the MCP servers and CLIs your team's research sources need,
-- runs `folkways doctor` (**coming soon**).
+- runs `folkways doctor` and reports what it finds.
 
 Or create `.local/me.yaml` by hand:
 
@@ -136,4 +136,4 @@ Review the branch, push, open a PR. After it merges, everyone pulls and reinstal
 | `folkways: framework files were edited:` | Someone changed a synced file. Move the change into `overlays/`, or rerun with `--force` to discard it |
 | `folkways: team skills clash with new framework skills: ...` | A team skill has a framework skill's name. Rename yours |
 | `warning: AGENTS.md has no '@.folkways/instructions.md' line; agents won't see the framework instructions.` | Agents won't see the framework rules. Put the line back |
-| `folkways: 'doctor' is not built yet (spec §7.2)` | Expected in v0.1.0; same for `review` and `run` |
+| `folkways: 'review' is not built yet (spec §7.2)` | Expected in v0.1.0; same for `run` |
