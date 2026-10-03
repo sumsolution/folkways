@@ -84,6 +84,10 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
    `folkways.yaml` the plugin and hooks stay silent except a one-time setup offer; `setup` configures a solo
    or team repo; solo is the team layout without `people/<handle>/`. Both are brain repos: sessions start
    there and code changes happen in worktrees of project repos.
+4. **Push approval mode** (Summer, 2026-10-03): a config choice between asking before every push (today's
+   M2 `ask` rule), never asking, and asking only for a push to a default branch. Open: where it lives
+   (`folkways.yaml` as a more, `.local/me.yaml` only tightening it, like `review.trigger`) and how `sync`
+   writes the matching permission rule. Becomes an effort in the command repo.
 
 ## Pending
 
