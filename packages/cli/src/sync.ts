@@ -16,7 +16,7 @@ import { FolkwaysError } from './errors.ts';
 import { fsOps, listFiles, pruneEmptyDirs, sha256, sha256Text } from './files.ts';
 import { hookWarnings } from './hooks.ts';
 import { MANIFEST, type Manifest, readManifest, writeManifest } from './manifest.ts';
-import { compileSkillFiles, lintPersonalOverlay } from './overlays.ts';
+import { compileSkillFiles, type LintFinding, lintPersonalOverlay } from './overlays.ts';
 import { PACKAGE_ROOT, packageVersion } from './package.ts';
 import { mergeSettings, type Settings } from './settings.ts';
 
@@ -234,11 +234,13 @@ export function staleOverlays(team: string, manifest: Manifest): string[] {
   return [...paths].filter((p) => !existsSync(join(team, p)) || recorded[p] !== sha256(join(team, p))).sort();
 }
 
-/** Lint findings for every personal overlay, as sync warnings (errors in `doctor`). */
-function lintPersonalOverlays(team: string): string[] {
+/** Lint findings for every personal overlay, each message prefixed with its path. `sync` prints them as warnings. */
+export function lintPersonalOverlays(team: string): LintFinding[] {
   return listFiles(join(team, 'people'))
     .filter((f) => /^[^/]+\/overlays\/[^/]+\/OVERLAY\.md$/.test(f))
-    .flatMap((f) => lintPersonalOverlay(readFileSync(join(team, 'people', f), 'utf8')).map((l) => `people/${f}: ${l.message}`));
+    .flatMap((f) =>
+      lintPersonalOverlay(readFileSync(join(team, 'people', f), 'utf8')).map((l) => ({ ...l, message: `people/${f}: ${l.message}` })),
+    );
 }
 
 const HANDLE = /^handle:\s*(["']?)([A-Za-z0-9][A-Za-z0-9._-]*)\1\s*(?:#.*)?$/m;
@@ -371,7 +373,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   pruneEmptyDirs(join(team, '.folkways'));
   pruneEmptyDirs(join(team, '.github'));
 
-  const warnings = [...compiled.warnings, ...lintPersonalOverlays(team), ...hookWarnings(team)];
+  const warnings = [...compiled.warnings, ...lintPersonalOverlays(team).map((l) => l.message), ...hookWarnings(team)];
   const link = linkPersonalFolder(team);
   if (link) warnings.push(link);
   if (!existsSync(join(team, 'folkways.yaml'))) warnings.push('no folkways.yaml; the hooks stay silent until the repo has one.');

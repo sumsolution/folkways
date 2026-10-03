@@ -51,6 +51,22 @@ describe('cli', () => {
     expect(cli(dest, 'hook').stderr).toMatch(/usage: folkways hook <name>/);
   });
 
+  it('doctor prints each finding and exits 1 on errors', () => {
+    const dest = join(tmp(), 'team');
+    cli(REPO, 'init', dest, '--no-install');
+    const doctor = () =>
+      spawnSync(process.execPath, [join(REPO, 'src/cli.ts'), 'doctor'], { cwd: dest, encoding: 'utf8', env: { ...process.env, HOME: tmp() } });
+    const r = doctor();
+    expect(r.status).toBe(1);
+    expect(r.stdout).toMatch(/^error: @folkways\/cli is not installed; run 'p?npm install'\n1 error, 0 warnings\.\n$/);
+    const version = json(join(REPO, 'package.json')).version;
+    put(join(dest, 'node_modules/@folkways/cli/package.json'), JSON.stringify({ version }));
+    put(join(dest, 'node_modules/.bin/folkways-hook'), '');
+    const ok = doctor();
+    expect(ok.stdout).toBe('No problems found.\n');
+    expect(ok.status).toBe(0);
+  });
+
   it('prints expected errors without a stack trace', () => {
     const dest = tmp();
     put(join(dest, 'x'), '');
