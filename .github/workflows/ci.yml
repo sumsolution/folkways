@@ -61,6 +61,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - '.pnpmfile.mjs'
               - 'tsconfig.base.json'
+              - 'tsconfig.json'
               - 'go.work'
               - '.github/workflows/**'
               - 'scripts/**'
@@ -82,6 +83,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/cli run check
+      - name: Typecheck scripts/
+        run: pnpm exec tsc -p tsconfig.json
       - run: pnpm --filter @folkways/cli run build
 
   cli-test:
@@ -210,10 +213,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run smoke
 
+  # Every change: scan the commits for leaked credentials. The action and the CLI image are pinned.
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: trufflesecurity/trufflehog@4dd8831c5f12599465d4d45c3c447b4018a34c85 # v3.97.9
+        with:
+          version: 3.97.9
+          extra_args: --results=verified,unknown
+
   ci:
     name: ci
     if: always()
-    needs: [changes, cli-check, cli-test, hooks, evals, claude-plugin, smoke]
+    needs: [changes, cli-check, cli-test, hooks, evals, claude-plugin, smoke, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

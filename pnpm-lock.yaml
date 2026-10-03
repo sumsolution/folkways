@@ -171,6 +171,12 @@ importers:
       '@changesets/cli':
         specifier: ^3.0.0
         version: 3.0.3
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.6
+      typescript:
+        specifier: ^7.0.0
+        version: 7.0.2
 
   packages/claude-plugin:
     devDependencies:
