@@ -5,10 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
-  readlinkSync,
   rmSync,
-  symlinkSync,
-  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -16,7 +13,7 @@ import { FolkwaysError } from './errors.ts';
 import { fsOps, listFiles, pruneEmptyDirs, sha256, sha256Text } from './files.ts';
 import { hookWarnings } from './hooks.ts';
 import { MANIFEST, type Manifest, readManifest, writeManifest } from './manifest.ts';
-import { compileSkillFiles, type LintFinding, lintPersonalOverlay } from './overlays.ts';
+import { compileSkillFiles } from './overlays.ts';
 import { assetsDir, PACKAGE_ROOT, packageVersion } from './package.ts';
 import { mergeSettings, type Settings } from './settings.ts';
 
@@ -82,7 +79,7 @@ export function editsMessage(edits: string[], fix: string): string {
   return [
     'framework files were edited:',
     ...edits.map((e) => `  ${e}`),
-    'Move team changes into overlays/ (team) or people/<handle>/overlays/ (personal), then rerun.',
+    'Move team changes into overlays/, then rerun.',
     fix,
   ].join('\n');
 }
@@ -234,47 +231,6 @@ export function staleOverlays(team: string, manifest: Manifest): string[] {
   return [...paths].filter((p) => !existsSync(join(team, p)) || recorded[p] !== sha256(join(team, p))).sort();
 }
 
-/** Lint findings for every personal overlay, each message prefixed with its path. `sync` prints them as warnings. */
-export function lintPersonalOverlays(team: string): LintFinding[] {
-  return listFiles(join(team, 'people'))
-    .filter((f) => /^[^/]+\/overlays\/[^/]+\/OVERLAY\.md$/.test(f))
-    .flatMap((f) =>
-      lintPersonalOverlay(readFileSync(join(team, 'people', f), 'utf8')).map((l) => ({ ...l, message: `people/${f}: ${l.message}` })),
-    );
-}
-
-const HANDLE = /^handle:\s*(["']?)([A-Za-z0-9][A-Za-z0-9._-]*)\1\s*(?:#.*)?$/m;
-
-/**
- * Point `.local/me` at `people/<handle>` (handle from `.local/me.yaml`), so skills can attach the
- * person's overlays with one path for everyone. Returns a warning when it can't.
- */
-function linkPersonalFolder(team: string): string | undefined {
-  const me = join(team, '.local/me.yaml');
-  if (!existsSync(me)) return undefined;
-  const handle = HANDLE.exec(readFileSync(me, 'utf8'))?.[2];
-  if (!handle) return undefined;
-  const link = join(team, '.local/me');
-  const target = `../people/${handle}`;
-  const stat = lstatSync(link, { throwIfNoEntry: false });
-  if (!existsSync(join(team, 'people', handle))) {
-    // A link left from another handle would attach someone else's overlays.
-    if (stat?.isSymbolicLink() && readlinkSync(link) !== target) unlinkSync(link);
-    return `people/${handle}/ not found; run the onboard skill. Skills won't attach personal overlays until it exists.`;
-  }
-  if (stat && !stat.isSymbolicLink()) {
-    return '.local/me is not a symlink; skills attach personal overlays through it. Move it and rerun sync.';
-  }
-  if (stat && readlinkSync(link) === target) return undefined;
-  try {
-    if (stat) unlinkSync(link);
-    symlinkSync(target, link, 'dir');
-  } catch (e) {
-    return `could not link .local/me to people/${handle} (${(e as Error).message}); skills fall back to reading people/${handle}/overlays/`;
-  }
-  return undefined;
-}
-
 /** The merged .claude/settings.json content. Reads only, so sync can fail before writing anything. */
 function mergedSettings(team: string, pkg: string): string {
   const path = join(team, '.claude/settings.json');
@@ -336,7 +292,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
       [
         'sync would overwrite team files that differ from this version:',
         ...overwrites.map((o) => `  ${o}`),
-        'Move team changes into overlays/ (team) or people/<handle>/overlays/ (personal), then rerun.',
+        'Move team changes into overlays/, then rerun.',
         'Or rerun with --force to overwrite them.',
       ].join('\n'),
     );
@@ -373,9 +329,7 @@ export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOpti
   pruneEmptyDirs(join(team, '.folkways'));
   pruneEmptyDirs(join(team, '.github'));
 
-  const warnings = [...compiled.warnings, ...lintPersonalOverlays(team).map((l) => l.message), ...hookWarnings(team)];
-  const link = linkPersonalFolder(team);
-  if (link) warnings.push(link);
+  const warnings = [...compiled.warnings, ...hookWarnings(team)];
   if (!existsSync(join(team, 'folkways.yaml'))) warnings.push('no folkways.yaml; the hooks stay silent until the repo has one.');
   const agents = join(team, 'AGENTS.md');
   const imports = existsSync(agents) && readFileSync(agents, 'utf8').split('\n').some((l) => l.trim() === INSTRUCTIONS_IMPORT);

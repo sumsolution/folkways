@@ -11,7 +11,7 @@ New to the repo? Install dependencies (`npm ci`, or `pnpm install --frozen-lockf
 | `state/` | Live trackers, one file per track | direct push |
 | `efforts/<KEY>-<slug>/` | Shared efforts, each with `00-STATUS.md` | direct push |
 | `overlays/<skill>/` | Team changes to framework skills | PR |
-| `people/<handle>/` | Personal overlays, inbox, work | direct push |
+| `people/<handle>/` | Inbox, work | direct push |
 | `.claude/skills/` | Framework skills (synced) and team skills | PR |
 | `.folkways/` | Framework files. Don't edit; `folkways sync` replaces them | PR |
 | `.local/` | Machine-local config (`me.yaml`). Not committed | — |

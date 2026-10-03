@@ -6,7 +6,7 @@ import { MANIFEST, readManifest } from './manifest.ts';
 import type { LintFinding } from './overlays.ts';
 import { PACKAGE_NAME, PACKAGE_ROOT, packageVersion } from './package.ts';
 import { detectPackageManager, installCommand } from './package-manager.ts';
-import { findEdits, lintPersonalOverlays, staleOverlays } from './sync.ts';
+import { findEdits, staleOverlays } from './sync.ts';
 
 export type Finding = LintFinding;
 
@@ -43,7 +43,6 @@ export function doctor(team: string, options: DoctorOptions = {}): Finding[] {
   } else if (!findings.some((f) => f.message.startsWith(MANIFEST))) {
     findings.push(error(`no ${MANIFEST}; run 'folkways sync'`));
   }
-  findings.push(...lintPersonalOverlays(team));
   findings.push(...shadowFindings(team, home));
   findings.push(...settingsFindings(team));
   findings.push(...hookWarnings(team).map(error));
