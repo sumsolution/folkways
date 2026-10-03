@@ -11,7 +11,7 @@ squash-merged, so the title becomes the commit on the default branch.
 ## Config
 
 - `folkways.yaml`: `git` (convention, scopes, merge), `review.trigger`, `notifications`, `members`.
-- `.local/me.yaml`: `projects_dir`, `review.trigger` (overrides the team value).
+- `.local/me.yaml`: `projects_dir`, `review.trigger` (may only tighten the team value; the session context gives the effective one).
 
 The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 

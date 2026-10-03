@@ -11,7 +11,7 @@ title into the commit on the default branch, so the same rules cover PR titles (
 ## Config
 
 - `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
-- `.local/me.yaml`: `projects_dir`, `review.trigger` (overrides the team value).
+- `.local/me.yaml`: `projects_dir`, `review.trigger` (may only tighten the team value; the session context gives the effective one).
 
 The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
