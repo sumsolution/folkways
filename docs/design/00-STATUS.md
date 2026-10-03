@@ -170,4 +170,4 @@ From the fresh-process review of [sumsolution/folkways#1](https://github.com/sum
 ## Security (open)
 
 - [ ] Enable secret scanning and push protection when the repo goes public.
-- [x] Add a CI secret-scan job: TruffleHog pinned to a SHA (not gitleaks-action, which needs an org license). `secret scan` in ci.yml, required through `ci`.
+- [x] Add a CI secret-scan job: TruffleHog pinned to a SHA (not gitleaks-action, which needs an org license). `secret scan` in ci.yml runs the CLI image pinned by digest (the repo's Actions policy rejected the third-party action), required through `ci`.
