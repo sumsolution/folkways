@@ -61,6 +61,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - '.pnpmfile.mjs'
               - 'tsconfig.base.json'
+              - 'tsconfig.json'
               - 'go.work'
               - '.github/workflows/**'
               - 'scripts/**'
@@ -82,6 +83,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/cli run check
+      - name: Typecheck scripts/
+        run: pnpm exec tsc -p tsconfig.json
       - run: pnpm --filter @folkways/cli run build
 
   cli-test:
@@ -210,10 +213,33 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run smoke
 
+  # Every change: scan the commits for leaked credentials.
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # The CLI image, pinned by digest (no third-party action). Scans the PR's or push's commits.
+      - name: TruffleHog 3.97.9
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.event.after }}
+        run: |
+          since=()
+          if [ -n "$BASE" ] && [ "$BASE" != 0000000000000000000000000000000000000000 ]; then since=(--since-commit "$BASE"); fi
+          docker run --rm -v "$PWD:/repo" -w /repo \
+            ghcr.io/trufflesecurity/trufflehog@sha256:52e67fef4d054ecff5c2ce4b4ae376626d1ef54aa0898b53cac19c25e92e14db \
+            git file:///repo "${since[@]}" --branch "$HEAD" \
+            --results=verified,unknown --fail --fail-on-scan-errors --no-update --github-actions
+
   ci:
     name: ci
     if: always()
-    needs: [changes, cli-check, cli-test, hooks, evals, claude-plugin, smoke]
+    needs: [changes, cli-check, cli-test, hooks, evals, claude-plugin, smoke, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

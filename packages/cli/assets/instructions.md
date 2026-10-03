@@ -97,7 +97,8 @@ Session close lists them all.
   `git.commit_pattern`. `none`: no format rule.
 - Branches follow `git.branch_pattern`, e.g. `fix/EX-123-handle-expired-tokens`.
 - PRs are squash-merged, so the PR title follows the commit rules.
-- A fresh-process review (`folkways review`) must cover the SHA before a PR opens.
+- A fresh-process review must cover the SHA before a PR opens: `folkways review`, or, in a solo repo (no
+  CLI), the `review` skill in a fresh subagent.
 - Ask before every push. Ask whether a PR is draft or ready; open it as a draft if unclear.
 
 ## Approval

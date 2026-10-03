@@ -31,7 +31,7 @@ From the repo root:
 |---|---|
 | `pnpm install` | install dev dependencies (pnpm version pinned in `packageManager`) |
 | `pnpm test` | every package's tests |
-| `pnpm run check` | every package's `tsc --noEmit` |
+| `pnpm run check` | every package's `tsc --noEmit`, then the root `scripts/` |
 | `pnpm run build` | build every package (the CLI's `src/` to `dist/`, also on `pnpm pack` / `pnpm publish`; the hook packages to `packages/hooks/npm/`, needs Go) |
 | `pnpm --filter @folkways/cli test` | one package only (same for `check`, `build`, `@folkways/hooks`) |
 | `pnpm run smoke` | pack the CLI and the four hook packages, install them with npm and pnpm, drive `init` and `sync`, run the contract suite through the installed binary (needs Go) |

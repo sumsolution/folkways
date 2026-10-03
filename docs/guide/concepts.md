@@ -108,7 +108,7 @@ PR, so an overlay can't loosen them.
   `permissions.ask` is unverified).
 - Framework files aren't edited. Built: `sync` checks their checksums.
 - Team overlay overrides apply. Built: `sync` compiles them in and fails on an unknown ID.
-- Personal overlays only add. `sync` warns when one doesn't; `doctor` will report it (coming soon).
+- Personal overlays only add. `sync` warns when one doesn't; `doctor` reports it as an error.
 - Commits follow the team's format. Built: `git-guard`.
 - A fresh-process review covers the commit before a push, with the `pre-push` trigger. Built: `git-guard`
   blocks the push of a project repo; `folkways review`, which writes the review, is coming soon.

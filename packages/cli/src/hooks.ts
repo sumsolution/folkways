@@ -7,6 +7,9 @@ import { detectPackageManager } from './package-manager.ts';
 /** The Go hook binary, linked by the `@folkways/hooks-<os>-<cpu>` optional dependency (ADR 0002). */
 export const HOOK_BIN = 'node_modules/.bin/folkways-hook';
 
+/** The hooks `folkways-hook` runs (spec §7.1); `assets/settings.json` wires each one. */
+export const HOOK_NAMES = ['context-band', 'git-guard', 'precompact', 'session-start'] as const;
+
 /** pnpm links a dependency's dependencies' bins only when hoisted; the pattern that hoists ours. */
 export const HOIST_PATTERN = '@folkways/hooks-*';
 

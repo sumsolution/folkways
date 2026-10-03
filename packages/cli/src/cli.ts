@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
+import { doctor } from './doctor.ts';
 import { FolkwaysError } from './errors.ts';
 import { git } from './git.ts';
 import { runHook } from './hooks.ts';
@@ -21,8 +22,10 @@ const USAGE = `usage: folkways <command> [options]
   upgrade <version>            install <version> on branch chore/folkways-<version>, sync, commit
                                (uses the team repo's package manager)
   hook <name>                  run a hook by hand; reads the payload on stdin
+  doctor                       check config, versions, overlays, skills, settings and hooks;
+                               prints each problem with its fix, exits 1 on errors
   version                      print the installed version
-  review | run | doctor        not built yet`;
+  review | run                 not built yet`;
 
 function teamRoot(): string {
   try {
@@ -80,9 +83,18 @@ function main(argv: string[]): void {
       process.exitCode = runHook(teamRoot(), positionals[0]!);
       return;
     }
+    case 'doctor': {
+      parseArgs({ args: rest });
+      const findings = doctor(teamRoot());
+      for (const f of findings) console.log(`${f.level}: ${f.message}`);
+      const errors = findings.filter((f) => f.level === 'error').length;
+      const warnings = findings.length - errors;
+      console.log(findings.length === 0 ? 'No problems found.' : `${errors} error${errors === 1 ? '' : 's'}, ${warnings} warning${warnings === 1 ? '' : 's'}.`);
+      if (errors > 0) process.exitCode = 1;
+      return;
+    }
     case 'review':
     case 'run':
-    case 'doctor':
       throw new FolkwaysError(`'${command}' is not built yet (spec §7.2)`);
     case 'help':
     case '--help':
