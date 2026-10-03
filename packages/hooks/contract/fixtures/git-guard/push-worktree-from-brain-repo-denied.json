@@ -27,6 +27,11 @@
       },
       "expect": {
         "stdout": {
+          "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": "re:no review of HEAD"
+          },
           "permissionDecision": "deny",
           "permissionDecisionReason": "re:no review of HEAD"
         }

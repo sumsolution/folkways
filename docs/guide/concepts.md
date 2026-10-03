@@ -111,7 +111,7 @@ PR, so an overlay can't loosen them.
 - Personal overlays only add. `sync` warns when one doesn't; `doctor` will report it (coming soon).
 - Commits follow the team's format. Built: `git-guard`.
 - A fresh-process review covers the commit before a push, with the `pre-push` trigger. Built: `git-guard`
-  blocks the push; `folkways review`, which writes the review, is coming soon.
+  blocks the push of a project repo; `folkways review`, which writes the review, is coming soon.
 - Agents never check out, pull or reset in your main clones. Built: `git-guard`.
 
 The full table is in [ADR 0001](../adr/0001-overlay-enforcement.md). The idea comes from the book the

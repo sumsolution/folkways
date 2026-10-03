@@ -77,4 +77,14 @@ func TestPushExemptsTheBrainRepo(t *testing.T) {
 	if got := checkPush(repo, cfg); got == "" {
 		t.Error("another repo without a review must still be denied")
 	}
+	nested := filepath.Join(repo, "projects", "app")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitIn(t, nested, "init", "-q", "-b", "main")
+	gitIn(t, nested, "commit", "-q", "--allow-empty", "-m", "feat: app")
+	cfg.Dir = repo
+	if got := checkPush(nested, cfg); got == "" {
+		t.Error("a project repo inside the brain repo's tree must still be denied")
+	}
 }

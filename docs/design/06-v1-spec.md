@@ -393,7 +393,10 @@ the contract suite, [test/hooks/README.md](../../packages/hooks/contract/README.
 - `after-commit`: the `commit` skill runs it after each commit. `pre-push`: `git-guard` blocks the push
   of a project repo until a review for HEAD exists. A push of the brain repo itself (the git top level
   holding `folkways.yaml`) is never gated: its direct pushes (§2.2: `state/`, `efforts/`, the personal
-  root) carry no project code, and knowledge and overlays go by PR, where people review them. `on-demand`: never automatic.
+  root) carry no project code, and knowledge and overlays go by PR, where people review them.
+  The exemption is per repo, not per path: a direct push of `knowledge/` or `overlays/` is held only by
+  the push approval and branch protection, not by `git-guard`. It matches the top level exactly, so a
+  repo nested in the brain repo's tree and a `git worktree` of the brain repo are still gated. `on-demand`: never automatic.
 - A review covers HEAD when a file under `efforts/**` or `<personal root>/work/**` has frontmatter
   `sha:` equal to the target repo's HEAD, or a file `<personal root>/inbox/<YYYY-MM-DD>-review-<sha7>.md`
   has `<sha7>` equal to the first 7 characters of HEAD. The personal root is `people/<handle>/` in a
