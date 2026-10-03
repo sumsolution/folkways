@@ -234,7 +234,7 @@ jobs:
           docker run --rm -v "$PWD:/repo" -w /repo \
             ghcr.io/trufflesecurity/trufflehog@sha256:52e67fef4d054ecff5c2ce4b4ae376626d1ef54aa0898b53cac19c25e92e14db \
             git file:///repo "${since[@]}" --branch "$HEAD" \
-            --results=verified,unknown --fail --no-update --github-actions
+            --results=verified,unknown --fail --fail-on-scan-errors --no-update --github-actions
 
   ci:
     name: ci

@@ -28,6 +28,8 @@ export function doctor(team: string, options: DoctorOptions = {}): Finding[] {
   if (!existsSync(config)) return [error(`no folkways.yaml in ${team}; run the setup skill, or run doctor in the team repo`)];
 
   const findings = hookValueFindings(readFileSync(config, 'utf8'), HOOK_NAMES);
+  // No package.json: the plugin set this repo up and there is no CLI install, sync or settings to check.
+  if (!existsSync(join(team, 'package.json'))) return [...findings, ...shadowFindings(team, home)];
   let manifest: ReturnType<typeof readManifest>;
   try {
     manifest = readManifest(team);
@@ -36,7 +38,7 @@ export function doctor(team: string, options: DoctorOptions = {}): Finding[] {
   }
   findings.push(...versionFindings(team, pkg, manifest?.version));
   if (manifest) {
-    findings.push(...findEdits(team, manifest).map((e) => warning(`${e} is a framework file; sync refuses until you move the change to an overlay, or run 'folkways sync --force' to discard it`)));
+    findings.push(...findEdits(team, manifest).map(editFinding));
     findings.push(...staleOverlays(team, manifest).map((p) => error(`${p} changed since the last sync compiled it; run 'folkways sync'`)));
   } else if (!findings.some((f) => f.message.startsWith(MANIFEST))) {
     findings.push(error(`no ${MANIFEST}; run 'folkways sync'`));
@@ -46,6 +48,12 @@ export function doctor(team: string, options: DoctorOptions = {}): Finding[] {
   findings.push(...settingsFindings(team));
   findings.push(...hookWarnings(team).map(error));
   return findings;
+}
+
+/** `modified  .folkways/instructions.md` (from `findEdits`) as an error: sync refuses until it is resolved. */
+function editFinding(edit: string): Finding {
+  const [, how, path] = /^(\S+)\s+(.*)$/.exec(edit)!;
+  return error(`${path} was ${how}, so sync refuses; move the change into an overlay, or run 'folkways sync --force' to discard it`);
 }
 
 function readJson(path: string): Record<string, unknown> | undefined {
@@ -69,6 +77,9 @@ function versionFindings(team: string, pkg: string, synced: string | undefined):
     | undefined;
   const pinned = manifest?.devDependencies?.[PACKAGE_NAME] ?? manifest?.dependencies?.[PACKAGE_NAME];
   if (!pinned) return [error(`package.json doesn't pin ${PACKAGE_NAME}; add it as an exact devDependency ('folkways upgrade <version>' does this)`)];
+  if (!EXACT.test(pinned)) {
+    return [error(`package.json pins ${PACKAGE_NAME} ${pinned}, not an exact version; pin one with 'folkways upgrade <version>'`)];
+  }
 
   const findings: Finding[] = [];
   const installed = (readJson(join(team, 'node_modules', PACKAGE_NAME, 'package.json')) as { version?: string } | undefined)?.version;
@@ -77,12 +88,15 @@ function versionFindings(team: string, pkg: string, synced: string | undefined):
     findings.push(error(`node_modules has ${PACKAGE_NAME} ${installed} but package.json pins ${pinned} (a failed upgrade leaves this); run '${install}'`));
   }
   const running = packageVersion(pkg);
-  if (running !== pinned) {
+  // A running CLI that is the installed one is covered by the node_modules error above.
+  if (running !== pinned && running !== installed) {
     findings.push(warning(`this is folkways ${running}, but the repo pins ${pinned}; run the pinned one with 'npx folkways doctor' from the team repo`));
   }
   if (synced && synced !== pinned) findings.push(error(`the repo was synced from ${synced}, but package.json pins ${pinned}; run 'folkways sync'`));
   return findings;
 }
+
+const EXACT = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 
 const PERSONAL_SKILL_DIRS = ['.claude/skills', '.agents/skills', '.copilot/skills'];
 
@@ -147,33 +161,62 @@ function hookValue(raw: string): boolean | undefined {
 /** A raw YAML value without its trailing comment. */
 const stripComment = (v: string): string => (/^(["']).*?\1/.exec(v)?.[0] ?? v.replace(/(^|\s)#.*$/, '')).trim();
 
+const NULL_MAP = new Set(['', '{}', '~', 'null', 'Null', 'NULL']);
+const KEY = /^(?:"([^"]*)"|'([^']*)'|([^\s"'#][^:#]*?))\s*:(?:\s+(.*))?$/;
+
 /**
  * Checks the `hooks:` block of folkways.yaml: each value is `true` or `false`. The hook binary (yaml.v3) also reads
  * YAML 1.1 words (`off`, `no`) and empty values as booleans, and anything else leaves the hook on; `run.sh` in the
  * plugin tests only some of these, so doctor asks for the two plain words.
  */
 export function hookValueFindings(yaml: string, known: readonly string[]): Finding[] {
-  const lines = yaml.split('\n');
-  const start = lines.findIndex((l) => /^hooks:/.test(l));
+  const lines = yaml.split(/\r?\n/);
+  const start = lines.findIndex((l) => /^hooks\s*:/.test(l));
   if (start < 0) return [];
-  const inline = stripComment(lines[start]!.slice('hooks:'.length));
-  if (inline !== '') {
-    return inline === '{}' ? [] : [warning('folkways.yaml hooks: write one hook per line (git-guard: false) so doctor can check the values')];
-  }
-  const findings: Finding[] = [];
-  for (const line of lines.slice(start + 1)) {
+  const inline = stripComment(lines[start]!.replace(/^hooks\s*:/, ''));
+  if (!NULL_MAP.has(inline)) return [warning('folkways.yaml hooks: write one hook per line (git-guard: false) so doctor can check the values')];
+
+  const entries: { name: string; raw: string; nested: boolean }[] = [];
+  let indent = -1;
+  for (let i = start + 1; i < lines.length; i++) {
+    const line = lines[i]!;
     if (line.trim() === '' || line.trim().startsWith('#')) continue;
-    const entry = /^\s+([^\s:#][^:]*?):(?:\s+(.*))?$|^\s+([^\s:#][^:]*?):$/.exec(line);
-    if (!/^\s/.test(line) || !entry) break;
-    const name = entry[1] ?? entry[3]!;
-    const raw = stripComment(entry[2] ?? '');
-    const shown = raw === '' ? '(empty)' : raw;
+    if (/^ *\t/.test(line)) {
+      return [error(`folkways.yaml hooks: line ${i + 1} is indented with a tab, which YAML forbids, so the hooks ignore folkways.yaml; indent with spaces`)];
+    }
+    const depth = /^ */.exec(line)![0].length;
+    if (depth === 0) break;
+    if (indent < 0) indent = depth;
+    if (depth > indent) {
+      // Deeper lines belong to the entry above: a nested map, or a plain value continued on the next line.
+      const last = entries[entries.length - 1];
+      if (last && KEY.test(line.trim())) last.nested = true;
+      else if (last && !last.nested) last.raw = `${last.raw} ${stripComment(line)}`.trim();
+      continue;
+    }
+    if (depth < indent) break;
+    const m = KEY.exec(line.trim());
+    if (!m) break;
+    entries.push({ name: (m[1] ?? m[2] ?? m[3]!).trim(), raw: stripComment(m[4] ?? ''), nested: false });
+  }
+
+  const findings: Finding[] = [];
+  for (const { name, raw, nested } of entries) {
     const where = `folkways.yaml hooks.${name}`;
     if (!known.includes(name)) {
       findings.push(warning(`${where}: no hook by that name (hooks: ${[...known].sort().join(', ')})`));
       continue;
     }
+    if (nested && raw === '') {
+      findings.push(error(`${where}: a nested map is not a boolean, so the hook stays on; write true or false`));
+      continue;
+    }
     if (raw === 'true' || raw === 'false') continue;
+    if (/^[!*&]/.test(raw)) {
+      findings.push(error(`${where}: doctor can't check ${raw} (a tag, anchor or alias); write true or false`));
+      continue;
+    }
+    const shown = raw === '' ? '(empty)' : raw;
     const value = hookValue(raw);
     if (value === undefined) findings.push(error(`${where}: ${shown} is not a boolean, so the hook stays on; write true or false`));
     else findings.push(error(`${where}: ${shown} reads as ${value} (hook ${value ? 'on' : 'off'}); write ${value}`));

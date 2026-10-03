@@ -39,6 +39,15 @@ describe('doctor', () => {
     ]);
   });
 
+  it('checks only folkways.yaml and personal skills in a repo without package.json (the plugin, no CLI)', () => {
+    const { pkg, home } = setup();
+    const solo = tmp();
+    put(join(solo, 'folkways.yaml'), 'mode: solo\nhooks:\n  git-guard: off\n');
+    expect(doctor(solo, { pkg, home })).toEqual([
+      { level: 'error', message: 'folkways.yaml hooks.git-guard: off reads as false (hook off); write false' },
+    ]);
+  });
+
   it('reports a missing manifest', () => {
     const { pkg, team, home } = setup();
     rmSync(join(team, '.folkways/manifest.json'));
@@ -74,6 +83,23 @@ describe('doctor', () => {
       ]);
     });
 
+    it('reports a pin that is not an exact version, and skips the comparisons', () => {
+      const { pkg, team, home } = setup();
+      const pj = json(join(team, 'package.json'));
+      pj.devDependencies['@folkways/cli'] = '^1.0.0';
+      writeFileSync(join(team, 'package.json'), JSON.stringify(pj));
+      expect(doctor(team, { pkg, home })).toEqual([
+        { level: 'error', message: expect.stringMatching(/pins @folkways\/cli \^1\.0\.0, not an exact version.*folkways upgrade/) },
+      ]);
+    });
+
+    it('does not send a failed upgrade to npx when the running CLI is the installed one', () => {
+      const { team, home } = setup();
+      install(team, '1.1.0');
+      const installed = makePackage('1.1.0');
+      expect(messages(team, installed, home, 'warning')).toEqual([]);
+    });
+
     it('reports a sync from another version than the pinned one', () => {
       const { pkg, team, home } = setup();
       const manifest = json(join(team, '.folkways/manifest.json'));
@@ -83,10 +109,12 @@ describe('doctor', () => {
     });
   });
 
-  it('warns about edited framework files', () => {
+  it('reports edited framework files, which sync refuses', () => {
     const { pkg, team, home } = setup();
     writeFileSync(join(team, '.folkways/instructions.md'), 'edited\n');
-    expect(messages(team, pkg, home, 'warning')).toEqual([expect.stringMatching(/modified +\.folkways\/instructions\.md/)]);
+    expect(messages(team, pkg, home, 'error')).toEqual([
+      ".folkways/instructions.md was modified, so sync refuses; move the change into an overlay, or run 'folkways sync --force' to discard it",
+    ]);
   });
 
   it('reports team overlays changed since the last sync', () => {
@@ -200,6 +228,40 @@ describe('hookValueFindings', () => {
       { level: 'error', message: 'folkways.yaml hooks.precompact: "off" reads as false (hook off); write false' },
       { level: 'error', message: "folkways.yaml hooks.session-start: 'on' reads as true (hook on); write true" },
     ]);
+  });
+
+  it('reads CRLF files', () => {
+    expect(hookValueFindings('hooks:\r\n  git-guard: "false"\r\n  precompact: false\r\n', known)).toEqual([
+      { level: 'error', message: 'folkways.yaml hooks.git-guard: "false" is not a boolean, so the hook stays on; write true or false' },
+    ]);
+  });
+
+  it('reports tabs, which make the hook binary ignore folkways.yaml', () => {
+    expect(hookValueFindings('hooks:\n\tgit-guard: false\n', known)).toEqual([
+      { level: 'error', message: 'folkways.yaml hooks: line 2 is indented with a tab, which YAML forbids, so the hooks ignore folkways.yaml; indent with spaces' },
+    ]);
+  });
+
+  it('reports a nested map under a hook, which leaves it on', () => {
+    expect(check('  git-guard:\n    enabled: false\n  precompact: false\n')).toEqual([
+      { level: 'error', message: 'folkways.yaml hooks.git-guard: a nested map is not a boolean, so the hook stays on; write true or false' },
+    ]);
+  });
+
+  it('reads a plain value continued on the next line, and does not guess at tags or aliases', () => {
+    expect(check('  git-guard:\n    off\n  precompact: !!bool "false"\n  context-band: *f\n')).toEqual([
+      { level: 'error', message: 'folkways.yaml hooks.git-guard: off reads as false (hook off); write false' },
+      { level: 'error', message: 'folkways.yaml hooks.precompact: doctor can\'t check !!bool "false" (a tag, anchor or alias); write true or false' },
+      { level: 'error', message: "folkways.yaml hooks.context-band: doctor can't check *f (a tag, anchor or alias); write true or false" },
+    ]);
+  });
+
+  it('unquotes and trims keys, and accepts an empty or null hooks map', () => {
+    expect(check('  "git-guard": off\n  precompact : false\n')).toEqual([
+      { level: 'error', message: 'folkways.yaml hooks.git-guard: off reads as false (hook off); write false' },
+    ]);
+    expect(hookValueFindings('hooks: null\n', known)).toEqual([]);
+    expect(hookValueFindings('hooks: ~ # none\n', known)).toEqual([]);
   });
 
   it('warns about unknown hook names', () => {
