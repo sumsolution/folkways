@@ -9,22 +9,13 @@ A session produces artifacts (already saved) and understanding: facts found at c
 procedures that worked. Understanding evaporates when the session ends; this skill catches it. It always
 proposes before writing, and never commits unless asked.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `repos`, `models`, `knowledge_audit`.
+- `.local/me.yaml`: `projects_dir`, `tool`.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `repos`, `models`, `knowledge_audit`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, `tool`.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/session-close/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/session-close/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 
@@ -68,7 +59,7 @@ Each candidate gets one home.
 | `knowledge/` (by PR) | Expensive to derive, still true in weeks, not already recorded in the source repo | One topic per file. Ends with `Last verified: YYYY-MM-DD (<method>)`; the method is what the audit re-runs |
 | `state/` (direct) | The live status of a tracked activity moved | `Last updated:` date. Supersede, don't delete |
 | Effort `00-STATUS.md` (direct) | Where the effort stands, what's next, what's blocked | Readable cold; update via `handoff` if it needs more than a line |
-| Overlays | A procedure will recur, or a skill behaved wrong for this team or person | Amend the existing overlay; a new one needs a real second occasion |
+| Overlays | A procedure will recur, or a skill behaved wrong for this team | Amend the existing overlay; a new one needs a real second occasion |
 | `<personal root>/inbox/` (direct) | Side quest or draft with no effort | Say where you wrote it |
 | Tool auto-memory (optional) | A personal preference of the user's, for one tool | Distinct from `knowledge/`: the tool owns it, the team never sees it. Never conflate the two, and never symlink one to the other |
 

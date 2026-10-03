@@ -8,23 +8,14 @@ description: Sets up one person on one machine for this team repo - writes .loca
 A new teammate, or a new machine, should be working in one sitting. This skill writes only personal
 files and asks before touching anything outside the team repo.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `mode`, `members`, `repos`, `research.sources`, `models`, `review.trigger`. **If it's
+  missing,** say folkways isn't set up in this repo, offer the `setup` skill, and stop.
+- `.local/me.yaml`: if it exists, this is a re-run; show its values and change only what the user asks.
+  If it doesn't, you create it.
 
-1. `folkways.yaml`: `mode`, `members`, `repos`, `research.sources`, `models`, `review.trigger`. **If it's
-   missing,** say folkways isn't set up in this repo, offer the `setup` skill, and stop.
-2. `.local/me.yaml`: if it exists, this is a re-run; show its values and change only what the user asks.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/onboard/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/onboard/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 
@@ -37,9 +28,7 @@ Read these first. A missing file is normal; skip it.
    listed → they need a PR adding them (offer to draft it); continue with the handle meanwhile.
 3. **Write `.local/me.yaml`** per [me.yaml](#me-yaml). Ask for `projects_dir` as an absolute path; `~`
    is not reliably expanded. Show the file; write on approval. `.local/` is gitignored; check that it is.
-4. **Create `people/<handle>/`** with `inbox/`, `work/` and `overlays/` (a `.gitkeep` in each empty
-   folder), if missing. Then link `.local/me` to it (`ln -sfn ../people/<handle> .local/me`), so skills
-   attach this person's overlays; `folkways sync` also keeps the link.
+4. **Create `people/<handle>/`** with `inbox/` and `work/` (a `.gitkeep` in each empty folder), if missing.
 5. **Grant access to the project clones,** with approval, per [Tool access](#tool-access).
 6. **Check the repos.** For each `repos` entry, is there a clone under `projects_dir`? List the missing
    ones with the clone command; clone only on approval.

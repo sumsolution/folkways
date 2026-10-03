@@ -8,22 +8,12 @@ description: Writes and makes a git commit in the team's convention (Angular typ
 Commit one logical change with a message that follows the team convention. Squash merges turn the PR
 title into the commit on the default branch, so the same rules cover PR titles (the `pr` skill).
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
+- `.local/me.yaml`: `projects_dir`, `review.trigger` (overrides the team value).
 
-1. `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`, and `review.trigger` (it overrides the team value).
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/commit/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/commit/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 
@@ -107,7 +97,7 @@ Create the branch in a new worktree from a freshly fetched default branch:
 |---|---|---|
 | Project repo | any | a feature branch in a worktree; never the default branch |
 | Team repo | `state/`, `efforts/`, `people/` | the default branch, rebased on push (keep history linear) |
-| Solo repo | `state/`, `work/`, `inbox/`, `knowledge/`, `overlays/`, `folkways.yaml` | the user's choice; ask |
+| Solo repo | `state/`, `work/`, `inbox/`, `knowledge/`, `folkways.yaml` | the user's choice; ask |
 | Team repo | `knowledge/`, `overlays/`, team skills, `folkways.yaml`, framework upgrades | a branch and a PR |
 
 Use `git mv` for moves so history follows the file.

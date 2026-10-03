@@ -38,8 +38,8 @@ Rebuild after changing skills, instructions or hooks; the next session picks it 
 
 ## What differs from a team repo
 
-- **Team overlays** in `overlays/` aren't compiled in (that needs `folkways sync`). Personal overlays
-  (`.local/me/overlays/`) still attach.
+- **Overlays** aren't applied. Team overlays in `overlays/` need `folkways sync` to compile them in, and
+  personal overlays no longer exist, so a solo repo has no overlays until the Go CLI.
 - **The push ask rule** isn't set: plugins can't add permission rules.
 - **Synced team repos** (with `.folkways/manifest.json`) are left alone: their own settings run the hooks.
 - **Hooks without a team repo** read no `folkways.yaml` or `me.yaml`. `git-guard` still denies commits that

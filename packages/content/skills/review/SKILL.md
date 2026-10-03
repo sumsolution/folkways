@@ -7,24 +7,15 @@ description: Reviews a code change against its ticket and writes a verdict and f
 
 Review a change the way a careful senior teammate would: know what it is meant to do, check that it
 does it, prove risky claims by running the code, and say plainly what must change. Every teammate's
-agent gives the same baseline review; overlays add team and personal rules.
+agent gives the same baseline review; team overlays add team rules.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
+- `.local/me.yaml`: `projects_dir`.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `repos` (default branches, owners), `tracker`, `review.trigger`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/review/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/review/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Inputs
 

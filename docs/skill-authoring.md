@@ -5,8 +5,8 @@ How to write a framework skill in `packages/content/skills/<name>/`. It is based
 ([06 §3.2, §6, §7.5](design/06-v1-spec.md)). `packages/content/test/skills.test.ts` checks the mechanical rules.
 
 > **Overlays follow [ADR 0001](adr/0001-overlay-enforcement.md).** `folkways sync` compiles team
-> overlays into the synced skill; the skill attaches the person's additions in step 0. Rules that must
-> hold whatever an overlay says are config enforced by hooks, not skill prose.
+> overlays into the synced skill. There are no personal overlays. Rules that must hold whatever an
+> overlay says are config enforced by hooks, not skill prose.
 
 ## Rules
 
@@ -16,7 +16,7 @@ How to write a framework skill in `packages/content/skills/<name>/`. It is based
 | `name` is lowercase-hyphenated, at most 64 chars, equals the folder | Spec requirement | yes |
 | `description` is at most 500 chars, no `<` or `>` | Spec limit is 1,024; all skills share a listing budget of about 1% of context in Claude Code | yes |
 | `SKILL.md` is under 500 lines | Spec and Anthropic guidance; the body loads whole on every use | yes |
-| Step 0 reads `folkways.yaml` and `.local/me.yaml`, then ends with the shared personal-additions block | Team overlays are compiled in by `sync`; the block attaches personal additions and states their precedence, without which they won 18 of 20 eval runs ([07 §6](design/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)) | yes, word for word |
+| A `## Config` section names the `folkways.yaml` and `.local/me.yaml` fields the skill uses, then ends with the shared line | The `session-start` hook prints both files into the session; the line tells the agent to read them only if they aren't there | yes, word for word |
 | Overridable sections carry a unique `{#id}` | Team overlays replace sections by ID | yes (unique) |
 | Writes, posts and pushes only after approval | Spec §6; instructions "Approval" list | wording only |
 | A `## Headless` section | Spec §7.5; no one can approve in a headless run | yes |
@@ -36,7 +36,7 @@ packages/content/skills/ticket/
     └── example-overlay.md
 ```
 
-- `SKILL.md` holds what every run needs: step 0, the workflow, the rules, overridable sections that
+- `SKILL.md` holds what every run needs: the Config section, the workflow, the rules, overridable sections that
   are short, and the headless section.
 - `references/` holds what only some runs need: templates, tracker mechanics, long examples. Link each
   from the step that needs it. Keep them one level deep: a reference doesn't send the agent to another
@@ -69,12 +69,11 @@ description: Opens or updates a pull request in the team's convention. Use when 
 
 ## Body structure
 
-In this order. Omit a section that has nothing to say, except step 0 and Headless.
+In this order. Omit a section that has nothing to say, except Config and Headless.
 
 1. `# <name>`, then two or three sentences: what the skill is for and the standard it holds.
-2. `## Step 0: Load config and overlays`: the `folkways.yaml` and `me.yaml` fields this skill uses, so a
-   reader knows what configures it, then the shared personal-additions block (see the skeleton; copy
-   it exactly, with the skill's name).
+2. `## Config`: the `folkways.yaml` and `.local/me.yaml` fields this skill uses, and the personal root if it
+   writes `<personal root>` paths, then the shared line (see the skeleton; copy it exactly).
 3. `## Workflow`: numbered steps. Each step starts with a bold verb phrase. Say where approval is needed
    at the step that needs it.
 4. Rule and format sections, overridable ones with `{#id}`.
@@ -100,23 +99,14 @@ Write for an agent that is capable but new to this team:
 
 ## Overlays and section IDs
 
-Spec §3.2: a skill's behavior = framework skill + team overlay + personal overlay, applied in that order.
+Spec §3.2: a skill's behavior = framework skill + team overlay.
 
 | Level | Path | `## Add` | `## Override {#id}` | Applied |
 |---|---|---|---|---|
 | Team | `overlays/<skill>/OVERLAY.md` (+ data files it references) | appended as `## Team additions` | replaces the section with that ID | compiled in by `folkways sync` |
-| Personal | `people/<handle>/overlays/<skill>/OVERLAY.md` | applied | ignored, and the skill says so | attached at runtime by step 0 |
 
-How the personal block works ([10](design/10-research-skill-at-imports.md)):
-
-- Claude Code attaches a file named by `@path` in a skill body when the skill loads. The line must start
-  with `@` (or have only whitespace before it), outside backticks. A missing file is skipped silently.
-- `${CLAUDE_PROJECT_DIR}` is replaced first, so the path works from any working directory, and
-  `.local/me` is a symlink to `people/<handle>/` that `sync` and `onboard` create, so one path works
-  for everyone.
-- The attached file isn't restored after compaction, preloaded subagent skills don't attach it, and
-  Copilot CLI may not expand `@` at all. The "if that file wasn't attached" sentence covers all three.
-- Team overlays are compiled in because compaction keeps the skill's own text and drops attachments.
+Team overlays are compiled in because compaction keeps the skill's own text and drops anything attached
+at runtime. Personal overlays were removed ([ADR 0001](adr/0001-overlay-enforcement.md), update 2026-10-03).
 
 Deciding what gets an ID:
 
@@ -208,8 +198,7 @@ Lessons that apply to any skill:
 - Time-sensitive facts ("as of this month", version numbers) in a skill; they belong in `knowledge/`.
 - Team or company specifics in the framework; they belong in overlays.
 - Steps that need a question with no headless fallback.
-- Tool names, tool-specific variables, or absolute paths. The one exception is the `@${CLAUDE_PROJECT_DIR}`
-  line in step 0, which has a plain-path fallback beside it.
+- Tool names, tool-specific variables, or absolute paths.
 
 ## Skeleton
 
@@ -223,21 +212,13 @@ description: <What it produces, one clause>. Use when the user says "<phrase>", 
 
 <Two or three sentences: what this is for and the standard it holds.>
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: <fields this skill uses>.
+- `.local/me.yaml`: <fields this skill uses>.
+- The personal root, for `<personal root>` paths. <Only if the skill writes them.>
 
-1. `folkways.yaml`: <fields this skill uses>.
-2. `.local/me.yaml`: `handle`, <other fields>.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so don't read `overlays/`.
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/<name>/OVERLAY.md
-
-   If that file wasn't attached with this skill, read `people/<handle>/overlays/<name>/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 

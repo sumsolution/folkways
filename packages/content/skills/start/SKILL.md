@@ -8,26 +8,17 @@ description: Starts a work session - resumes an effort from its 00-STATUS.md, or
 Every session begins here, so it has to be quick. Resuming follows the same three steps every time;
 a new effort gets a folder and a `00-STATUS.md` before any real work.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `mode`, `tracker`, `repos`, `research.sources`. **If it's missing,** say folkways
+  isn't set up in this repo. folkways runs from a brain repo: say to start the session there, offer
+  the `setup` skill to create one, and stop; don't assume the team layout.
+- `.local/me.yaml`: `handle`, `projects_dir`, `tool`. **In a team repo, if it's missing,** stop and run
+  the `onboard` skill first; nothing else works without a handle. In a solo repo (`mode: solo`) there is
+  no handle, but `projects_dir` is required; if the file or it is missing, run `onboard` first.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `mode`, `tracker`, `repos`, `research.sources`. **If it's missing,** say folkways
-   isn't set up in this repo. folkways runs from a brain repo: say to start the session there, offer
-   the `setup` skill to create one, and stop; don't assume the team layout.
-2. `.local/me.yaml`: `handle`, `projects_dir`, `tool`. **In a team repo, if it's missing,** stop and run
-   the `onboard` skill first; nothing else works without a handle. In a solo repo (`mode: solo`) there is
-   no handle, but `projects_dir` is required; if the file or it is missing, run `onboard` first.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/start/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/start/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Before anything else
 

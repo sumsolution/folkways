@@ -1,5 +1,10 @@
 # Overlay-enforcement eval
 
+> **Historical.** Personal overlays were removed on 2026-10-03 (see the last update in
+> [ADR 0001](../../../docs/adr/0001-overlay-enforcement.md)), so the personal arm no longer describes the
+> product. `run.ts` imports `compileSkill` from `packages/cli/src/overlays.ts`, which is removed; to rerun,
+> use a checkout from before that change.
+
 Does a model follow a **team** rule when a **personal** overlay tries to change it? Results and
 discussion: [07-research-overlay-enforcement.md](../../../docs/design/07-research-overlay-enforcement.md) §6.
 

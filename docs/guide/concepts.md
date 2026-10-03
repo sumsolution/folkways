@@ -18,7 +18,7 @@ Set and setting matter: the team repo is where every session starts.
 | `knowledge/` | Durable facts, each with `Last verified:` and how | PR |
 | `state/` | Live trackers, one file per track | direct push |
 | `efforts/<KEY>-<slug>/` | Shared pieces of work, each with a `00-STATUS.md` | direct push |
-| `people/<handle>/` | One folder per person: `overlays/`, `inbox/`, `work/` | direct push |
+| `people/<handle>/` | One folder per person: `inbox/`, `work/` | direct push |
 | `overlays/<skill>/` | Team changes to framework skills | PR |
 | `.folkways/` | Framework files. `sync` owns them; don't edit | PR (upgrades) |
 | `.local/` | Machine-local config (`me.yaml`), never committed | — |
@@ -30,7 +30,7 @@ Direct pushes are rebased and linear. Every push, direct or not, waits for the p
 One person can use folkways through the Claude Code plugin, from their own **brain repo**: like a team
 repo, it's where sessions start and knowledge, state and efforts build up across every project, and it
 holds no code. Code changes happen in worktrees of the project repos. A solo repo is the team layout
-with one layer removed: what lives in `people/<handle>/` in a team repo lives at the repo root (`work/`, `inbox/`, `overlays/`). There's no handle, no `efforts/` and nothing to promote.
+with one layer removed: what lives in `people/<handle>/` in a team repo lives at the repo root (`work/`, `inbox/`). There's no handle, no `efforts/` and nothing to promote.
 Skills call that folder the **personal root**.
 
 A repo is set up when it has a `folkways.yaml`. Without one, the plugin stays quiet: the first session
@@ -60,25 +60,24 @@ ship: `setup`, `onboard`, `start`, `status`, `handoff`, `session-close`, `side-q
 
 ## Overlays
 
-The way teams and people customize a framework skill without editing it.
+The way a team customizes a framework skill without editing it. There are no personal overlays.
 
 | Level | File | Add rules | Replace a section |
 |---|---|---|---|
 | Team | `overlays/<skill>/OVERLAY.md` | yes | yes, by section ID |
-| Person | `people/<handle>/overlays/<skill>/OVERLAY.md` | yes | no |
 
 Framework skills mark replaceable sections with an ID, like `## Commit format {#commit-format}`. An
 overlay has `## Add` for extra rules and `## Override {#commit-format}` to replace that section.
 
 Team overlays are **compiled in** by `folkways sync`: an override replaces its section in the synced
 skill, and an add goes under `## Team additions`. An unknown ID stops the sync before anything is
-written. Rerun `sync` after you change an overlay. Personal overlays are attached at runtime: each
-skill's step 0 reads `folkways.yaml` and `.local/me.yaml`, then attaches your overlay through `.local/me`, a
-link to `people/<handle>/` that `onboard` creates and `sync` keeps. The framework's precedence text says
-personal rules may only add, and `sync` lints them. Reasoning:
+written. Rerun `sync` after you change an overlay. Reasoning:
 [ADR 0001](../adr/0001-overlay-enforcement.md).
 
-So the team gets one shared baseline, and each person can still add their own touches on top.
+Each skill has a `## Config` section naming the `folkways.yaml` and `.local/me.yaml` fields it uses. The
+`session-start` hook prints those files into the session, so the skill reads them from there.
+
+So the team gets one shared baseline.
 
 ## Hooks
 
@@ -108,7 +107,6 @@ PR, so an overlay can't loosen them.
   `permissions.ask` is unverified).
 - Framework files aren't edited. Built: `sync` checks their checksums.
 - Team overlay overrides apply. Built: `sync` compiles them in and fails on an unknown ID.
-- Personal overlays only add. `sync` warns when one doesn't; `doctor` reports it as an error.
 - Commits follow the team's format. Built: `git-guard`.
 - A fresh-process review covers the commit before a push, with the `pre-push` trigger. Built: `git-guard`
   blocks the push of a project repo; `folkways review`, which writes the review, is coming soon.

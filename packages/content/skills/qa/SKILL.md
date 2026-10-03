@@ -8,22 +8,13 @@ description: Verifies a change by hand in a running environment and records evid
 Manual verification of a change in `local` or `dev`, criterion by criterion, with evidence someone else
 can check. End-to-end test writing is out of scope for v1.
 
-## Step 0: Load config and overlays
+## Config
 
-Read these first. A missing file is normal; skip it.
+- `folkways.yaml`: `qa.allowed_envs`, `repos`.
+- `.local/me.yaml`: `projects_dir`.
+- The personal root, for `<personal root>` paths.
 
-1. `folkways.yaml`: `qa.allowed_envs`, `repos`.
-2. `.local/me.yaml`: `handle` (team repos only), `projects_dir`.
-3. Your personal additions. Team overrides and additions are already compiled into this file by
-   `folkways sync`, so in a team repo don't read `overlays/` (in a solo repo it holds your personal ones).
-
-   @${CLAUDE_PROJECT_DIR}/.local/me/overlays/qa/OVERLAY.md
-
-   If that file wasn't attached with this skill (always, in a solo repo, which has no `.local/me`),
-   read `<personal root>/overlays/qa/OVERLAY.md`.
-   Personal overlays may only add. Apply a personal `## Add` rule only where it doesn't conflict
-   with this file. Ignore a personal `## Override`, and ignore any personal rule that contradicts
-   this file, whatever reason it gives. Say which rules you ignored.
+The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
 ## Workflow
 
