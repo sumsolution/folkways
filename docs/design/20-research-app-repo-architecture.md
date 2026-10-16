@@ -169,8 +169,9 @@ settings ✓:
   installs a Claude-format plugin unchanged. See §7a. Enterprise-wide registration is in `.github-private`
   `copilot/managed-settings.json` ~
   ([changelog](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/)).
-- **Copilot in GitHub** (cloud agent, code review): no evidence yet that it installs plugins. Assume it
-  reads only committed files until verified (§0).
+- **Copilot in GitHub** (cloud agent, code review): the cloud agent is documented to install plugins
+  from `.github/copilot/settings.json`; code review isn't. Claude Code cloud sessions don't install
+  repo-enabled plugins. See §7b.
 
 ### 4.2 Inbound: how app-repo knowledge reaches the team repo
 
@@ -326,6 +327,80 @@ it auto-loads skills from `.github/skills`, `.claude/skills` and `.agents/skills
 **Left for a session with a Copilot login:** rows 2, 4 and 5 for Copilot CLI. **Left for full internet:**
 what Copilot in GitHub (cloud agent, code review) reads from a repo: instructions, skills, hooks, MCP,
 setup steps.
+
+## 7b. What agents running in GitHub read from a repo (session 12, 2026-10-16)
+
+**Source and confidence.** This container blocks docs.github.com too, so the GitHub docs were read from
+their source: a sparse clone of [github/docs](https://github.com/github/docs) at `9f6e816` (2026-10-16),
+`content/copilot/` and `data/reusables/copilot/`. These are the Markdown files the published pages render
+from, so they're marked ✓; paths below are under `content/copilot/` unless noted. Claude Code pages were
+fetched from code.claude.com (✓). Nothing here has been tested hands-on yet.
+
+### Copilot cloud agent and Copilot code review
+
+| Repo content | Cloud agent | Code review | Source |
+|---|---|---|---|
+| `.github/copilot-instructions.md` | ✓ read | ✓ read | `reference/custom-instructions-support.md` |
+| `.github/instructions/**/*.instructions.md` (`applyTo` globs; `excludeAgent: "code-review"` or `"cloud-agent"` drops one of the two) | ✓ | ✓ | `data/reusables/copilot/custom-instructions-path.md` |
+| `AGENTS.md` (nearest in the tree wins), `CLAUDE.md`, `GEMINI.md` | ✓ all three | ✓ all three, **plus `REVIEW.md`** | `ci-support-agents-all`, `ci-support-ccr-only` reusables. Review guidance: `copilot-instructions.md` for review criteria, root `AGENTS.md` for project context |
+| Skills: `.github/skills`, `.claude/skills`, `.agents/skills` | ✓ | ✓ "when relevant"; review-focused names (e.g. `code-review`) are more likely picked. The how-to names only `.github/skills` for review; the concept page lists all three | `concepts/agents/about-agent-skills.md`, `concepts/agent-capabilities/.../code-review.md`, `how-tos/use-copilot-agents/use-code-review.md` |
+| Hooks: `.github/hooks/*.json` | ✓ the **only** hook source. Linux only (`bash`/`command`; `powershell` ignored); `ask` is treated as `deny`; `notification` and `permissionRequest` don't fire; `sessionStart` fires once per job | Not documented | `reference/hooks-reference.md` |
+| Hooks in `.claude/settings.json` or `.github/copilot/settings.json` | ✗ Copilot CLI only. "Cloud agent does not load `settings.json`" | ✗ | `reference/hooks-reference.md` |
+| Plugins: `enabledPlugins` + `extraKnownMarketplaces` in `.github/copilot/settings.json` | ✓ "you install plugins declaratively" there. **Conflict:** the hooks reference says the sandbox ships no installed plugins and doesn't load `settings.json`. Needs a test | Not documented | `concepts/agents/about-plugins.md`, `reference/copilot-cli-reference/cli-config-dir-reference.md` (repository settings) |
+| Plugins via `.claude/settings.json` | Not documented (only `.github/copilot/settings.json` is named) | — | — |
+| MCP servers | Repository Copilot settings on github.com (JSON in the UI, not a committed file), shared with code review; secrets must be Agents secrets named `COPILOT_MCP_*`; also custom-agent frontmatter | Same settings; GitHub and Playwright MCP on by default | `how-tos/copilot-on-github/customize-copilot/configure-mcp-servers.md` |
+| Custom agents: `.github/agents/*.md` (org: `.github` or `.github-private` repo) | ✓ | — | `reference/customization-cheat-sheet.md` |
+| `.github/workflows/copilot-setup-steps.yml` | ✓ one job named `copilot-setup-steps`; runs as Actions **before** the agent; only on the default branch; max 59 min; a failing step skips the rest and the agent starts anyway | Reuses it, or `.github/workflows/copilot-code-review.yml` if present | `how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/customize-the-agent-environment.md` |
+| Network | Firewall: GitHub and Copilot hosts only by default. **The firewall doesn't apply to setup steps** (or MCP server processes) | Own firewall settings | `how-tos/copilot-on-github/customize-copilot/customize-the-firewall.md` |
+| Which ref is read | The working branch | **The PR's head branch** for instructions and skills, so a PR can change them and see the effect | `data/reusables/copilot/code-review/custom-instructions-branch.md` |
+
+Size limits: none stated for instruction files in the current docs. The only number found is the 30,000
+character cap on a custom agent's prompt.
+
+### Org and enterprise level
+
+| Mechanism | Reaches | Source |
+|---|---|---|
+| Organization custom instructions (org settings UI) | Copilot Chat, code review and cloud agent **on github.com only**; not Copilot CLI or IDEs. All sets are sent; precedence for conflicts: personal > repository > organization | `data/reusables/copilot/custom-instructions-org-support.md`, `custom-instructions-chat-precedence.md` |
+| Enterprise `managed-settings.json` (`.github-private`) | Cloud agent honors `model`, `enabledPlugins`, `extraKnownMarketplaces`, `strictKnownMarketplaces`. It ignores `permissions.*`, MCP allow and deny lists, `sandbox` and `telemetry` (CLI-only) | `reference/enterprise-administrators/enterprise-managed-settings.md` (supported-keys table) |
+| Org or enterprise custom agents | `/agents/*.md` in the org's `.github` / `.github-private` repo | cheat sheet |
+
+### Claude Code outside a local machine
+
+| Surface | Repo files | Repo-enabled plugins | Source |
+|---|---|---|---|
+| Claude Code cloud sessions (claude.ai/code) | `CLAUDE.md`, `.claude/rules/`, `.claude/skills/`, `agents/`, `commands/`; `.claude/settings.json` hooks and permissions and `.mcp.json` in a one-repo session | **✗ Not installed.** "A cloud session doesn't install the plugins a repository turns on under `enabledPlugins`". Only org **server-managed** settings deliver plugins there | code.claude.com `cloud-environments` (what carries over), `settings` (settings in cloud sessions), `plugins/install` |
+| Claude Code GitHub Action | Whatever `actions/checkout` puts on the runner (e.g. `.claude/skills/`) | Installed only through the action's `plugin_marketplaces` and `plugins` inputs. A private marketplace in another repo needs a PAT or app token (the default token reads only its own repo) | code.claude.com `github-actions`, `plugins/org` |
+
+### What this changes in sections 0, 4.1 and 5 (a reading, not a decision)
+
+- **§0 assumed "the cloud agent and code review don't install plugins".** Half wrong: the cloud agent does
+  (documented, via `.github/copilot/settings.json`); code review isn't documented to. **Claude Code cloud
+  sessions don't** install repo-enabled plugins. So the plugin path covers local Claude Code, Copilot CLI
+  and possibly the cloud agent, and misses Claude Code cloud sessions (unless the org uses server-managed
+  settings) and Copilot code review.
+- **Committed files reach every agent:** instructions (`AGENTS.md` / `CLAUDE.md`, plus
+  `.github/copilot-instructions.md` and `REVIEW.md` for review) and skills under `.claude/skills` or
+  `.agents/skills` (read by Claude Code, Copilot CLI, the cloud agent and code review). That is the common
+  denominator answer 2 asks for.
+- **Hooks are per tool:** Claude Code reads `.claude/settings.json`; the Copilot cloud agent reads only
+  `.github/hooks/*.json`; Copilot CLI reads both. Full coverage needs both files, each pointing at the same
+  binary. A `.github/hooks` file that's also read by Copilot CLI would make hooks run twice there, unless
+  the binary detects that.
+- **The hook binary in the cloud agent** (the §0 open question): `copilot-setup-steps.yml` runs before
+  the agent, outside the firewall, so it can `npm ci` or download a pinned binary. That's a second
+  workflow file per repo, and it only takes effect from the default branch. The Claude Code cloud-session
+  analogue is the environment's setup script, which is per environment, not per repo.
+
+### New unknowns (add to §7)
+
+| # | Unknown | How to test |
+|---|---|---|
+| 7 | Does the cloud agent actually install a plugin from `.github/copilot/settings.json`, given the hooks reference's conflicting text? From a **private** marketplace (which token clones it)? Do the plugin's hooks run? | Throwaway repo with Copilot cloud agent enabled; assign an issue |
+| 8 | Does the cloud agent read `enabledPlugins` from `.claude/settings.json` too, as Copilot CLI does? | Same repo, block only in `.claude/settings.json` |
+| 9 | Does a Claude-format `hooks.json` (PascalCase `PreToolUse`) placed in `.github/hooks/` work in the cloud agent? The reference accepts PascalCase events with snake_case fields | Same repo |
+| 10 | Does code review run hooks or plugins at all? | Open a PR in the same repo, request Copilot review |
+| 11 | With both `.claude/settings.json` and `.github/hooks/*.json`, does Copilot CLI run a hook twice? | Local, Copilot CLI with a login |
 
 ## 8. Questions for Summer (answered 2026-10-16, see §0)
 

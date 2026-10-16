@@ -34,6 +34,10 @@ and runs the hands-on tests.
 
 ### 0. Copilot in GitHub (new top priority, from Summer's answer 2)
 
+**Docs part done in session 12**: see 20 §7b (GitHub docs read from a github/docs clone, since
+docs.github.com was blocked again). Open: unknowns 7–11 in 20 §7b need a throwaway repo with the Copilot
+cloud agent, which needs Summer's approval.
+
 What does each GitHub-hosted Copilot agent read from a repo? Primary docs, then a test on a throwaway repo
 if Summer approves.
 
