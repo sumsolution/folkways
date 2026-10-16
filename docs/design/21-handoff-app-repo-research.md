@@ -108,7 +108,14 @@ same way.
 - Keep findings in 20; mark confidence (✓ opened, ~ summary only, tested with version).
 - Commit to `claude/determined-clarke-k9kpdh`; the PR is #37. Docs only, no changeset.
 - Summer approves pushes outside this branch and any repo creation.
+- **If docs sites are blocked** (session 12: docs.github.com, github.blog and WebFetch were; code.claude.com
+  and GitHub clones worked): read GitHub's docs from source with a sparse clone of `github/docs`
+  (`git clone --depth 1 --filter=blob:none --sparse https://github.com/github/docs.git`, then
+  `git sparse-checkout set content/copilot data/reusables/copilot`). Fetch Claude Code pages as Markdown:
+  `curl https://code.claude.com/docs/en/<page>.md`. Blog posts and third-party pages stay `~` if blocked.
+- Never ask an agent under test to print its environment: the session 12 probe leaked a Copilot token
+  that way. The probe repo has been deleted.
 
 ## Resume prompt
 
-`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md, then start "Next" step 0 (what Copilot in GitHub reads from a repo). Collaborate; don't decide.`
+`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md (especially §7b), then start "Next" step 1 (verify the ~ claims). Step 0 is done. Collaborate; don't decide.`
