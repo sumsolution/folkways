@@ -392,6 +392,41 @@ character cap on a custom agent's prompt.
   workflow file per repo, and it only takes effect from the default branch. The Claude Code cloud-session
   analogue is the environment's setup script, which is per environment, not per repo.
 
+### Hands-on results (2026-10-16): the cloud agent does more than its docs say
+
+Throwaway private repo `sumsolution/folkways-copilot-probe`, fixture commit `e30a343`. An issue was assigned
+to the Copilot cloud agent (it opened PR 2 and wrote its raw outputs to `PROBE-RESULTS.md`), and Copilot
+review was requested on a separate PR (PR 3). Each probe wrote a unique marker.
+
+| Probe | Cloud agent | Code review |
+|---|---|---|
+| `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` | ✓ all three followed | Not shown (the markers asked for PR-description lines, which a review doesn't write) |
+| `REVIEW.md` | ✗ not injected | ✓ followed |
+| Skills in `.claude/skills`, `.github/skills`, `.agents/skills`, plus a `code-review` skill | ✓ all listed (self-reported; not invoked) | ✓ the `code-review` skill was used |
+| `.github/hooks/*.json`, native camelCase | ✓ sessionStart and preToolUse | — |
+| `.github/hooks/*.json`, version 1 with PascalCase events and a `Bash` matcher | ✓ matcher honored | — |
+| `.github/hooks/*.json` in **Claude Code format** (no `version`) | ✓ | — |
+| Hooks in **`.claude/settings.json`** | **✓, contrary to the docs** | — |
+| Hooks in `.github/copilot/settings.json` | **✓, contrary to the docs** | — |
+| Plugin enabled in `.github/copilot/settings.json`, from the repo's own **private** marketplace | ✓ installed; its hook ran | — |
+| Plugin enabled **only in `.claude/settings.json`** | **✓ installed; its hook ran** | — |
+| Plugin skills | ✓ listed | — |
+| Plugin hook environment | `CLAUDE_PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT`, `PLUGIN_ROOT` set to the plugin dir (`/tmp/copilot-plugins/<repo>_<sha>/plugins/<name>`); `CLAUDE_PROJECT_DIR`, `COPILOT_PROJECT_DIR` set to the workspace | — |
+| `copilot-setup-steps.yml` | ✓ ran; a tool it put on `PATH` (`$GITHUB_PATH`) was usable by the agent; files it wrote to `/tmp` persisted into the agent's run | Own Actions run ("Running Copilot Code Review") |
+| Network | `registry.npmjs.org` and `github.com` both returned 200 from the agent (default firewall) | — |
+
+Caveats: one run each, observed through the agent's own report; skill results are its self-reported list.
+
+**What this changes:** a Claude-format setup (`CLAUDE.md`, `.claude/skills`, `.claude/settings.json`
+hooks and `enabledPlugins` from a private marketplace) works **unchanged** in the Copilot cloud agent. Unknowns
+7, 8 and 9 below are answered yes; 10 is answered for skills and `REVIEW.md` (hooks in review unobserved).
+Copilot CLI double-running hooks (11) is still open. The remaining gap among cloud surfaces is Claude Code
+cloud sessions, which skip repo-enabled plugins.
+
+**Security note:** the agent was asked to print its environment with tokens redacted; the redaction missed
+`GITHUB_COPILOT_API_TOKEN`, and PR 2 committed it. Lesson for any agent-facing probe or hook: never ask an
+agent to dump `env`. Agents in the sandbox can read a live Copilot token.
+
 ### Hook delivery: options and Summer's answers (2026-10-16)
 
 What today's hooks do, and what a cloud run needs: `session-start` adds a "follow the `start` skill"
