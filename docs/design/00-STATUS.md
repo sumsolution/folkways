@@ -35,6 +35,7 @@ works across Claude Code and Copilot CLI. A domain engineering team at the autho
 | [16-plan-config-and-solo.md](16-plan-config-and-solo.md) | `folkways.yaml`, guided setup, solo repos: the plugin outside a team repo (built with parallel agents) |
 | [17-handoff-pr25-review.md](17-handoff-pr25-review.md) | Handoff after session 8: reviewing #25, addressing findings, next steps (done) |
 | [18-handoff-after-plan-16.md](18-handoff-after-plan-16.md) | Handoff after session 9: the brain-repo push gate, `doctor`, cleanup, then release prep |
+| [20-research-app-repo-architecture.md](20-research-app-repo-architecture.md) | **Open (session 11):** engineers work in app repos, the team repo syncs. Options per flow, four composed architectures, the octo-team-context review, unknowns and questions |
 | [../adr/](../adr) | Framework decisions, one file each: 0001 overlay enforcement, 0002 hook runtime, 0003 repo layout, 0004 license (all accepted) |
 | [../skill-authoring.md](../skill-authoring.md) | Skill skeleton, overlay IDs, headless rules, trigger eval |
 | [../guide/](../guide) | User guide: concepts, getting started, how it works, the name. [../voice.md](../voice.md) is the writing voice |
