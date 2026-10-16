@@ -108,7 +108,10 @@ Replace each `~` in 20 §7c and the Sources list with ✓ or a correction.
 
 **Three seylox-cited sources done in session 14**, in 20 §7d. Headline: none solves cross-repo work
 without a workspace or umbrella where sessions start; agent-team (woditschka) is the closest relative to
-folkways found so far. **The rest of the list below is still open.**
+folkways found so far. **The rest of the list was done the same session**, in 20 §7e: three more sync
+tools, six team or solo accounts (none with outcomes), Claude Code plugin update behavior and bugs (plugin
+hooks are the fragile part), GitHub App vs PAT, and context-generation tools. Still open from step 2: what
+security teams accept (no evidence found; ask the beta company) and real per-repo generation cost (trial).
 
 **Start with the three sources the seylox sequel cites** (20 §7c), as Summer asked:
 

@@ -633,6 +633,125 @@ workspace ADRs) and the [SoCraTes session page](https://github.com/Softwerkskamm
   context current (codified context), the seylox team's 64k lines, the meta-repo warning. No source reports
   the cost of fanning content out to many app repos.
 
+## 7e. Wider prior art (session 14, 2026-10-16)
+
+**Source and confidence.** Web search, then each page opened with WebFetch (✓); GitHub repos and issues read
+with `gh`; Claude Code docs fetched as Markdown from code.claude.com; GitHub docs from docs.github.com. Bug
+reports are what users reported at the version they name, not retested here.
+
+### Other hubs, and the octo upstream
+
+- **`TheJeans/octo-team-context`**: one commit (`2e9869c`, 2026-05-30), "Central information hub for the
+  ACME engineering team", 7 forks all made the same day and never pushed since. It reads as a workshop or
+  talk template, not a running team's repo. The "From Drift to Sync" talk wasn't found; the nearest match
+  is Colleen Lake, "Agentic Drift: keeping pace with your agents", WeAreDevelopers World Congress North
+  America 2026 (page ✓, description only: from manual reviews to "systemic governance"; video behind a login).
+- **Sync tools found by GitHub search** (all ✓ README):
+
+| Tool | How it runs | What it writes | Notes for us |
+|---|---|---|---|
+| [trick77/agents-md-sync](https://github.com/trick77/agents-md-sync) (npm) | Runs on one machine over local clones; one commit per target on a tool-owned branch, force-pushed, optional PR | A generated `AGENTS.md` from central fragments; each repo's `.agents/<NAME>.md` is a repo-owned addendum placed **before** the matching central section | The clearest ownership split found: tool owns `AGENTS.md`, repo owns `.agents/`. Preview by default |
+| [yuka-repos/agents-md-sync](https://github.com/yuka-repos/agents-md-sync) (PowerShell) | Local script over a workspace | Only a **marked block** inside each `AGENTS.md` pointing to workspace-wide docs by absolute path; text outside the markers untouched; a check mode fails on drift | Refuses to write into public repos (absolute paths would leak). The pointer only works on machines with that workspace |
+| [lbb00/ai-rules-sync](https://github.com/lbb00/ai-rules-sync) (npm) | Per machine: **symlinks** native assets (rules, skills, agents, `AGENTS.md`) from git repos into each project | Symlinks, no copies | Instant upstream changes, but nothing lands in the app repo's history, so clones and cloud agents see nothing (fails §0 answer 2) |
+
+### Real-team experience
+
+Searches for retros on central agent repos or org-wide plugin rollouts found **no first-hand account with
+outcomes**. What exists:
+
+| Source | Who | What they did | What they hit |
+|---|---|---|---|
+| [Lessons from building Claude Code: how we use skills](https://claude.dev/blog/lessons-from-building-claude-code-how-we-use-skills/) ✓ | Thariq Shihipar, Anthropic, 2026-06-03 | Checked-in `.claude/skills` for small teams and few repos; an **internal plugin marketplace** as the org scales. Skills start in a sandbox folder, move into the marketplace by the owner's PR once they get traction; no central gatekeeper; a `PreToolUse` hook logs skill usage | Every checked-in skill costs context, which is why they moved to a marketplace. "Hundreds" of skills; no adoption numbers |
+| [Steering AI agents in monorepos with AGENTS.md](https://dev.to/datadog-frontend-dev/steering-ai-agents-in-monorepos-with-agentsmd-13g0) ✓ | Simon Boudrias, Datadog, 2025-09-26 | Root `AGENTS.md` as a router to folder-level docs; a dev-experience team owns the scaffolding, product teams own their content; one-line `CLAUDE.md` that imports `AGENTS.md`; gitignored `AGENTS.local.md` | Nested files aren't found unless you work in the right folder; keep docs short; test with a shared set of example prompts. Monorepo only |
+| [Structuring Claude Code for multi-repo workspaces](https://karun.me/blog/2026/03/26/structuring-claude-code-for-multi-repo-workspaces/) ✓ | Karun Japhet, 2026-03 (updated 2026-10-15) | **Sessions start in the app repo**; org and team `CLAUDE.md` come from a bootstrap repo that is the **parent folder** of the clones (`mani` clones them), so Claude Code's walk-up reads them | Repo lists go stale (point at the manifest instead); gitignore `dir/` vs `dir/*` breaks exceptions; must work with partial checkouts. Works only on machines with the bootstrap layout: cloud agents and outside contributors get the repo level only |
+| [My personal skills repo became internal tooling](https://www.joekarlsson.com/blog/my-personal-claude-code-skills-repo-accidentally-became-internal-tooling/) ✓ | Joe Karlsson, CloudQuery marketing, 2026-04-07 | One repo, cloned; an `/update` skill wraps `git pull`; a `/setup` wizard | Terminal was the main adoption barrier; a model update broke one skill; docs rot; it needs a named owner with time; "feel free to contribute" brought nothing, specific asks did |
+| [Beyond AGENTS.md](https://mem0.ai/blog/beyond-agents.md-shared-memory-for-coding-agents-across-services-and-repos) ✓ | Mem0 (vendor), 2026 | Shared memory service across repos | One staged two-repo demo: a static `AGENTS.md` can't tell service B about service A's recent change. No team data |
+| [Polyrepo synthesis](https://rajiv.com/blog/2025/11/30/polyrepo-synthesis-synthesis-coding-across-multiple-repositories-with-claude-code-in-visual-studio-code/) ✓ | Rajiv Pant, solo, 2025-11 | Same repo-ecosystem table in each repo's `CLAUDE.md`; VS Code multi-root | Git commands in the wrong repo; logic duplicated into whichever repo was open; stale docs unless updated in the same commit |
+
+### Claude Code team plugins in practice
+
+From the current docs (code.claude.com `plugins/install`, `plugins/loading`, `plugins/org`,
+`plugins/host-marketplace`, ✓):
+
+- **Auto-update is off by default for a team marketplace** (on only for official ones and those added from
+  claude.ai). Precedence: `autoUpdate` on the `extraKnownMarketplaces` entry in a settings file, then the
+  user's `/plugin` toggle, then the default. So, unlike Copilot CLI (§7c), an app repo's committed
+  `.claude/settings.json` **can** turn auto-update on.
+- When it runs: after the first message, a random delay of up to ten minutes, then a background refresh.
+  The running session keeps what it loaded; the next session gets the new version. Old versions are kept 14
+  days so running sessions keep working.
+- **Private marketplace updates** use the user's git credential helper without prompting: SSH agent keys and
+  stored HTTPS credentials work; a helper that needs to prompt fails quietly and the old checkout stays.
+- Pinning: `owner/repo#ref` on add, `ref`/`sha` on plugin sources. `strictKnownMarketplaces` entries must
+  match `ref` and `path` exactly (an entry without `ref` doesn't cover `ref: "main"`).
+- `-p` and CI: `extraKnownMarketplaces` only in folders already trusted; `CLAUDE_CODE_PLUGIN_SEED_DIR` for
+  images that can't clone at runtime (seed marketplaces never auto-update).
+
+Reported bugs in `anthropics/claude-code` (`gh`, ✓ read; status as of 2026-10-16):
+
+| Issue | Version or date | Reported | State |
+|---|---|---|---|
+| [#14061](https://github.com/anthropics/claude-code/issues/14061) | 2025-12 | `/plugin update` refreshes the marketplace but not the plugin cache | Open (labelled duplicate) |
+| [#52218](https://github.com/anthropics/claude-code/issues/52218) | 2026-04 | `autoUpdate` updates skills but leaves **bundled hooks** on the old install path | Closed, stale |
+| [#55355](https://github.com/anthropics/claude-code/issues/55355) | 2.1.126 | **Project-scope** installs: wrong entry picked across projects, no auto-update | Closed, not planned |
+| [#67868](https://github.com/anthropics/claude-code/issues/67868) | 2.1.175 | Third-party marketplace with `autoUpdate: true` not refreshed across restarts | Closed, not planned |
+| [#73952](https://github.com/anthropics/claude-code/issues/73952) → [#90135](https://github.com/anthropics/claude-code/issues/90135) | 2026-07/08 | A mid-session plugin update removes the old path and **silently stops hooks** in running sessions | Re-filed, open. The 14-day retention in the docs may postdate it; not retested |
+| [#14485](https://github.com/anthropics/claude-code/issues/14485) | 2025-12 | Marketplace clones over SSH trigger SSH-agent approval prompts at startup | Open |
+| [#28729](https://github.com/anthropics/claude-code/issues/28729) | 2026-02 | Feature request: a git repo as the source of org skills (instead of uploading in the admin console) | Open |
+
+The pattern across them: skills update reliably, **plugin hooks lag or break on update**. That matters most
+for the hook-in-plugin path (H2 in §7b).
+
+### GitHub App vs PAT for a hub with PR write
+
+GitHub docs (✓ [deciding when to build a GitHub App](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/deciding-when-to-build-a-github-app),
+[managing PATs](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens),
+[App best practices](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app))
+and the `actions/create-github-app-token` README (v3.3.0, ✓):
+
+| | GitHub App | Fine-grained PAT | Classic PAT |
+|---|---|---|---|
+| Identity | The app (bot) | A user | A user |
+| Repo scope | Repos chosen at install; each token can narrow further (`repositories:` input) | Chosen repos of **one** owner | Everything the user can reach |
+| Permissions | Fine-grained, narrowable per token (`permission-<name>:`) | Fine-grained | Broad scopes |
+| Lifetime | Installation token: **1 hour** | Up to 366 days or none, unless an org caps it | Until revoked; removed after a year unused |
+| When the creator leaves | Keeps working | Breaks | Breaks |
+| Org controls | Owner installs and approves new permissions | Org can require approval; can block them | Org can block classic PATs |
+| GitHub's advice | "For long-lived integrations, you should use a GitHub App" | — | "Less secure" |
+
+- The long-lived secret becomes the app's **private key**, which can act on every installation. GitHub
+  advises a key vault with sign-only use; an environment variable is weaker.
+- Writing `.github/workflows/*` (for example `copilot-setup-steps.yml`) needs the **Workflows** permission
+  on top of Contents and Pull requests, for apps and PATs alike (repo-file-sync-action, §7c).
+- What security teams usually accept: **no evidence found**. Still a question for the beta company (§7
+  unknown 4).
+
+### Per-repo context generation: tools and costs
+
+| Tool | What it produces | Cost signal |
+|---|---|---|
+| octo (`generate-repo-context.py` at `2e9869c`, read) | `STACK.md`, `DEV.md` from a 10-step tool loop (file reads cut at 6,000 chars, 2,000 output tokens per step); `DEPS.md` deterministic | Runs on **GitHub Models** with the workflow's `GH_TOKEN`, default `gpt-4.1`, so the bill would land on the org's GitHub Models allowance, not an API key (GitHub Models pricing not checked). Up to 11 calls per push to `main` |
+| RepoSwarm (§7c) | `<repo>.arch.md` per repo in a hub | Temporal + Docker + DynamoDB to run; re-analyzes only changed repos. No cost figures published |
+| [Litho / deepwiki-rs](https://github.com/sopaco/deepwiki-rs) (✓ README, 3.1k stars) | C4 architecture docs from code, CI-friendly; succeeded by "Terrain", a "living map" for agents | None stated |
+| [DeepWiki MCP](https://docs.devin.ai/work-with-devin/deepwiki-mcp) (✓) | Wiki and Q&A per repo over MCP (`read_wiki_structure`, `read_wiki_contents`, `ask_question`) | Free for **public** repos; private repos need a Devin account and API key, pricing not on the page |
+| `claude -p` with a fixed prompt | Whatever the prompt asks | No published figure. Search found only generic estimates (one blog: ~900k input + 120k output tokens for a full docs pass); not a basis for a number |
+
+**Cost stays unknown 5:** a trial on three beta repos is still the only way to get a real figure.
+
+### What this changes (a reading, not a decision)
+
+- The two managed-file designs found in the wild match what §3 said octo lacks: a tool-owned file plus a
+  repo-owned addendum folder (trick77), or a marked block inside a hand-written file (yuka-repos).
+  Both avoid octo's wholesale overwrite.
+- Karun's walk-up layout is the only found setup where sessions start in the app repo **and** pick up team
+  context without copying anything. It depends on the parent folder, so it fails the same concerns (2–4) as
+  seylox.
+- Anthropic's own advice (check skills in for small setups, a marketplace when it grows) lines up with the
+  B-as-add-on reading in §0. The bug list says plugin **hooks** are the fragile part of that path, while
+  plugin skills are not.
+- Every real-team account names an **owner with time** or a named team (Datadog's dev-experience team,
+  Karlsson's "AI champion"); none reports a hub running unattended.
+
 ## 8. Questions for Summer (answered 2026-10-16, see §0)
 
 1. **The concerns you heard about the brain repo:** which ones? The answer weights the options. For
