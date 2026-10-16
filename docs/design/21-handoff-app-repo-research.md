@@ -1,14 +1,15 @@
 # Handoff: app-repo-first research, continued with full internet access
 
-**Written:** 2026-10-16 (session 11) · **For:** the next session, in an environment with full network
-access · **Index:** [00-STATUS](00-STATUS.md)
+**Written:** 2026-10-16 (session 11; updated sessions 12 and 13) · **For:** the next session, run
+**locally on Summer's machine** so the network is unrestricted · **Index:** [00-STATUS](00-STATUS.md)
 
 ## Why a new session
 
 Session 11's container blocked most outbound sites. Web search worked, but WebFetch and curl could reach
 only `code.claude.com` and GitHub clones. So most claims in [20](20-research-app-repo-architecture.md)
-outside the Claude Code docs are marked `~` (search summary, page not opened). This session verifies them
-and runs the hands-on tests.
+outside the Claude Code docs are marked `~` (search summary, page not opened). Sessions 12 and 13 ran in
+cloud containers with the same blocks and verified what they could from source repos (20 §7b, §7c).
+Session 14 runs locally: open the blocked pages, then widen the prior art.
 
 ## Ground rules (Summer)
 
@@ -85,7 +86,37 @@ The original brief follows for reference.
 | Central-repo and meta-repo patterns | agentpatterns.ai central-repo page, seylox meta-repo post, RepoSwarm, Arvore Repo Hub, the dev.to multi-repo post |
 | Cross-repo sync actions | BetaHuhn/repo-file-sync-action README (auth, PR mode, templating), netlify/file-sync-action |
 
+### 1b. Open the pages sessions 12 and 13 couldn't reach (first, it's quick)
+
+Replace each `~` in 20 §7c and the Sources list with ✓ or a correction.
+
+| Page | Check |
+|---|---|
+| [Managed settings GA changelog](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/) and [enterprise-managed plugins preview](https://github.blog/changelog/2026-05-06-enterprise-managed-plugins-in-github-copilot-cli-are-now-in-public-preview/) | GA date and scope; anything the docs source didn't say |
+| [Org custom instructions GA changelog](https://github.blog/changelog/2026-04-02-copilot-organization-custom-instructions-are-generally-available/) | Surfaces and any size limit |
+| [anthropics/claude-code#30064](https://github.com/anthropics/claude-code/issues/30064), [#44224](https://github.com/anthropics/claude-code/issues/44224) | State, and whether closed as by-design (the docs now say settings-based dirs load no skills) |
+| [AgentPatterns central repo](https://agentpatterns.ai/workflows/central-repo-shared-agent-standards/) | Drift and overhead claims |
+| [dev.to multi-repo context problem](https://dev.to/mnzs/the-context-problem-nobody-solved-ai-agents-across-multiple-repos-4533), [team-ai-sync](https://dev.to/paladini/sync-ai-agent-rules-across-repositories-with-github-actions-5b9h), [Copilot CLI plugins and marketplaces](https://dev.to/pwd9000/github-copilot-cli-plugins-and-marketplaces-extend-your-terminal-agent-16pc) | What each proposes; any real-team experience |
+| [Ruler and rulesync](https://developertoolkit.ai/en/ecosystem/frameworks/rules-sync/) | What they generate, for which tools |
+| [Arvore Repo Hub story](https://hub.arvore.com.br/docs/our-story) | Why they chose the hub-as-workspace model; anything on its limits |
+
 ### 2. Widen the prior art (new searches)
+
+**Start with the three sources the seylox sequel cites** (20 §7c), as Summer asked:
+
+- [The meta-repo pattern write-up](https://devnewsletter.com/p/meta-repo-pattern/): its case studies (the
+  35-repo "virtual monorepo"), "narrows the visibility gap, not the transaction gap", and the warning about
+  unmaintained meta-repos.
+- [Codified context](https://arxiv.org/abs/2602.20478): the hot-memory constitution vs cold-memory knowledge
+  base; any measurements.
+- [woditschka/agentic-coding-reference](https://github.com/woditschka/agentic-coding-reference) and the
+  SoCraTes Austria session ["Agents Forget. Repos Remember."](https://github.com/Softwerkskammer-Linz/SoCraTesAT-2026/tree/main/agents-forget-repos-remember):
+  layout, how it reaches app repos, which tools it targets.
+
+For each: what it is, where sessions start (app repo, hub, or workspace), how content reaches app repos and
+cloud agents, what it costs, and what it says about Summer's four concerns (20 §0 row 1). Add them to 20 as
+a new section after §7c, in the same style. Then the rest:
+
 
 - Other "team context hub" implementations, and the octo upstream (`TheJeans/octo-team-context`; the
   "From Drift to Sync" WWC 2026 talk). Search found nothing; try GitHub search directly.
@@ -114,7 +145,9 @@ same way.
 - Keep findings in 20; mark confidence (✓ opened, ~ summary only, tested with version).
 - Commit to `claude/determined-clarke-k9kpdh`; the PR is #37. Docs only, no changeset.
 - Summer approves pushes outside this branch and any repo creation.
-- **If docs sites are blocked** (session 12: docs.github.com, github.blog and WebFetch were; code.claude.com
+- Network should be open locally. Prefer WebFetch or `curl` on the real pages; mark ✓ only for pages
+  actually opened.
+- **If docs sites are blocked anyway** (sessions 12 and 13: docs.github.com, github.blog and WebFetch were; code.claude.com
   and GitHub clones worked): read GitHub's docs from source with a sparse clone of `github/docs`
   (`git clone --depth 1 --filter=blob:none --sparse https://github.com/github/docs.git`, then
   `git sparse-checkout set content/copilot data/reusables/copilot`). Fetch Claude Code pages as Markdown:
@@ -124,4 +157,4 @@ same way.
 
 ## Resume prompt
 
-`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md (especially §7b), then start "Next" step 2 (widen the prior art). Steps 0 and 1 are done (§7b, §7c). Collaborate; don't decide.`
+`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: git pull, read it and 20-research-app-repo-architecture.md (especially §7b and §7c), then do "Next" step 1b (open the pages earlier sessions couldn't reach) and step 2, starting with the three sources the seylox sequel cites. Steps 0 and 1 are done. Collaborate; don't decide.`
