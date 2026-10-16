@@ -3,7 +3,8 @@
 **Researched:** 2026-10-16 (session 11). Main agent, no subagents. Tool facts come from primary docs where
 fetched (marked ✓); the rest come from search summaries (marked ~) because this container's network
 blocks most sites. **Status: options for Summer to review. Nothing decided.** Summer's answers to §8 and
-the marketplace tests were added the same day (§0, §7a).
+the marketplace tests were added the same day (§0, §7a). Session 13 checked the `~` claims against
+primary sources (§7c); a few stay `~` where the site is blocked.
 
 **Question:** engineers should keep starting sessions in their app repos, not in a brain repo. The team
 still has a central agent repo that holds shared knowledge and understands every team repo, and acts as
@@ -167,7 +168,7 @@ settings ✓:
 - **Copilot CLI:** reads the same `extraKnownMarketplaces` block from the app repo's
   `.claude/settings.json` (tested, 1.0.98) and from `.github/copilot/settings.json` (its changelog), and
   installs a Claude-format plugin unchanged. See §7a. Enterprise-wide registration is in `.github-private`
-  `copilot/managed-settings.json` ~
+  `copilot/managed-settings.json` ✓ (§7c)
   ([changelog](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/)).
 - **Copilot in GitHub** (cloud agent, code review): the cloud agent is documented to install plugins
   from `.github/copilot/settings.json`; code review isn't. Claude Code cloud sessions don't install
@@ -469,6 +470,69 @@ local path for every team; H2, or a non-npm install, has to cover non-Node repos
 | 10 | Does code review run hooks or plugins at all? | Open a PR in the same repo, request Copilot review |
 | 11 | ~~Does Copilot CLI run a hook defined in two sources twice?~~ Dropped: Summer chose to define each hook once | — |
 
+## 7c. The `~` claims, checked (session 13, 2026-10-16)
+
+**Source and confidence.** This container blocks the same sites as session 12 (docs.github.com, github.blog,
+dev.to, agentpatterns.ai, and the GitHub web UI and API for issues). So: GitHub docs from a sparse clone of
+`github/docs` at `dae83f7` (2026-10-16), paths under `content/copilot/`; Claude Code pages as Markdown from
+code.claude.com; projects from their own repos or npm. ✓ = primary source read. Still ~ = blocked.
+
+| Claim (where in 20) | Verdict | What the primary source says |
+|---|---|---|
+| Copilot CLI installs plugins from marketplaces and reads `.claude-plugin/marketplace.json` (§4.1 O4) | ✓ confirmed | Manifest lookup order: `marketplace.json`, `.plugin/`, `.github/plugin/`, `.claude-plugin/marketplace.json`; plugin manifest also accepts `.claude-plugin/plugin.json` (`reference/copilot-cli-reference/cli-plugin-reference.md`, "File locations") |
+| Copilot CLI registers marketplaces from repo settings (§4.1 O4, §7a row 1) | ✓ confirmed | `.github/copilot/settings.json` supports `enabledPlugins` ("declarative plugin auto-install") and `extraKnownMarketplaces`; "The CLI also reads `.claude/settings.json` and `.claude/settings.local.json` for the shared cross-tool subset … `enabledPlugins`, `extraKnownMarketplaces`, and `hooks`" (`cli-config-dir-reference.md`, "Configuration file settings") |
+| (new) A repo-enabled plugin is scoped to that repo | ✓ | "auto-installs and activates in the declaring repository, but stays disabled globally"; leaving the repo deactivates it (same page) |
+| (new) Trust in Copilot CLI | ✓ partial | Only `model`, `effortLevel`, `contextTier` are documented as waiting for a trusted folder. Plugin auto-update runs "in a trusted working directory". Nothing says `enabledPlugins` waits for trust, which fits §7a (registered with no trust step) |
+| (new) Pinning and updates in Copilot CLI (open item 7) | ✓ | A marketplace entry's plugin `source` takes `ref` and `sha` (full 40-char SHA, "immune to force-pushes"); `marketplace add` takes `owner/repo#ref`. Only first-party plugins auto-update by default. **Repo-level `autoUpdate` is "accepted and ignored"**; only user or managed settings can opt a marketplace in. Auto-update is skipped in CI (`cli-plugin-reference.md`) |
+| Enterprise `managed-settings.json` in `.github-private` (§4.1 O4, §7b) | ✓ confirmed | Server-managed via `copilot/managed-settings.json` in the enterprise's `.github-private` repo; "applies to all clients, including Copilot cloud agent", only for users licensed by that enterprise; team overrides via `overridable`. MDM and file-based delivery reach local clients only (`how-tos/administer-copilot/manage-for-enterprise/use-managed-settings/deploy-managed-settings.md`). Supported-keys table as in §7b. Managed `extraKnownMarketplaces` sources: `github` (`repo`, `ref`, `path`), `git`, `directory`; a managed `autoUpdate` can't be overridden |
+| Managed settings are GA (§4.1 O4) | ✓ by the docs, changelog still ~ | No preview marker on the reference or how-to pages; the MCP registry reusable calls managed settings "the more secure, generally available method". The changelog post itself is blocked |
+| `strictKnownMarketplaces` can block repo marketplaces (§7 unknown 6) | ✓ | "Restricts plugin installation to only the marketplaces explicitly defined by the enterprise. An empty array means complete lockdown." Honored by CLI, VS Code, the app, cloud agent, JetBrains. Entry types include `github`, `git`, `hostPattern`, `pathPattern` |
+| Org custom instructions: surfaces, precedence, limit (§7b) | ✓ confirmed | Copilot Chat, code review and cloud agent **on github.com only** (so not Copilot CLI or IDEs); personal > repository > organization, all sent. Set in org settings UI by org owners on Business or Enterprise. **No size limit stated** (`custom-instructions-org-support.md`, `add-organization-instructions.md`). The GA changelog is blocked |
+| `--add-dir` loads skills; settings-based dirs don't (§4.1 O6) | ✓ confirmed, and it's **by design** | `--add-dir` / `/add-dir` load `.claude/skills/` (live reload), `.claude/commands/`, `.claude/agents/`, and **only `enabledPlugins` and `extraKnownMarketplaces`** from its settings; `CLAUDE.md` and rules only with `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`; **its `AGENTS.md` never loads**. "Directories listed in `permissions.additionalDirectories` … grant file access only" (code.claude.com `permissions`, `skills`, `memory`). So issue 30064 describes documented behavior. Issues 30064 and 44224 themselves stay ~ (blocked) |
+| repo-file-sync-action: auth, PR mode, templating (§4.1 O2) | ✓ | Push model: runs in the source repo, opens a PR per target (`SKIP_PR` pushes direct). Auth: a classic PAT with full `repo` scope (`GITHUB_TOKEN` won't work), or a GitHub App installation token with Contents RW, Metadata R, Pull requests RW, Workflows RW to sync workflows. Nunjucks templates per file; `replace: false`; `deleteOrphaned` for directories; labels, reviewers, team reviewers. Last release v1.21.1, 2024-05-05; `node20` runtime (README at `8b92be3`) |
+| netlify/file-sync-action (§4.1 O2) | ✓, and it's a **different model** | Pull model: runs in each **target** repo on a schedule, fetches mapped files from a source repo, opens a PR per changed file (branch `file-sync-<sha>`) using the target's own token. Only two inputs (`files`, `token`). `action.yml` still declares `node12`; last non-bot commit 2023-05 (`3f00664`) |
+| seylox meta-repo pattern (§4.1 O2 sources) | ✓, and there's a **sequel** | Read both posts from the blog's repo (`seylox/seylox.github.io` at `a07c868`). Below |
+| RepoSwarm | ✓ README | Now `reposwarm/reposwarm` (was `loki-bedlam/repo-swarm`), Apache-2.0, Python, at `34dcfaa` (2026-03-26). Runs on Temporal in Docker, clones each repo, picks a type-aware prompt, writes `<repo>.arch.md` into a **central results-hub repo**; re-analyzes only repos with new commits; cache in DynamoDB or files; Anthropic API, Bedrock or LiteLLM. A hub-side scanner (our I2) with heavier infra |
+| Arvore Repo Hub | ✓ npm README | `@arvoretech/hub` 0.29.3 (2026-08-29), MIT, source `arvoreeducacao/rhm`. A `hub.yaml` lists repos, MCPs and skills; `hub generate --editor …` writes Cursor, Kiro, Claude Code or `AGENTS.md` config. The hub **is the workspace**: repos are cloned side by side inside it and you open the AI there. That is the brain-repo model, not app-repo-first |
+| agentpatterns.ai central repo; dev.to multi-repo post; team-ai-sync; Ruler and rulesync page | Still ~ | Hosts blocked |
+
+**seylox, in more detail** (because it's the closest real-team account, and the October post answers §8 Q1's
+"evidence on the concerns" in part):
+
+- Team of five, a dozen repos, two product lines, Claude Code. A no-code **meta-repo cloned on every
+  machine**, beside the code repos in a workspace folder. A bootstrap script writes a generated, uncommitted
+  workspace-root `AGENTS.md` of `@` includes, chosen by which product lines are on disk. So it's a
+  per-machine overlay (our D/L3) plus per-repo `AGENTS.md` files that keep build and test detail.
+- Layers: router `AGENTS.md`, `workspace.yml` registry, `repos.yaml` per product line, org rules always
+  loaded, per-domain conventions and workflows loaded by routing (ticket prefix, then keywords, else ask).
+- Workflows are plain markdown with trigger phrases, not Claude Code skills, "because the repo is for every
+  agent, not one tool". Active-work trackers are "two thirds of all commits"; the archive feeds conventions.
+- Costs they report: about 64,000 lines of markdown, three quarters archived; prose overviews drift; a cited
+  write-up warns an unmaintained meta-repo "becomes a source of confidently wrong behavior at agent speed".
+  No atomic cross-repo commit.
+- Their claim on value: the shared clone (many people, one agent memory), not the map itself. Two other
+  groups in their company copied the pattern; one stalled after a day.
+- Onboarding: a new hire "cloned one repository, ran the script, started the agent".
+- Not addressed: cloud agents, Copilot, outside contributors. Every session needs the meta-repo clone, which
+  is the gap Summer's concerns 2–4 (§0) point at.
+- New sources it cites, not yet read: the [meta-repo pattern write-up](https://devnewsletter.com/p/meta-repo-pattern/),
+  [codified context](https://arxiv.org/abs/2602.20478) (hot vs cold memory), and
+  [woditschka/agentic-coding-reference](https://github.com/woditschka/agentic-coding-reference) with the
+  SoCraTes Austria session "Agents Forget. Repos Remember." Candidates for step 2.
+
+**What this changes (a reading, not a decision):**
+
+- Copilot CLI's repo-level plugin path is now documented, not just observed: same `.claude/settings.json`
+  block as Claude Code, scoped to the repo, no documented trust gate. §5 B's risk "Copilot CLI repo-level
+  registration unverified" and the comparison row "Unverified at repo level" are answered for registration
+  and install; skill and hook runs with a login (open item 1) are still untested.
+- Updates differ by tool: a repo can't turn on Copilot CLI auto-update for a team marketplace. Freshness
+  there comes from user settings, managed settings, or pinning a `ref`/`sha` that a PR bumps.
+- `strictKnownMarketplaces` is a real blocker for B in an enterprise that sets it; the team marketplace would
+  need to be on the enterprise allowlist (unknown 6 becomes a question for the beta admin, not a test).
+- The prior art splits three ways: hub writes into repos (octo, repo-file-sync-action), repos pull from a
+  hub (netlify's action), and the hub as workspace or overlay (Arvore, seylox). RepoSwarm is inbound only.
+
 ## 8. Questions for Summer (answered 2026-10-16, see §0)
 
 1. **The concerns you heard about the brain repo:** which ones? The answer weights the options. For
@@ -494,7 +558,11 @@ Primary, fetched (✓):
   `--add-dir` and `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD`, symlinked rules, size guidance)
 - [octo-team-context](https://github.com/summer-jordan/octo-team-context) at `2e9869c` (read in full)
 
-From search summaries (~, not opened; verify before relying on them):
+Checked in session 13 (§7c): the Copilot docs links below, both sync actions, seylox, RepoSwarm and
+Arvore are now ✓ from their source repos or npm; the changelog posts, the two Claude Code issues,
+AgentPatterns, dev.to and the Ruler page are still ~ (blocked).
+
+From search summaries (~ unless §7c says otherwise):
 
 - Copilot: [enterprise managed-settings.json GA](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/),
   [enterprise-managed plugins preview](https://github.blog/changelog/2026-05-06-enterprise-managed-plugins-in-github-copilot-cli-are-now-in-public-preview/),

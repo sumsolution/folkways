@@ -69,6 +69,12 @@ Same for the Claude GitHub Action. These decide how much must be committed files
 
 ### 1. Verify the `~` claims (open the primary pages)
 
+**Done in session 13**, results in 20 §7c. Same blocked sites as session 12. Still `~`: the two
+github.blog changelog posts, Claude Code issues 30064 and 44224 (the docs now say the behavior is by
+design), agentpatterns.ai, the dev.to posts and the Ruler page. New leads for step 2 from the seylox
+sequel: devnewsletter's meta-repo write-up, the codified-context paper, `woditschka/agentic-coding-reference`.
+The original brief follows for reference.
+
 | Claim in 20 | Open |
 |---|---|
 | Copilot CLI plugins, marketplaces, `.claude-plugin/marketplace.json` support, repo-level marketplace registration | https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference and the about-plugins page; the Copilot CLI config docs |
@@ -118,4 +124,4 @@ same way.
 
 ## Resume prompt
 
-`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md (especially §7b), then start "Next" step 1 (verify the ~ claims). Step 0 is done. Collaborate; don't decide.`
+`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md (especially §7b), then start "Next" step 2 (widen the prior art). Steps 0 and 1 are done (§7b, §7c). Collaborate; don't decide.`
