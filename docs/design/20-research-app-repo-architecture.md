@@ -392,6 +392,35 @@ character cap on a custom agent's prompt.
   workflow file per repo, and it only takes effect from the default branch. The Claude Code cloud-session
   analogue is the environment's setup script, which is per environment, not per repo.
 
+### Hook delivery: options and Summer's answers (2026-10-16)
+
+What today's hooks do, and what a cloud run needs: `session-start` adds a "follow the `start` skill"
+reminder and the contents of `folkways.yaml` and `.local/me.yaml`; `git-guard` checks commits and guards
+main clones; `context-band` and `precompact` serve long interactive sessions.
+
+| | Delivery | Reaches | Costs |
+|---|---|---|---|
+| H1 | npm, as today (`node_modules/.bin`) | Where `npm ci` ran | A Node manifest in non-Node repos |
+| H2 | Team plugin carries `hooks.json` and binaries | Local Claude Code, Copilot CLI, maybe the Copilot cloud agent; Claude Code cloud sessions only through server-managed settings | Trust prompt; every platform's binary in each install; no hooks for people who decline |
+| H3 | Committed launcher downloads a pinned, checksummed binary | Any surface with network to the host | Cache, offline behavior, Windows script, security review of "downloads a binary" |
+| H4 | Install in `copilot-setup-steps.yml` / the Claude environment setup script | Cloud surfaces | A workflow per repo; the Claude script is per environment, not per repo |
+| H5 | Commit the binaries | Everywhere | Repo bloat, unreviewable diffs |
+| H6 | Rewrite hooks as scripts | Everywhere hooks run | Reverses ADR 0002 |
+| H7 | Tiered: hooks locally; instructions and CI in the cloud | Everywhere, at different strengths | Cloud enforcement happens at PR time, not before the command |
+
+Summer's answers:
+
+1. **`git-guard` isn't needed in cloud agents; CI is enough there.** Summer thinks cloud agents can go
+   without hooks. `session-start` is the only one that matters, and its path is to be revisited.
+2. **A downloaded binary (H3):** possibly acceptable to the beta company's security team, possibly not.
+3. **Claude Code server-managed settings:** likely available for the beta org; Summer can confirm.
+4. **App repos are not all Node.** folkways targets a wide variety of teams, some with no Node anywhere.
+
+Reading (not a decision): with 1, the cloud question reduces to how `session-start`'s content reaches a
+cloud run. Committed instructions plus a skill that reads `folkways.yaml` are one candidate. The `.github/hooks`
+file, the double-run question and H3–H5 matter only if a cloud hook is kept. With 4, H1 alone can't be the
+local path for every team; H2, or a non-npm install, has to cover non-Node repos.
+
 ### New unknowns (add to §7)
 
 | # | Unknown | How to test |
