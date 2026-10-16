@@ -27,9 +27,24 @@ and runs the hands-on tests.
 | Branch | `claude/determined-clarke-k9kpdh` |
 | PR | [sumsolution/folkways#37](https://github.com/sumsolution/folkways/pull/37), docs only, open |
 | Research doc | [20-research-app-repo-architecture.md](20-research-app-repo-architecture.md): three flows, options per flow, four composed architectures (A CI hub, B team repo as plugin marketplace, C package per app repo, D per machine), what each changes, unknowns (§7), questions (§8) |
-| Questions to Summer (§8) | Asked, **not answered yet**. Don't assume answers |
+| Questions to Summer (§8) | **Answered** 2026-10-16; see 20 §0. Biggest: app repos must carry everything an agent needs, and **Copilot in GitHub** (cloud agent, code review) is first class, a scope change from spec §1. Efforts/reviews location still open (Summer wants to think it through). Per-repo context and synthesis are phase 1 |
+| Marketplace tests | Done offline, 20 §7a. Claude Code: works end to end after folder trust. Copilot CLI: registers the marketplace from `.claude/settings.json` and installs the Claude-format plugin; auto-install, skill run and hook run not observed (no Copilot login here) |
 
 ## Next: research to do
+
+### 0. Copilot in GitHub (new top priority, from Summer's answer 2)
+
+What does each GitHub-hosted Copilot agent read from a repo? Primary docs, then a test on a throwaway repo
+if Summer approves.
+
+| Agent | Find out |
+|---|---|
+| Copilot cloud coding agent | Instruction files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/*`), skills dirs (`.github/skills`, `.claude/skills`, `.agents/skills`), hooks (`.github/hooks/*.json`? `.claude/settings.json`?), MCP config, `copilot-setup-steps.yml` (can it install a hook binary?), whether it installs plugins or honors `enabledPlugins` |
+| Copilot code review | Which instruction files it reads, any skills or path-scoped rules, size limits |
+| Org custom instructions | Which of these agents they reach, precedence over repo files |
+
+Also: Claude Code on the web (cloud sessions) with a repo-registered private marketplace: does it install?
+Same for the Claude GitHub Action. These decide how much must be committed files vs plugin.
 
 ### 1. Verify the `~` claims (open the primary pages)
 
@@ -55,17 +70,17 @@ and runs the hands-on tests.
 - Per-repo context generation: tools and costs (octo's loop, RepoSwarm, DeepWiki, `claude -p` with a
   fixed prompt).
 
-### 3. Hands-on tests (unknowns 1–3 in 20 §7)
+### 3. Hands-on tests still open
 
 Only with Summer's approval for anything that creates repos or pushes. Use throwaway repos and synthetic
-names (`Example Team`, `example.com`).
+names (`Example Team`, `example.com`). Session 11's offline fixture is described in 20 §7a; rebuild it the
+same way.
 
-1. A marketplace repo holding one tiny team plugin (a skill and a `SessionStart` hook), and an app repo
-   whose `.claude/settings.json` registers it. Fresh clone; record the Claude Code trust and install flow
-   and whether the hook sees `CLAUDE_PROJECT_DIR`.
-2. Same app repo with Copilot CLI: does it auto-register the marketplace from repo settings? From which
-   file?
-3. Record each result in 20 (replace `~` with ✓ or a correction), with the version tested.
+1. Copilot CLI with a login: does `enabledPlugins` from `.claude/settings.json` auto-install at session
+   start; does the plugin skill run; does the plugin `SessionStart` hook run with `CLAUDE_PROJECT_DIR`?
+2. The interactive Claude Code trust and marketplace prompts on a fresh machine (what a teammate sees).
+3. How hooks reach agents in a clone without `node_modules` (20 §0, last bullet).
+4. Record each result in 20 (replace `~` with ✓ or a correction), with the version tested.
 
 ## How to work
 
@@ -75,4 +90,4 @@ names (`Example Team`, `example.com`).
 
 ## Resume prompt
 
-`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md, then start "Next" step 1 (verify the ~ claims). Collaborate; don't decide.`
+`Resume docs/design/21-handoff-app-repo-research.md on branch claude/determined-clarke-k9kpdh: read it and 20-research-app-repo-architecture.md, then start "Next" step 0 (what Copilot in GitHub reads from a repo). Collaborate; don't decide.`

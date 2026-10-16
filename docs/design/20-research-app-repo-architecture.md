@@ -2,12 +2,36 @@
 
 **Researched:** 2026-10-16 (session 11). Main agent, no subagents. Tool facts come from primary docs where
 fetched (marked ✓); the rest come from search summaries (marked ~) because this container's network
-blocks most sites. **Status: options for Summer to review. Nothing decided.**
+blocks most sites. **Status: options for Summer to review. Nothing decided.** Summer's answers to §8 and
+the marketplace tests were added the same day (§0, §7a).
 
 **Question:** engineers should keep starting sessions in their app repos, not in a brain repo. The team
 still has a central agent repo that holds shared knowledge and understands every team repo, and acts as
 the sync between them ([octo-team-context](https://github.com/summer-jordan/octo-team-context) is the
 example). What shapes could that take, and what would each one change in folkways?
+
+## 0. Summer's answers (2026-10-16) and what they imply
+
+| # | Answer | Implication for the options |
+|---|---|---|
+| 1 | Concerns about the brain repo: an unconventional workflow; cloud environments can't reach several repos at once; outside contributors clone only the app repo and lack context; **most impactful: Copilot agents running in GitHub would lack the brain repo's skills and context** | Every agent that touches the app repo must find what it needs **in that repo's clone**. Anything that lives only on a person's machine or in another repo fails concerns 2–4 |
+| 2 | App repos should contain **all the context, skills and workflows** an agent needs to operate in that repo. First-class: Claude Code, Copilot CLI, **and Copilot running in GitHub** (code review, cloud coding agent) | **Scope change:** spec §1 excluded the Copilot cloud agent. The cloud agent and code review don't install plugins (to verify), so plugin-only delivery (O4, O5, architectures B and D) can't be the whole answer. Files committed to the app repo are required; a plugin can only add to them |
+| 3 | Copilot CLI parity is required; test it now | Tested, §7a |
+| 4 | Where efforts and reviews live: not decided; think it through carefully | Stays open (§4.4). Answer 2 favors the app repo or the tracker for anything an agent needs |
+| 5 | Bots may open PRs into app repos; to discuss | O2 (hub opens PRs) and I1 stay on the table |
+| 6 | Per-repo context generation and architecture synthesis: **first phase** | Inbound (I1/I2) and synthesis are in phase 1, not later |
+
+What the answers rule out or narrow, as a reading of them rather than a decision:
+
+- **D (per machine)** fails answer 2: nothing lands in the repo.
+- **B (marketplace only)** fails answer 2 for Copilot in GitHub and for any tool without plugins. B
+  survives as an add-on: the repo carries committed files for every agent, and a plugin adds what
+  committed files can't (hook binaries, for example) for local Claude Code and Copilot CLI.
+- **A (CI hub writing files into the repo)** and **C (package per repo)** both put files in the repo. They
+  differ in who writes them: a hub bot by PR (A) or each repo's own `folkways sync` (C).
+- New open question: **how hooks reach agents in a clone with no `node_modules`** (non-Node repos, the
+  cloud agent). Today the hook binary comes from npm. Candidates: a plugin (local only), the cloud
+  agent's setup steps, or a committed launcher that downloads a pinned binary. Not researched yet.
 
 ## 1. What changes, and what stays
 
@@ -140,10 +164,13 @@ settings ✓:
   Useful if a security team wants control.
 - The plugin build we already have (`packages/claude-plugin`) does most of this. The new step is a
   **team** plugin: framework plugin + compiled overlays + team skills, built in the team repo's CI.
-- **Copilot CLI:** it has plugins and marketplaces and reads `.claude-plugin/marketplace.json` ~.
-  Enterprise-wide registration is in `.github-private` `copilot/managed-settings.json` ~
+- **Copilot CLI:** reads the same `extraKnownMarketplaces` block from the app repo's
+  `.claude/settings.json` (tested, 1.0.98) and from `.github/copilot/settings.json` (its changelog), and
+  installs a Claude-format plugin unchanged. See §7a. Enterprise-wide registration is in `.github-private`
+  `copilot/managed-settings.json` ~
   ([changelog](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/)).
-  **Repo-level auto-registration is unconfirmed**; one guide says yes, the docs found don't. Needs a test.
+- **Copilot in GitHub** (cloud agent, code review): no evidence yet that it installs plugins. Assume it
+  reads only committed files until verified (§0).
 
 ### 4.2 Inbound: how app-repo knowledge reaches the team repo
 
@@ -275,7 +302,32 @@ fallback (O1/O2) that writes only a short instructions file for tools that don't
 | 5 | Cost and quality of per-repo context generation on real repos | Run octo's generator, or a `claude -p` equivalent, on 3 beta repos | A, B |
 | 6 | Can the beta team's enterprise policy block repo-level marketplaces (`strictKnownMarketplaces`)? | Check their managed settings | B |
 
-## 8. Questions for Summer
+## 7a. Test results (2026-10-16)
+
+Local, offline: a marketplace repo `example-team-agents` (one plugin with a `team-hello` skill and a
+`SessionStart` hook that logs `$CLAUDE_PROJECT_DIR`) and an app repo `web-app` whose `.claude/settings.json`
+registers it through a `git` source (`file://` URL) and sets `enabledPlugins`. Isolated HOME and config
+dirs. Claude Code 2.1.301, Copilot CLI 1.0.98 (npm `@github/copilot`).
+
+| # | Check | Claude Code 2.1.301 | Copilot CLI 1.0.98 |
+|---|---|---|---|
+| 1 | Marketplace registered from the app repo's `.claude/settings.json` | Yes, at session start, **only once the folder is trusted** (`hasTrustDialogAccepted`). Before trust: ignored, no message (matches docs ✓) | **Yes**, on `copilot plugin marketplace list`, no trust step and no session needed |
+| 2 | Plugin from `enabledPlugins` installed automatically | **Yes** (`claude -p` with `CLAUDE_CODE_SYNC_PLUGIN_INSTALL=1`; `init` lists `example-team@example-team`) | **Not observed**: session start needs a Copilot login, and this container blocks `api.githubcopilot.com`. Its changelog says "Support enabledPlugins in config for automatic plugin installation at startup" |
+| 3 | Claude-format plugin (`.claude-plugin/plugin.json`, `skills/`, `hooks/hooks.json`) accepted | Yes | **Yes**: `copilot plugin install example-team@example-team` → "Installed 1 skill", hooks copied |
+| 4 | Plugin skill usable | Yes: model ran `example-team:team-hello` and replied `EXAMPLE-TEAM-SKILL-OK` | Not run (no login) |
+| 5 | Plugin `SessionStart` hook runs with `CLAUDE_PROJECT_DIR` = the app repo | **Yes** (logged `project=…/web-app`) | Not run. Changelog: plugin hooks get `CLAUDE_PROJECT_DIR`, `CLAUDE_PLUGIN_ROOT`, `COPILOT_PLUGIN_ROOT`, `CLAUDE_PLUGIN_DATA` |
+
+Also from the Copilot CLI 1.0.98 changelog (`changelog.json` in its package): it reads `.claude/settings.json`
+and `.claude/settings.local.json` as repo config; `.github/copilot/settings.json` is its own repo config;
+it auto-loads skills from `.github/skills`, `.claude/skills` and `.agents/skills`; it expands `@` imports in
+`AGENTS.md`, `CLAUDE.md` and Copilot instruction files; managed `enabledPlugins` and
+`extraKnownMarketplaces` win over local ones.
+
+**Left for a session with a Copilot login:** rows 2, 4 and 5 for Copilot CLI. **Left for full internet:**
+what Copilot in GitHub (cloud agent, code review) reads from a repo: instructions, skills, hooks, MCP,
+setup steps.
+
+## 8. Questions for Summer (answered 2026-10-16, see §0)
 
 1. **The concerns you heard about the brain repo:** which ones? The answer weights the options. For
    example, "a second place to start sessions" rules out D's clone; "nothing new in my repo" favors B or
