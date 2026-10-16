@@ -1,6 +1,6 @@
 # Handoff: app-repo-first research, continued with full internet access
 
-**Written:** 2026-10-16 (session 11; updated sessions 12 and 13) · **For:** the next session, run
+**Written:** 2026-10-16 (session 11; updated sessions 12, 13 and 14) · **For:** the next session, run
 **locally on Summer's machine** so the network is unrestricted · **Index:** [00-STATUS](00-STATUS.md)
 
 ## Why a new session
@@ -88,6 +88,10 @@ The original brief follows for reference.
 
 ### 1b. Open the pages sessions 12 and 13 couldn't reach (first, it's quick)
 
+**Done in session 14** (local), results in 20 §7c rows marked "session 14". Every page opened. Corrections:
+the managed-settings GA post named only VS Code and Copilot CLI (cloud agent support came later); the
+pwd9000 dev.to post's "no repo-level auto-enable" is outdated. The original brief follows for reference.
+
 Replace each `~` in 20 §7c and the Sources list with ✓ or a correction.
 
 | Page | Check |
@@ -101,6 +105,10 @@ Replace each `~` in 20 §7c and the Sources list with ✓ or a correction.
 | [Arvore Repo Hub story](https://hub.arvore.com.br/docs/our-story) | Why they chose the hub-as-workspace model; anything on its limits |
 
 ### 2. Widen the prior art (new searches)
+
+**Three seylox-cited sources done in session 14**, in 20 §7d. Headline: none solves cross-repo work
+without a workspace or umbrella where sessions start; agent-team (woditschka) is the closest relative to
+folkways found so far. **The rest of the list below is still open.**
 
 **Start with the three sources the seylox sequel cites** (20 §7c), as Summer asked:
 

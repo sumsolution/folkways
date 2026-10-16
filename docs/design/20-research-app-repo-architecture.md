@@ -4,7 +4,8 @@
 fetched (marked ✓); the rest come from search summaries (marked ~) because this container's network
 blocks most sites. **Status: options for Summer to review. Nothing decided.** Summer's answers to §8 and
 the marketplace tests were added the same day (§0, §7a). Session 13 checked the `~` claims against
-primary sources (§7c); a few stay `~` where the site is blocked.
+primary sources (§7c). Session 14 ran locally with an open network, opened the pages left blocked
+(§7c, no `~` left there), and read the three sources the seylox sequel cites (§7d).
 
 **Question:** engineers should keep starting sessions in their app repos, not in a brain repo. The team
 still has a central agent repo that holds shared knowledge and understands every team repo, and acts as
@@ -137,11 +138,11 @@ write-everywhere token) are the parts to change.
 | | Mechanism | App-repo footprint | Review | Tools covered | Notes |
 |---|---|---|---|---|---|
 | **O1. Hub pushes files** | Hub CI writes into each repo (octo) | Synced files + workflows | None (direct write) | Any | Simplest; fails the "AGENTS.md is team-owned" rule unless it writes only a managed file |
-| **O2. Hub opens PRs** | Hub CI opens a PR per repo when content changes ([repo-file-sync-action](https://github.com/BetaHuhn/repo-file-sync-action) ~, [team-ai-sync](https://dev.to/paladini/sync-ai-agent-rules-across-repositories-with-github-actions-5b9h) ~) | Synced files in a folkways-owned folder | App-repo owners merge | Any | Needs a GitHub App or token with PR write on team repos. Upgrades visible in each repo, as `sync` does today |
+| **O2. Hub opens PRs** | Hub CI opens a PR per repo when content changes ([repo-file-sync-action](https://github.com/BetaHuhn/repo-file-sync-action) ✓, [team-ai-sync](https://dev.to/paladini/sync-ai-agent-rules-across-repositories-with-github-actions-5b9h) ✓) | Synced files in a folkways-owned folder | App-repo owners merge | Any | Needs a GitHub App or token with PR write on team repos. Upgrades visible in each repo, as `sync` does today |
 | **O3. App repo pins and pulls** | Each app repo has `@folkways/cli` pinned and runs `folkways sync`, pulling team content too | `package.json` + lockfile + synced files | Upgrade PR per repo | Any | Reuses today's CLI. Odd in Go, Java or Python repos (a Node manifest in each). N repos to bump |
 | **O4. Team repo is a plugin marketplace** | Team repo carries `.claude-plugin/marketplace.json`; its team plugin = framework + compiled overlays + team skills + hooks. App repo's `.claude/settings.json` adds `extraKnownMarketplaces` and `enabledPlugins` ✓ | About 10 lines of settings | Team repo PRs; plugin auto-updates or pins a ref ✓ | Claude Code ✓; Copilot CLI partly (below) | Nothing else copied into app repos. Teammates are prompted to trust the folder and the marketplace ✓ |
 | **O5. Per machine, no app-repo footprint** | Each engineer installs the plugin; `session-start` checks whether the current repo is listed in the team's `folkways.yaml` and loads team context | None | Team repo PRs | Claude Code, Copilot CLI | Only folkways users get anything; the repo itself carries no standards for other tools or newcomers |
-| **O6. Import or add-dir** | App repo `AGENTS.md` imports from a local clone of the team repo, or the engineer runs with `--add-dir <team repo>` | One import line, or none | Team repo PRs | Claude Code ✓; Copilot CLI `--add-dir` ✓ ([05](05-research-repo-split.md)) | Import paths are machine-specific and trigger an approval dialog ✓. `--add-dir` loads skills but not `CLAUDE.md` unless an env var is set ✓, and settings-based dirs don't load skills ~ |
+| **O6. Import or add-dir** | App repo `AGENTS.md` imports from a local clone of the team repo, or the engineer runs with `--add-dir <team repo>` | One import line, or none | Team repo PRs | Claude Code ✓; Copilot CLI `--add-dir` ✓ ([05](05-research-repo-split.md)) | Import paths are machine-specific and trigger an approval dialog ✓. `--add-dir` loads skills but not `CLAUDE.md` unless an env var is set ✓, and settings-based dirs don't load skills, by design ✓ (§7c) |
 
 **O4 in detail, since it is new to us.** Claude Code reads plugin marketplaces from a repo's own
 settings ✓:
@@ -169,7 +170,8 @@ settings ✓:
   `.claude/settings.json` (tested, 1.0.98) and from `.github/copilot/settings.json` (its changelog), and
   installs a Claude-format plugin unchanged. See §7a. Enterprise-wide registration is in `.github-private`
   `copilot/managed-settings.json` ✓ (§7c)
-  ([changelog](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/)).
+  ([changelog](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/) ✓;
+  at GA it named VS Code and Copilot CLI only; the current docs add the cloud agent).
 - **Copilot in GitHub** (cloud agent, code review): the cloud agent is documented to install plugins
   from `.github/copilot/settings.json`; code review isn't. Claude Code cloud sessions don't install
   repo-enabled plugins. See §7b.
@@ -475,7 +477,9 @@ local path for every team; H2, or a non-npm install, has to cover non-Node repos
 **Source and confidence.** This container blocks the same sites as session 12 (docs.github.com, github.blog,
 dev.to, agentpatterns.ai, and the GitHub web UI and API for issues). So: GitHub docs from a sparse clone of
 `github/docs` at `dae83f7` (2026-10-16), paths under `content/copilot/`; Claude Code pages as Markdown from
-code.claude.com; projects from their own repos or npm. ✓ = primary source read. Still ~ = blocked.
+code.claude.com; projects from their own repos or npm. ✓ = primary source read. Session 14 (local, open
+network) opened the pages that were still ~: the github.blog changelogs, the two Claude Code issues (with
+`gh`), AgentPatterns, the dev.to posts, the Ruler page and Arvore's story page. Those rows say "session 14".
 
 | Claim (where in 20) | Verdict | What the primary source says |
 |---|---|---|
@@ -485,16 +489,20 @@ code.claude.com; projects from their own repos or npm. ✓ = primary source read
 | (new) Trust in Copilot CLI | ✓ partial | Only `model`, `effortLevel`, `contextTier` are documented as waiting for a trusted folder. Plugin auto-update runs "in a trusted working directory". Nothing says `enabledPlugins` waits for trust, which fits §7a (registered with no trust step) |
 | (new) Pinning and updates in Copilot CLI (open item 7) | ✓ | A marketplace entry's plugin `source` takes `ref` and `sha` (full 40-char SHA, "immune to force-pushes"); `marketplace add` takes `owner/repo#ref`. Only first-party plugins auto-update by default. **Repo-level `autoUpdate` is "accepted and ignored"**; only user or managed settings can opt a marketplace in. Auto-update is skipped in CI (`cli-plugin-reference.md`) |
 | Enterprise `managed-settings.json` in `.github-private` (§4.1 O4, §7b) | ✓ confirmed | Server-managed via `copilot/managed-settings.json` in the enterprise's `.github-private` repo; "applies to all clients, including Copilot cloud agent", only for users licensed by that enterprise; team overrides via `overridable`. MDM and file-based delivery reach local clients only (`how-tos/administer-copilot/manage-for-enterprise/use-managed-settings/deploy-managed-settings.md`). Supported-keys table as in §7b. Managed `extraKnownMarketplaces` sources: `github` (`repo`, `ref`, `path`), `git`, `directory`; a managed `autoUpdate` can't be overridden |
-| Managed settings are GA (§4.1 O4) | ✓ by the docs, changelog still ~ | No preview marker on the reference or how-to pages; the MCP registry reusable calls managed settings "the more secure, generally available method". The changelog post itself is blocked |
+| Managed settings are GA (§4.1 O4) | ✓ confirmed, changelog opened (session 14) | No preview marker on the reference or how-to pages; the MCP registry reusable calls managed settings "the more secure, generally available method". **GA changelog (2026-07-01):** Enterprise Cloud; `copilot/managed-settings.json` in a chosen org's `.github-private`, default branch; the older `.github/copilot/settings.json` path still works. Keys at GA: `extraKnownMarketplaces`, `enabledPlugins`, `strictKnownMarketplaces`, `disableBypassPermissionsMode`, `model`. **Enforced in VS Code and Copilot CLI** at GA, other clients "planned"; the current docs add the cloud agent, so that came later. Fetched at sign-in, refreshed hourly; Business or Enterprise seats from that enterprise only. **Plugins preview changelog (2026-05-06):** the earlier step, Copilot CLI only, from `.github-private/.github/copilot/settings.json`; also enterprise-wide hooks and MCP config |
 | `strictKnownMarketplaces` can block repo marketplaces (§7 unknown 6) | ✓ | "Restricts plugin installation to only the marketplaces explicitly defined by the enterprise. An empty array means complete lockdown." Honored by CLI, VS Code, the app, cloud agent, JetBrains. Entry types include `github`, `git`, `hostPattern`, `pathPattern` |
-| Org custom instructions: surfaces, precedence, limit (§7b) | ✓ confirmed | Copilot Chat, code review and cloud agent **on github.com only** (so not Copilot CLI or IDEs); personal > repository > organization, all sent. Set in org settings UI by org owners on Business or Enterprise. **No size limit stated** (`custom-instructions-org-support.md`, `add-organization-instructions.md`). The GA changelog is blocked |
-| `--add-dir` loads skills; settings-based dirs don't (§4.1 O6) | ✓ confirmed, and it's **by design** | `--add-dir` / `/add-dir` load `.claude/skills/` (live reload), `.claude/commands/`, `.claude/agents/`, and **only `enabledPlugins` and `extraKnownMarketplaces`** from its settings; `CLAUDE.md` and rules only with `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`; **its `AGENTS.md` never loads**. "Directories listed in `permissions.additionalDirectories` … grant file access only" (code.claude.com `permissions`, `skills`, `memory`). So issue 30064 describes documented behavior. Issues 30064 and 44224 themselves stay ~ (blocked) |
+| Org custom instructions: surfaces, precedence, limit (§7b) | ✓ confirmed | Copilot Chat, code review and cloud agent **on github.com only** (so not Copilot CLI or IDEs); personal > repository > organization, all sent. Set in org settings UI by org owners on Business or Enterprise. **No size limit stated** (`custom-instructions-org-support.md`, `add-organization-instructions.md`). GA changelog opened (session 14): GA 2026-04-02 (first shipped April 2025); same three surfaces, Business and Enterprise; it states no size limit and no precedence |
+| `--add-dir` loads skills; settings-based dirs don't (§4.1 O6) | ✓ confirmed, and it's **by design** | `--add-dir` / `/add-dir` load `.claude/skills/` (live reload), `.claude/commands/`, `.claude/agents/`, and **only `enabledPlugins` and `extraKnownMarketplaces`** from its settings; `CLAUDE.md` and rules only with `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1`; **its `AGENTS.md` never loads**. "Directories listed in `permissions.additionalDirectories` … grant file access only" (code.claude.com `permissions`, `skills`, `memory`). So issue 30064 describes documented behavior. **Issues opened (session 14, `gh`):** 30064 closed 2026-08-19 as completed; a maintainer reproduced it on 2.1.233 and called it intended, with the docs since updated (`additionalDirectories` = file access only, not a config root). 44224 (`--add-dir` not loading skills, 2.1.89) was flagged as a duplicate of 30064 and closed as stale, not planned, 2026-05-17; the current docs say `--add-dir` does load skills |
 | repo-file-sync-action: auth, PR mode, templating (§4.1 O2) | ✓ | Push model: runs in the source repo, opens a PR per target (`SKIP_PR` pushes direct). Auth: a classic PAT with full `repo` scope (`GITHUB_TOKEN` won't work), or a GitHub App installation token with Contents RW, Metadata R, Pull requests RW, Workflows RW to sync workflows. Nunjucks templates per file; `replace: false`; `deleteOrphaned` for directories; labels, reviewers, team reviewers. Last release v1.21.1, 2024-05-05; `node20` runtime (README at `8b92be3`) |
 | netlify/file-sync-action (§4.1 O2) | ✓, and it's a **different model** | Pull model: runs in each **target** repo on a schedule, fetches mapped files from a source repo, opens a PR per changed file (branch `file-sync-<sha>`) using the target's own token. Only two inputs (`files`, `token`). `action.yml` still declares `node12`; last non-bot commit 2023-05 (`3f00664`) |
 | seylox meta-repo pattern (§4.1 O2 sources) | ✓, and there's a **sequel** | Read both posts from the blog's repo (`seylox/seylox.github.io` at `a07c868`). Below |
 | RepoSwarm | ✓ README | Now `reposwarm/reposwarm` (was `loki-bedlam/repo-swarm`), Apache-2.0, Python, at `34dcfaa` (2026-03-26). Runs on Temporal in Docker, clones each repo, picks a type-aware prompt, writes `<repo>.arch.md` into a **central results-hub repo**; re-analyzes only repos with new commits; cache in DynamoDB or files; Anthropic API, Bedrock or LiteLLM. A hub-side scanner (our I2) with heavier infra |
-| Arvore Repo Hub | ✓ npm README | `@arvoretech/hub` 0.29.3 (2026-08-29), MIT, source `arvoreeducacao/rhm`. A `hub.yaml` lists repos, MCPs and skills; `hub generate --editor …` writes Cursor, Kiro, Claude Code or `AGENTS.md` config. The hub **is the workspace**: repos are cloned side by side inside it and you open the AI there. That is the brain-repo model, not app-repo-first |
-| agentpatterns.ai central repo; dev.to multi-repo post; team-ai-sync; Ruler and rulesync page | Still ~ | Hosts blocked |
+| Arvore Repo Hub | ✓ npm README | `@arvoretech/hub` 0.29.3 (2026-08-29), MIT, source `arvoreeducacao/rhm`. A `hub.yaml` lists repos, MCPs and skills; `hub generate --editor …` writes Cursor, Kiro, Claude Code or `AGENTS.md` config. The hub **is the workspace**: repos are cloned side by side inside it and you open the AI there. That is the brain-repo model, not app-repo-first. **Our-story page (session 14):** 9 repos (NestJS, Elixir, Next.js, React, libraries, infra); engineering cut from 30 to 10 people. The repos sit in the hub folder, excluded by the hub's `.gitignore` and included for the AI by `.cursorignore`, so git sees separate repos and the AI one workspace. Reported gains are self-reported (features "from 3 to 6 months down to weeks"); no limits or downsides stated |
+| AgentPatterns central repo (§4.1, Sources) | ✓ opened (session 14) | A canonical `agent-standards` repo fanned out to project repos. Lists five delivery routes: symlinks, `@` imports, generate-then-fan-out by hook or CI (called the most robust cross-tool), packages with semver, and plugins (best for a single vendor). Its example: submodule pinned to a tag, pre-commit copy, CI diff that fails on drift. **When not to:** single-team orgs; conventions still changing weekly ("standards should stabilize before they centralize"); tacit or contested conventions; catalog bloat; no CI diff, so the hub turns advisory. Evidence it cites: 22% of 673 skills across 41 repos fail structural checks; an ETH Zurich study where LLM-generated context files changed task success by −0.5 to −2% (not significant) and raised cost 20–23%. Real teams named (Nx, Datadog) without outcome data. Treats Copilot org instructions, managed settings and marketplaces as complements to the repo, not replacements |
+| dev.to "context problem nobody solved" (Sources) | ✓ opened (session 14) | Gabriel Menezes; promotional for his tool **ivar**. Problem: agents bind to one working dir; cross-repo changes break LSP, search, git. Rejects parent dirs, submodule meta-repos, path hacks, MCP bridges, agent swarms. ivar builds a per-session "View Dir" of symlinked worktrees: promoted repos writable on one feature branch, the rest read-only by `chmod`; a `HALL.md` is synthesized into the root `CLAUDE.md`/`AGENTS.md`. Sessions start in the View Dir. No team data |
+| team-ai-sync (§4.1 O2) | ✓ opened (session 14) | Fernando Paladini. **Push model by PR**, like repo-file-sync-action: a workflow in the source repo reads a manifest and opens or updates one PR per target; never merges, never bypasses protection. Fine-grained PAT (Contents RW, PRs RW, Metadata R) or a GitHub App, recommended for org-wide use. Per-target file mappings, no templating, `deleteOrphans` off by default. Also GitLab and Bitbucket. Demo only, no team data; notes it was drafted with AI help |
+| dev.to Copilot CLI plugins and marketplaces (§4.1 O4) | ✓ opened, **partly outdated** | Marcel Lupo, 2026-05-27. Commands and manifest lookup match the docs (§7c). It says plugins install per user only, with no repo-level auto-enable; the current docs and our §7a test contradict that (`enabledPlugins` in `.github/copilot/settings.json` or `.claude/settings.json`). Its claims that plugin contents are cached at install and that plugin skills don't override project ones are unsourced |
+| Ruler and rulesync page (Sources) | ✓ opened (session 14) | Both are **single-repo** generators: one source folder (`.ruler/`, `.rulesync/`) → each tool's native files. Ruler concatenates Markdown into one file per agent, 30+ agent ids, also MCP, skills, subagents; it gitignores its output by default, so clones, cloud agents and reviewers miss it unless `--no-gitignore`. rulesync writes native scoped files (`.claude/rules/`, `.cursor/rules/`), also hooks and permissions, and has `generate --check` for CI; it shipped four majors in three days (Sept 2026), so pin it. Neither syncs across repos |
 
 **seylox, in more detail** (because it's the closest real-team account, and the October post answers §8 Q1's
 "evidence on the concerns" in part):
@@ -515,10 +523,10 @@ code.claude.com; projects from their own repos or npm. ✓ = primary source read
 - Onboarding: a new hire "cloned one repository, ran the script, started the agent".
 - Not addressed: cloud agents, Copilot, outside contributors. Every session needs the meta-repo clone, which
   is the gap Summer's concerns 2–4 (§0) point at.
-- New sources it cites, not yet read: the [meta-repo pattern write-up](https://devnewsletter.com/p/meta-repo-pattern/),
+- New sources it cites: the [meta-repo pattern write-up](https://devnewsletter.com/p/meta-repo-pattern/),
   [codified context](https://arxiv.org/abs/2602.20478) (hot vs cold memory), and
   [woditschka/agentic-coding-reference](https://github.com/woditschka/agentic-coding-reference) with the
-  SoCraTes Austria session "Agents Forget. Repos Remember." Candidates for step 2.
+  SoCraTes Austria session "Agents Forget. Repos Remember." Read in session 14; see §7d.
 
 **What this changes (a reading, not a decision):**
 
@@ -530,8 +538,100 @@ code.claude.com; projects from their own repos or npm. ✓ = primary source read
   there comes from user settings, managed settings, or pinning a `ref`/`sha` that a PR bumps.
 - `strictKnownMarketplaces` is a real blocker for B in an enterprise that sets it; the team marketplace would
   need to be on the enterprise allowlist (unknown 6 becomes a question for the beta admin, not a test).
-- The prior art splits three ways: hub writes into repos (octo, repo-file-sync-action), repos pull from a
-  hub (netlify's action), and the hub as workspace or overlay (Arvore, seylox). RepoSwarm is inbound only.
+- The prior art splits three ways: hub writes into repos (octo, repo-file-sync-action, team-ai-sync), repos
+  pull from a hub (netlify's action), and the hub as workspace or overlay (Arvore, seylox, ivar). RepoSwarm
+  is inbound only. Ruler and rulesync are a fourth kind, inside one repo: one source, every tool's file.
+- (Session 14) Managed settings reached the cloud agent after GA, not at it; anything built on that path
+  depends on a recent behavior. AgentPatterns' "when not to centralize" list (single team, conventions still
+  changing weekly, no CI drift check) is the closest thing found to a published counter-argument.
+
+## 7d. The sources the seylox sequel cites (session 14, 2026-10-16)
+
+**Source and confidence.** Run locally with an open network. All pages opened (✓):
+[The Meta-Repo Pattern](https://devnewsletter.com/p/meta-repo-pattern/) (The Dev Newsletter, 2026-03-30, no
+named author); [Codified Context](https://arxiv.org/abs/2602.20478) (Aristidis Vasilopoulos, arXiv v1,
+2026-02-24), abstract and [full HTML](https://arxiv.org/html/2602.20478v1);
+[woditschka/agentic-coding-reference](https://github.com/woditschka/agentic-coding-reference) at `4ccc5fc`
+(README, adoption guide, `product-workspace.md`, `human-teams.md`, `cross-tool-strategy.md`, the channel and
+workspace ADRs) and the [SoCraTes session page](https://github.com/Softwerkskammer-Linz/SoCraTesAT-2026/tree/main/agents-forget-repos-remember)
+(talk by Bernhard Woditschka, SoCraTes 2026 Linz; a short README with links to the same repo).
+
+### What each one is, side by side
+
+| | Meta-repo write-up | Codified context | agentic-coding-reference ("agent-team") |
+|---|---|---|---|
+| Kind | Survey article, four approaches with named practitioners | Single-author experience report with numbers | An open-source harness: skills, agents, hooks, engines, eval bench |
+| Scale | Anyline: 6 SDK repos. Owen Zanzal: **35 repos** cloned into one workspace with a root `CLAUDE.md`. Mars CLI (Dean Sharon): declarative repo list, tags, `mars exec`. Nx: synthetic monorepo graph | **One developer, one repo**: 108k lines of C#, 283 sessions over 70 days part time | Two runnable samples (Go, Spring Boot), a generic one, and a four-repo `product-workspace` sample (partly built) |
+| Where sessions start | The meta-repo or workspace root in every case | The one repo | **Single repo:** the app repo itself. **Several repos:** the "umbrella" repo only; members carry a one-line `CLAUDE.md` pointing to it, and "no harness session starts here" |
+| How content reaches app repos | It doesn't, by design: the meta-repo sits above them and carries no app code | n/a (one repo) | Three channels, **copy** the default: runtime committed into each app repo by `/materialize`; **manifest** (same, gitignored, from a pinned source); **marketplace**: per-tool plugins from one `.claude-plugin/marketplace.json`, enabled per repo in committed `.claude/settings.json`, plus a small engine sliver a setup skill installs and gitignores |
+| Cloud agents | Not covered | Not covered | Not covered as a target. Mentions Copilot's `&` delegation to the cloud agent and that `.github/instructions` reach the cloud agent and code review. Copy channel commits skills and `CLAUDE.md`, which §7b says those agents read |
+| Tools | Claude Code, Codex, Cursor, Copilot, Gemini, OpenCode, Nx | Claude Code + MCP | Claude Code, Copilot CLI, OpenCode (Junie retired). One `CLAUDE.md` and one `.claude/skills/` tree serve all three |
+| Costs stated | Keeping manifests and docs current; disk; context noise; prompt injection through retrieved docs; no atomic cross-repo commits | About 26k lines of context infra (24% of code lines); about 5 min per session when a spec changes plus a 30–45 min biweekly review (1–2 h a week); two incidents of stale specs causing conflicting code | Model spend: $3.90 for one recorded bug fix, about $5 per feature on its public eval series (README), about $9 in the talk; every upgrade replaces the runtime whole; on the marketplace channel, a setup re-run after each plugin update or engines skew |
+
+### Points worth keeping
+
+**Meta-repo write-up**
+
+- **Visibility gap vs transaction gap:** a meta-repo tells the agent what else should change; it doesn't
+  give atomic commits, shared releases or integrated tests. Those need their own process.
+- **The unmaintained meta-repo warning** (the source of the seylox quote): a stale root `CLAUDE.md`
+  naming renamed services, helper scripts that encode one person's habits, system maps that drift the day
+  a new service ships. Agents treat the docs as ground truth, so drift hurts faster than with people.
+- Recommends measuring outcomes (time to first useful change, cross-repo task completion, review load,
+  rollback rate) and trust separately from throughput.
+- No adoption criteria; its bottom line is that a meta-repo beats agents working blind.
+
+**Codified context**
+
+- Three tiers: a 660-line **constitution** always loaded (conventions, build commands, known failure
+  modes, a trigger table routing tasks to agents); **19 specialist agents** (over half of each is domain
+  knowledge, not behavior); **34 specs** (about 16k lines) fetched on demand through a small MCP server with
+  keyword search (1,478 retrieval calls across 218 sessions).
+- The hot/cold split is the paper's main idea: keep the always-loaded file short and route to detail.
+  That matches L1 (small map) + L2 (skill that reads more) in §4.3 and the memory docs' size guidance.
+- Limits it names: single developer, single project, observational only, no failure rates, tied to Claude
+  Code and MCP. Teams and multi-repo are future work.
+
+**agentic-coding-reference**
+
+- **Its multi-repo design is the brain-repo model.** The umbrella holds the PRD, cross-module decisions,
+  glossary and member list (`[workspace.members]` in `scripts/layout.toml`, with contract paths and
+  dependencies); members sit as sibling clones and are checked out per slice. It considered and rejected
+  submodules (reviews go blind to a pointer diff), subtree (history and sync burden) and nested checkouts
+  (gitlinks, hidden from search, the member's rules file loads too).
+- **Two tiers of truth with a routing rule:** whatever another team would need to know goes up to the
+  umbrella; a member keeps only its own design, ADRs and any deviation from the shared briefs.
+- **Partial checkout is designed in:** an absent member is reported, not failed; a contract change with an
+  absent dependent blocks, other changes warn.
+- **Teams:** one checkout and one slice per person; claims live in the team's tracker, reached by a
+  project-owned `backlog.sh`; the harness adds no shared registry or lock. Shared memory is `docs/` through
+  git; working memory (`.scratch/`) is per checkout and gitignored.
+- **Distribution is close to our O3/O4 split:** copy (committed, like `folkways sync`) as the default after
+  real adoptions showed it was what people wanted; marketplace for teams that prefer a plugin pinned in
+  `.claude/settings.json`. Its marketplace ADR keeps engines project-side because plugin caches are
+  tool-specific paths.
+
+### Against Summer's four concerns (§0 row 1)
+
+| Concern | Meta-repo write-up | Codified context | agentic-coding-reference |
+|---|---|---|---|
+| 1. Unconventional workflow | Every approach starts sessions in a workspace above the repos | n/a | Single repo: no, sessions start in the app repo. Multi-repo: yes, umbrella only |
+| 2. Cloud environments can't reach several repos | Not discussed | n/a | Not discussed; the umbrella needs sibling clones and per-tool directory grants (Copilot's grant is per user, not committed) |
+| 3. Outside contributors clone only the app repo | Not discussed | n/a | Copy channel: they get the full runtime in the clone. Workspace member: they get one line pointing elsewhere |
+| 4. Copilot agents in GitHub lack context | Not discussed | n/a | Copy channel commits `CLAUDE.md` and `.claude/skills`, which those agents read (§7b); not tested by the project |
+
+### What this changes (a reading, not a decision)
+
+- None of the three sources solves the cross-repo case without a workspace or umbrella where sessions
+  start. The seylox, Arvore, Mars, Zanzal and agent-team umbrella designs all land there. The app-repo-first
+  premise has prior art only in the single-repo mode (agent-team's copy channel, Ruler/rulesync, octo).
+- agent-team is the nearest relative to folkways found so far: skills, hooks, a doctor, evals, overlays
+  ("briefs" with a kernel that no brief can change), npm-free install by copy or plugin, Copilot CLI
+  parity. Its choices (copy as default, engines outside the plugin, per-person checkouts with the tracker
+  as the coordination layer) are data points for §4.1 and §4.4, not a template.
+- The cost evidence is thin and all from single teams or one person: 1–2 hours a week to keep one developer's
+  context current (codified context), the seylox team's 64k lines, the meta-repo warning. No source reports
+  the cost of fanning content out to many app repos.
 
 ## 8. Questions for Summer (answered 2026-10-16, see §0)
 
@@ -559,10 +659,12 @@ Primary, fetched (✓):
 - [octo-team-context](https://github.com/summer-jordan/octo-team-context) at `2e9869c` (read in full)
 
 Checked in session 13 (§7c): the Copilot docs links below, both sync actions, seylox, RepoSwarm and
-Arvore are now ✓ from their source repos or npm; the changelog posts, the two Claude Code issues,
-AgentPatterns, dev.to and the Ruler page are still ~ (blocked).
+Arvore are now ✓ from their source repos or npm. Opened in session 14 (§7c): the changelog posts, the two
+Claude Code issues, AgentPatterns, the three dev.to posts, the Ruler page and Arvore's story page, so every
+link in the next list is ✓ except the RepoSwarm write-up on robotpaper.ai (its README is ✓), Backstage,
+Sourcegraph and DeepWiki, which no session has opened. The §7d sources are listed there.
 
-From search summaries (~ unless §7c says otherwise):
+From search summaries, now opened unless noted:
 
 - Copilot: [enterprise managed-settings.json GA](https://github.blog/changelog/2026-07-01-enterprise-managed-settings-json-is-generally-available/),
   [enterprise-managed plugins preview](https://github.blog/changelog/2026-05-06-enterprise-managed-plugins-in-github-copilot-cli-are-now-in-public-preview/),
@@ -570,8 +672,8 @@ From search summaries (~ unless §7c says otherwise):
   [Copilot CLI plugins and marketplaces](https://dev.to/pwd9000/github-copilot-cli-plugins-and-marketplaces-extend-your-terminal-agent-16pc),
   [organization custom instructions GA](https://github.blog/changelog/2026-04-02-copilot-organization-custom-instructions-are-generally-available/)
 - Claude Code `--add-dir` skills: [skills docs](https://code.claude.com/docs/en/skills),
-  [issue 30064](https://claudeissues.com/issue/30064-bug-permissions-additionaldirectories-does-not-load-skills-from-added-directorie),
-  [issue 44224](https://claudeissues.com/issue/44224-bug-add-dir-cli-flag-does-not-load-skills-from-added-directorys-claude-skills-v2)
+  [issue 30064](https://github.com/anthropics/claude-code/issues/30064),
+  [issue 44224](https://github.com/anthropics/claude-code/issues/44224)
 - File sync across repos: [repo-file-sync-action](https://github.com/BetaHuhn/repo-file-sync-action),
   [netlify/file-sync-action](https://github.com/netlify/file-sync-action),
   [team-ai-sync](https://dev.to/paladini/sync-ai-agent-rules-across-repositories-with-github-actions-5b9h)
