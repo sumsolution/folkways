@@ -450,6 +450,9 @@ Summer's answers:
 2. **A downloaded binary (H3):** possibly acceptable to the beta company's security team, possibly not.
 3. **Claude Code server-managed settings:** likely available for the beta org; Summer can confirm.
 4. **App repos are not all Node.** folkways targets a wide variety of teams, some with no Node anywhere.
+5. **The one-time trust prompt is acceptable** for local hooks (plugin path). A fresh clone gets hooks
+   through the repo-enabled plugin after the trust dialog (§7a); a committed launcher (H3) stays a fallback.
+6. **Define each hook once** (one source per tool, e.g. the plugin only). Unknown 11 is not tested.
 
 Reading (not a decision): with 1, the cloud question reduces to how `session-start`'s content reaches a
 cloud run. Committed instructions plus a skill that reads `folkways.yaml` are one candidate. The `.github/hooks`
@@ -464,7 +467,7 @@ local path for every team; H2, or a non-npm install, has to cover non-Node repos
 | 8 | Does the cloud agent read `enabledPlugins` from `.claude/settings.json` too, as Copilot CLI does? | Same repo, block only in `.claude/settings.json` |
 | 9 | Does a Claude-format `hooks.json` (PascalCase `PreToolUse`) placed in `.github/hooks/` work in the cloud agent? The reference accepts PascalCase events with snake_case fields | Same repo |
 | 10 | Does code review run hooks or plugins at all? | Open a PR in the same repo, request Copilot review |
-| 11 | With both `.claude/settings.json` and `.github/hooks/*.json`, does Copilot CLI run a hook twice? | Local, Copilot CLI with a login |
+| 11 | ~~Does Copilot CLI run a hook defined in two sources twice?~~ Dropped: Summer chose to define each hook once | — |
 
 ## 8. Questions for Summer (answered 2026-10-16, see §0)
 

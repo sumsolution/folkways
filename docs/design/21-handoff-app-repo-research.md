@@ -34,9 +34,26 @@ and runs the hands-on tests.
 
 ### 0. Copilot in GitHub (new top priority, from Summer's answer 2)
 
-**Docs part done in session 12**: see 20 §7b (GitHub docs read from a github/docs clone, since
-docs.github.com was blocked again). Open: unknowns 7–11 in 20 §7b need a throwaway repo with the Copilot
-cloud agent, which needs Summer's approval.
+**Done in session 12.** Docs: 20 §7b (GitHub docs read from a github/docs clone, since docs.github.com
+was blocked). Hands-on: throwaway repo `sumsolution/folkways-copilot-probe` (results in 20 §7b; the
+cloud agent committed its Copilot token in PR 2, so Summer was advised to delete the repo). Hook answers
+from Summer are in 20 §7b "Hook delivery". The original brief follows for reference.
+
+**Open after session 12:**
+
+| # | Question | Who or what settles it |
+|---|---|---|
+| 1 | Copilot CLI with a login: does a repo-enabled plugin auto-install; do its skill and hook run (20 §7a rows 2, 4, 5)? | Local test with a Copilot login |
+| 2 | Trust and marketplace prompts on a fresh machine; do new worktrees prompt again? | Local test on a clean setup |
+| 3 | How `session-start`'s content reaches cloud runs (instructions, generated file, or a hook) | Summer to revisit |
+| 4 | Server-managed settings for Claude Code cloud sessions in the beta org | Summer, if needed |
+| 5 | Security acceptance: downloaded binary, GitHub App with PR write, read-only scanner | Beta company's security team |
+| 6 | Enterprise `strictKnownMarketplaces` blocking repo-level marketplaces | Beta team's admin settings |
+| 7 | Plugin update and pinning per surface (Copilot ignores repo-level `autoUpdate`) | Docs, then a test |
+| 8 | Windows: no Windows hook binary today; Copilot ignores bash-only hooks on Windows | Design question |
+| 9 | Efforts and reviews location; bots opening PRs into app repos | Summer (answers 4, 5) |
+| 10 | Cost and quality of per-repo context generation | Trial on real repos |
+| 11 | Hooks in Copilot code review (not observed) | Low priority |
 
 What does each GitHub-hosted Copilot agent read from a repo? Primary docs, then a test on a throwaway repo
 if Summer approves.
