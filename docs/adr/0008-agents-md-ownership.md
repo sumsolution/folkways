@@ -49,70 +49,89 @@ does `AGENTS.md` refer to it?
   The Copilot cloud agent followed `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md` in a
   probe; code review followed `REVIEW.md`
   ([20 §7b hands-on](https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md?plain=1#L398-L408)).
-- **`@` imports are confirmed for two of the four agents.** Claude Code and Copilot CLI expand `@` imports
-  in `AGENTS.md` and `CLAUDE.md`
+- **`@` imports reach three of the four agents.** Claude Code and Copilot CLI expand `@` imports in
+  `AGENTS.md` and `CLAUDE.md`
   ([spec §5](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md);
   [20 §7a](https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md?plain=1#L324-L328)).
-  Whether the Copilot cloud agent and Copilot code review expand them is **not researched or tested**.
+  The Copilot cloud agent does too: told not to read `AGENTS.md` or `docs/`, it followed a rule that
+  existed only in the imported file, and its log shows no read of that file (probe issue
+  [#7](https://github.com/sumsolution/folkways-copilot-probe-2/issues/7) →
+  [PR #8](https://github.com/sumsolution/folkways-copilot-probe-2/pull/8)).
+- **Copilot code review does not expand imports.** It followed rules written directly in `AGENTS.md`,
+  `CLAUDE.md`, `REVIEW.md` and `.github/copilot-instructions.md`, and missed the imported rule both times
+  ([PR #2](https://github.com/sumsolution/folkways-copilot-probe-2/pull/2),
+  [PR #6](https://github.com/sumsolution/folkways-copilot-probe-2/pull/6)). A plain-text pointer wasn't
+  tested; a reviewer that skips an `@` line it can see probably skips a pointer too (inferred).
+- **Code review reads skills** from `.claude/skills` and from `.github/skills`, each tested alone with a
+  skill named `code-review`
+  ([PR #4](https://github.com/sumsolution/folkways-copilot-probe-2/pull/4),
+  [PR #5](https://github.com/sumsolution/folkways-copilot-probe-2/pull/5)). The docs say review-focused
+  names are more likely to be picked
+  ([20 §7b](https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md?plain=1#L349)).
+- **Probe limits:** private repo
+  [sumsolution/folkways-copilot-probe-2](https://github.com/sumsolution/folkways-copilot-probe-2), one run
+  per case, model chosen by GitHub. The import fixture used `docs/…`, not `.folkways/…`.
 - **Claude Code reads `CLAUDE.md`, not `AGENTS.md`;** a team repo's `CLAUDE.md` holds `@AGENTS.md`
   ([spec §5](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)).
   Datadog uses the same one-line `CLAUDE.md`
   ([post](https://dev.to/datadog-frontend-dev/steering-ai-agents-in-monorepos-with-agentsmd-13g0)).
-  octo overwrites both files, so the question applies to `CLAUDE.md` too.
+  Code review reads `CLAUDE.md` on its own
+  ([PR #6](https://github.com/sumsolution/folkways-copilot-probe-2/pull/6)). octo overwrites both files.
 
 ## Decision
 
-**folkways never overwrites or edits the team's text in an app repo's `AGENTS.md`. The repo's team owns
-that file. folkways writes only paths it owns.**
+**folkways never overwrites or edits the team's text in an app repo's `AGENTS.md` or `CLAUDE.md`. The
+repo's team owns them. folkways writes only paths it owns.**
 
-1. Framework and team content goes in a folkways-owned folder, `.folkways/`, plus the framework skill
-   folders and settings entries the manifest already lists (spec §3 table). `sync`, or a hub, replaces only
-   those paths.
-2. `AGENTS.md` refers to that content. Adding the reference is the repo team's edit. folkways checks for
-   it and warns, as `sync` does today; it doesn't add it.
-3. **Not settled here: the form of the reference.** The research doesn't decide between:
-   - **(a) an import line**, `@.folkways/instructions.md`, today's mechanism. Works in Claude Code and
-     Copilot CLI; unknown in the Copilot cloud agent and code review.
-   - **(b) a plain-text pointer** ("read `.folkways/instructions.md` first"). Any agent can follow it, but
-     loading depends on the model doing so (unconfirmed for each agent).
-   - **(c) a marked block** the repo team lets folkways own inside `AGENTS.md`. The full text is in the
-     file every agent reads, at the cost of folkways writing inside the team's file.
-
-   (a) stays the default because it is built and holds for both local tools. A probe of the Copilot cloud
-   agent and code review with an import line decides whether (a) holds for GitHub agents, or whether a
-   fallback, (b) or (c), is needed for them.
+1. **Owned paths:** `.folkways/`, plus the framework skill folders and settings entries the manifest
+   already lists (spec §3 table). `sync`, or a hub, replaces only those paths.
+2. **Session agents get the instructions by import.** The team's `AGENTS.md` holds
+   `@.folkways/instructions.md` (option 4a), as team repos do today. That reaches Claude Code (through
+   `CLAUDE.md`'s `@AGENTS.md`), Copilot CLI and the Copilot cloud agent. Adding the line is the repo team's
+   edit; `sync` checks for it and warns, and doesn't add it.
+3. **Code review gets what it needs from a skill.** Code review doesn't follow the import, so folkways
+   ships its review criteria as a framework skill under `.claude/skills/`, a folder it already owns
+   (option 4c). The criteria come from the existing `review` skill and the team's compiled overlay. The
+   skill's name and description must read as code review, since the review agent picks skills by
+   relevance.
 
 Rationale: an overwrite costs the repo's owners their own instructions every time the sync runs, and in
-an app repo those owners may not be on the folkways team, so they can't fix it in the hub. Owning a
-folder keeps every folkways write reviewable as a change to files only folkways writes. It also keeps
-today's team-repo rule, so `sync` needs no new ownership model. The reference form is left open because
-the one agent class Summer named as most important, Copilot in GitHub, is the one we haven't tested with
-imports.
+an app repo those owners may not be on the folkways team, so they can't fix it in the hub. Owning paths
+keeps every folkways write reviewable as a change to files only folkways writes, and keeps today's
+team-repo rule. The import is built, and the probe shows it reaches every agent that runs a session. For
+code review, a skill is the only form that needs no write to a file the repo already owns or may own:
+`REVIEW.md` and `.github/copilot-instructions.md` are the repo's to write, and a marked block puts two
+writers in one file. Most of `instructions.md` is about running a session (status docs, handoff, pushes),
+which a reviewer doesn't need (inferred).
 
 ## Options considered
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
 | 1 | Overwrite `AGENTS.md` wholesale from the hub (octo) | Simplest; full text in the file every agent reads, no import needed | Erases the repo's own instructions; the reconcile reverts edits without notice; the repo team can't change its own file | Easy to build, and it takes the file away from the people who own the repo. |
-| 2 | A marked managed block inside `AGENTS.md` (yuka-repos; folkways before round 12) | Full text reaches every agent; text outside the markers stays the team's; a check can catch drift | folkways writes inside a team file; edits inside the markers get reverted; the block makes the file longer; diffs land in the team's file | Works in every agent at the cost of a shared file with two writers. |
+| 2 | A marked managed block inside `AGENTS.md` (yuka-repos; folkways before round 12) | Full text reaches every agent, code review included; text outside the markers stays the team's; a check can catch drift | folkways writes inside a team file; edits inside the markers get reverted; the block makes the file longer; diffs land in the team's file | The one form code review reads for sure, at the cost of a shared file with two writers. |
 | 3 | Tool-owned `AGENTS.md` plus a repo-owned addendum folder (trick77) | Clear split; the tool can lay out the whole file | The team loses `AGENTS.md` and edits a side folder instead; an app repo that already has an `AGENTS.md` must move its text | Clean ownership, but the wrong owner for an app repo. |
-| **4** | **folkways-owned folder; the team's `AGENTS.md` refers to it (reference form open: 4a import, 4b pointer)** | folkways never writes the team's file; reuses today's `sync` and ownership table; 4a is built and confirmed in both local tools | One line the team must add; 4a unconfirmed in Copilot cloud agent and code review; 4b relies on the model reading the file | Keeps the file the team's, and leaves one untested gap for GitHub agents. |
+| 4a | folkways-owned `.folkways/`; the team's `AGENTS.md` imports it | folkways never writes the team's file; built today; reaches Claude Code, Copilot CLI and the cloud agent | One line the team must add; code review ignores it | Covers every session agent; code review needs something else. |
+| 4b | Same, with a plain-text pointer instead of an import | Readable by any agent in principle | Loading depends on the model; untested; likely ignored by code review like the import (inferred) | Weaker than 4a everywhere 4a works, and no better where it doesn't. |
+| **4a + 4c** | **4a for sessions, plus a folkways review skill under `.claude/skills/` for code review** | Uses folders folkways already owns; the review skill already exists; code review was seen reading `.claude/skills` | Skills load by relevance, not always; tested with a skill named `code-review`, not folkways' name; a repo's own review skill may compete | Reaches every agent without writing a file the repo owns, and rests on one probe run for review. |
+| 4d | 4a, plus a folkways-owned `REVIEW.md` or `.github/copilot-instructions.md` | Read directly by code review, every time | Both are files a repo may already own; `copilot-instructions.md` also loads in every Copilot session, duplicating the import | Reliable for review, and brings back the ownership clash for a different file. |
 
 ## Consequences
 
 - **Spec:** the spec §3 ownership table applies to app repos unchanged: `AGENTS.md` is "team, never
-  written". What `init` or `setup` does in an app repo with no `AGENTS.md` is open; creating it once, as
-  `init` does today, is the obvious carry-over (unconfirmed).
+  written", and `CLAUDE.md` joins it. What `init` or `setup` does in an app repo with no `AGENTS.md` is
+  open; creating it once, as `init` does today, is the obvious carry-over (unconfirmed).
+- **`sync` warnings:** besides the missing import line, warn when `CLAUDE.md` exists and doesn't import
+  `AGENTS.md`, since Claude Code then misses the instructions.
+- **Review skill:** folkways' skill is named `review`. Name it, or describe it, so code review picks it, and
+  probe that once: a PR with only the synced folkways skill, checking for a marker in the review. Until
+  then, 4c is unconfirmed for folkways' own skill.
 - **Hub designs** (architecture A, or each repo pulling, decided elsewhere) may write only folkways-owned
-  paths. Whether a hub PR that adds the reference line counts as folkways writing `AGENTS.md` goes with
-  that decision.
-- **Test to run:** a throwaway repo whose `AGENTS.md` and `CLAUDE.md` import a file with a marker; assign
-  an issue to the Copilot cloud agent and request Copilot review. The result picks 4a, or 4a plus a
-  fallback for GitHub agents.
-- **`CLAUDE.md`:** the same rule should hold (Claude Code needs `@AGENTS.md` there). This record doesn't
-  decide it. If the repo's `CLAUDE.md` doesn't import `AGENTS.md`, Claude Code misses the reference; `sync`
-  could warn on that as well.
-- **Cost:** adoption needs one edit by each repo team, and a repo that skips it gets no folkways
-  instructions (skills in `.claude/skills` still load). A missing line is a warning, not a failure.
-- **Revisit** if the probe shows GitHub agents ignore both imports and pointers, which would leave only
-  option 2 for them, or if repo teams consistently ask folkways to manage the file for them.
+  paths. Whether a hub PR that adds the import line counts as folkways writing `AGENTS.md` goes with that
+  decision.
+- **Cost:** adoption needs one edit by each repo team. A repo that skips it gets no folkways instructions
+  in sessions; skills in `.claude/skills` still load, and code review is unaffected. A missing line is a
+  warning, not a failure.
+- **Revisit** if code review stops picking the folkways skill or a repeat run contradicts the probe (then
+  4d, accepting the clash on `REVIEW.md`), if the cloud agent stops expanding imports, or if repo teams
+  consistently ask folkways to manage the file for them.
