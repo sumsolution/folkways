@@ -39,7 +39,7 @@ From the repo root:
 | `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |
 | `node packages/cli/src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
-| `node packages/evals/src/cli.ts run ../folkways-command/efforts/<effort>/evals/<suite> --dry-run` | plan a behavior eval (suites live in the command repo); drop `--dry-run` to run it (model calls on your account; see `packages/evals/README.md`) |
+| `node packages/evals/src/cli.ts run packages/evals/suites/<suite> --dry-run` | plan a behavior eval; drop `--dry-run` to run it (model calls on your account; see `packages/evals/README.md`) |
 | `pnpm changeset` | record a change for the next release of the packages it touches |
 
 ## Rules
@@ -76,5 +76,5 @@ From the repo root:
 - **CI** runs only the jobs for the packages a change touches; the `ci` job is the required check. A new
   package gets a filter and jobs in `.github/workflows/ci.yml`.
 - **Design record, plans, research and status** live in the team repo, [sumsolution/folkways-command](https://github.com/sumsolution/folkways-command)
-  (private): the v1 spec in `efforts/v1-design/`, other work in `efforts/`, what's built in `state/framework.md`. Clone it
-  next to this repo to read it or run eval suites.
+  (private): open work in `efforts/`, closed work indexed in `state/closed-efforts.md` ([ADR 0005](docs/adr/0005-closing-efforts.md)),
+  what's built in `state/framework.md`.
