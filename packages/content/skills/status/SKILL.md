@@ -83,7 +83,8 @@ only the second. Show the plan for all five steps and act on approval.
    ```
 
 4. **Repoint** every link to the folder or its files (`git grep` for the folder name) to a permalink at
-   `<sha>` (`blob/<sha>/<path>`). Links from a project repo change there, in a worktree and PR.
+   `<sha>` (`tree/<sha>/<path>` for a folder, `blob/<sha>/<path>` for a file). Links in `knowledge/` change in
+   the lift PR; links from a project repo change there, in a worktree and PR.
 5. **Remove** the folder with `git rm -r`. Commit steps 3 to 5 together and push on approval (team repo:
    straight to the default branch, rebased; solo repo: ask where it lands).
 
