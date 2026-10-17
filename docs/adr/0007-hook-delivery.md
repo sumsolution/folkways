@@ -27,18 +27,27 @@ end up defined twice. How do hooks reach agents in an app repo, and from how man
 - **A repo can turn the plugin on.** `extraKnownMarketplaces` and `enabledPlugins` in the app repo's
   `.claude/settings.json` register and install it. Tested ([research §7a][r-7a]): in Claude Code 2.1.301,
   after the folder is trusted, the plugin's `SessionStart` hook ran with `CLAUDE_PROJECT_DIR` set to the app
-  repo. Copilot CLI 1.0.98 registered the marketplace and installed the plugin with its hooks. With no
-  Copilot login, its auto-install at startup, skill run and hook run were **not observed**.
+  repo. Copilot CLI 1.0.98, logged in, single runs ([probe Q5][q-q5]): one prompt, folder trust; then the
+  plugin auto-installed, its skill ran, and its `SessionStart` and `PreToolUse` (matcher `Bash`) hooks ran
+  with `CLAUDE_PROJECT_DIR` and `COPILOT_PROJECT_DIR` set to the repo. The hook's working directory was the
+  plugin root, and `SessionStart` stdin had `source: "new"`.
+- **Copilot CLI fails closed on `PreToolUse`** ([probe Q5][q-q5]). When the hook command failed (exit 127,
+  script not found), the log said `(fail-closed)` and the tool call was denied. A failing `SessionStart`
+  was only logged. ADR 0002 already expected this from the docs.
+- **Headless Copilot CLI runs need saved trust or an explicit install** ([probe Q5][q-q5]). `copilot -p`
+  loads a repo-enabled plugin only if the folder was saved in `trustedFolders` ("Yes, and remember this
+  folder") or the plugin was installed with `copilot plugin install`. Otherwise the run has no plugin
+  skills or hooks, and shows no error. Headless runs never auto-installed the plugin.
 - **The Copilot cloud agent runs the same plugin's hooks.** Second probe, private repo
-  [folkways-copilot-probe-2][q-repo], one run per result, plugin enabled only in `.claude/settings.json`,
+  [folkways-agent-sandbox][q-repo], one run per result, plugin enabled only in `.claude/settings.json`,
   no other hook source in the repo. The agent cloned the plugin from the job's starting commit.
   `SessionStart` ran in 2 of 2 runs ([PR #3][q-3], [PR #8][q-8]). `PreToolUse` (matcher `Bash`) ran in the
   one run that used tools (#8). The first probe saw the same ([research §7b, hands-on][r-hands-on]).
-- **A hook can tell it's in the cloud agent.** These were set in both runs: `COPILOT_AGENT_SESSION_ID`,
-  `COPILOT_AGENT_ACTION=fix`, `GITHUB_ACTOR=copilot-swe-agent[bot]`. `CI` and `GITHUB_ACTIONS` don't tell
-  it apart, because every Actions job sets them. `COPILOT_CLI=1` probably doesn't either, since local
-  Copilot CLI likely sets it too (unconfirmed). **Not verified:** that local Copilot CLI leaves
-  `COPILOT_AGENT_*` unset.
+- **A hook can tell it's in the cloud agent.** These were set in both cloud runs:
+  `COPILOT_AGENT_SESSION_ID`, `COPILOT_AGENT_ACTION=fix`, `GITHUB_ACTOR=copilot-swe-agent[bot]`. Local
+  Copilot CLI set no `COPILOT_AGENT_*` variable ([probe Q5][q-q5]). `CI` and `GITHUB_ACTIONS` don't tell
+  the cloud apart, because every Actions job sets them, and `COPILOT_CLI=1` is set both locally and in the
+  cloud.
 - **The cloud hook runs in a different environment.** Its working directory is the plugin root, not the
   repo. `CLAUDE_PROJECT_DIR` and `COPILOT_PROJECT_DIR` point at the workspace. `SessionStart` stdin has
   `source: "new"`, where Claude Code sends `startup`, `resume`, `clear` or `compact`. The environment also
@@ -77,14 +86,14 @@ Rationale: the plugin is the only option that works in a non-Node repo without d
 it already exists. Summer has accepted the trust prompt it costs. In the cloud agent, `git-guard` isn't
 wanted, and nobody has shown that `session-start`'s output reaches the agent. Committed instructions do
 reach it. Exiting at once keeps one behavior for every hook, and it keeps hook logic out of a process that
-holds live agent credentials. The cost: one environment check, which rests on a single run and on an
-untested assumption about local Copilot CLI.
+holds live agent credentials. The cost: one environment check, which rests on single runs of each
+surface.
 
 ## Options considered
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
-| **1** | **Plugin only; every hook exits in the cloud agent; instructions and CI in GitHub (H2 + H7)** | Works in any repo, Node or not; already built; one hook definition; the cloud agent runs no folkways logic | Trust prompt; no hooks for people who decline it or whose enterprise blocks the marketplace; a binary for every platform in each install; the check rests on one run; if local Copilot CLI sets `COPILOT_AGENT_*`, its hooks turn off without a sign | Uses the code we have and keeps GitHub quiet, but the cloud check and Copilot CLI parity are still unproven |
+| **1** | **Plugin only; every hook exits in the cloud agent; instructions and CI in GitHub (H2 + H7)** | Works in any repo, Node or not; already built; one hook definition; the cloud agent runs no folkways logic | Trust prompt; no hooks for people who decline it or whose enterprise blocks the marketplace; a binary for every platform in each install; headless Copilot CLI runs get no hooks without saved trust or an explicit install; the cloud check rests on single runs | Uses the code we have and works on every surface tested, but whether a session has hooks depends on the plugin being installed and trusted, and it doesn't say when it isn't |
 | 1b | As 1, but `session-start` still runs in the cloud agent | Team config reaches the cloud run through the same hook as locally | Its output reaching the agent is unobserved; `source: "new"` and the plugin-root cwd need handling; more code runs beside live credentials | Worth it only if a test shows the output lands and instructions can't carry it |
 | 1c | As 1, with no cloud check: every hook runs in the cloud agent | No detection code | `git-guard` runs where Summer says it's unneeded, and a crash or nonzero exit makes Copilot deny the tool call; nothing has tested `git-guard` there | Saves one check and accepts untested blocking in the cloud |
 | 2 | npm in each app repo, as today (H1; architecture C) | Proven; committed and reviewable; no trust prompt | A Node manifest and `npm ci` in every Go, Java or Python repo; misses the cloud agent unless setup steps run `npm ci` | Fine for Node teams, and a non-starter for teams without Node |
@@ -109,13 +118,14 @@ in the research for repo bloat and the reversal.
   CI changes. Hooks must never log their environment.
 - **`run.sh`'s synced-repo exit has to change** in any repo where the plugin is the only source. Repos
   that still have synced hook entries must not run the plugin's hooks too.
-- **Open: local Copilot CLI and `COPILOT_AGENT_*`.** If local Copilot CLI sets these variables, option 1
-  turns its hooks off without a sign. The Copilot CLI login test (research §7a rows 2, 4, 5) has to check
-  this, along with auto-install, the skill run and the hook run. Until then, Copilot CLI hook parity is an
-  assumption.
-- **Open: the cloud check rests on one run** of one runtime (`runtime-cca-vendored-e7c2e09`). GitHub could
-  rename the variables. If it does, the check stops matching and every hook
-  runs in the cloud, as in option 1c.
+- **A broken hook blocks every tool in Copilot CLI.** A failing `PreToolUse` command denies the tool call,
+  so the binary must never fail on its own errors: it exits 0 and prints a warning, as ADR 0002 already
+  requires. `run.sh` exits 0 when the binary is missing. What neither can catch is a hook command that
+  can't start, such as a broken install path. In that case Copilot CLI denies every Bash call until the
+  plugin is fixed. `doctor` should check that the plugin's hook command runs.
+- **Open: the cloud check rests on single runs** of one cloud runtime (`runtime-cca-vendored-e7c2e09`).
+  GitHub could rename the variables. If it does, the check stops matching and every hook runs in the
+  cloud, as in option 1c.
 - **Open: hooks in Copilot code review** weren't checked.
 - **Open: how a hook binary reaches clones with no `node_modules` outside the plugin's reach** (Claude Code
   cloud sessions, a tool without plugins). This ADR doesn't solve that ([research §0][r-0]). H3 and H4 stay
@@ -123,15 +133,17 @@ in the research for repo bloat and the reversal.
 - **Open: running a hook twice (unknown 11)** was dropped, not tested ([research, new unknowns][r-unknowns]).
   It matters wherever a synced settings file and the plugin overlap, for example during migration.
 - **Risk: weaker enforcement.** People who decline the trust prompt, enterprises that set
-  `strictKnownMarketplaces`, and plugin-update bugs all leave a session without `git-guard`. That makes
-  ADR 0001's mores in an app repo depend on the plugin. CI is the backstop at PR time. `doctor` should
-  report a missing or stale plugin.
+  `strictKnownMarketplaces`, and plugin-update bugs all leave a session without `git-guard`. So does a
+  headless `copilot -p` run in a folder whose trust wasn't saved, unless the plugin was installed with
+  `copilot plugin install`, and it shows no error. `onboard` should tell Copilot CLI users to pick
+  "Yes, and remember this folder", and scripts or CI that run Copilot headless should install the plugin
+  explicitly. All of this makes ADR 0001's mores in an app repo depend on the plugin. CI is the
+  backstop at PR time. `doctor` should report a missing or stale plugin.
 - **Risk: platforms.** The plugin ships no Windows binary, so a Windows engineer gets no hooks.
 - **Follow-on:** the cloud check in the binary; CI checks matching `git-guard`'s commit and branch rules
-  (M1, M5) for app repos; the Copilot CLI login test, including `COPILOT_AGENT_*`; a repeat cloud-agent
-  run with the check in place.
-- **Revisit** if local Copilot CLI sets `COPILOT_AGENT_*`, if the Copilot CLI test fails, if plugin hook
-  updates keep breaking, or if a team needs `session-start` in the cloud agent (option 1b).
+  (M1, M5) for app repos; a repeat cloud-agent and Copilot CLI run with the check in place.
+- **Revisit** if a later Copilot CLI sets `COPILOT_AGENT_*` locally, if plugin hook updates keep
+  breaking, or if a team needs `session-start` in the cloud agent (option 1b).
 
 [r-0]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#0-summers-answers-2026-10-16-and-what-they-imply
 [r-7a]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#7a-test-results-2026-10-16
@@ -143,6 +155,7 @@ in the research for repo bloat and the reversal.
 [r-plugins]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#claude-code-team-plugins-in-practice
 [p-readme]: ../../packages/claude-plugin/README.md
 [p-run]: ../../packages/claude-plugin/src/run.sh
-[q-repo]: https://github.com/sumsolution/folkways-copilot-probe-2
-[q-3]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/3
-[q-8]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/8
+[q-repo]: https://github.com/sumsolution/folkways-agent-sandbox
+[q-3]: https://github.com/sumsolution/folkways-agent-sandbox/pull/3
+[q-8]: https://github.com/sumsolution/folkways-agent-sandbox/pull/8
+[q-q5]: https://github.com/sumsolution/folkways-command/blob/e7781d5/efforts/app-repo-first/23-probe-copilot-github.md#q5-copilot-cli-with-a-login-2026-10-17-session-15
