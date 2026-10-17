@@ -24,7 +24,7 @@ export interface UpgradeResult {
 }
 
 /**
- * Install `version` on branch chore/folkways-<version>, run that version's sync, and commit (spec §3.1).
+ * Install `version` on branch chore/folkways-<version>, run that version's sync, and commit.
  * The new version's own `sync` runs, so its assets and rules apply.
  */
 export function upgrade(cwd: string, versionArg: string, install: Installer = packageInstall): UpgradeResult {

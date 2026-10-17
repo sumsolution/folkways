@@ -1,7 +1,0 @@
-None of the three commands succeeded:
-
-- `touch hooked-file` failed. A PreToolUse hook (`.claude/guard.sh`) blocked it with "blocked by team hook".
-- `touch asked-file` failed. The Bash permission hadn't been granted, so the call wasn't approved.
-- `touch denied-file` failed. Permission for that command was denied.
-
-I didn't retry any of them or look for a way around the blocks. If you want any of these files created, you'd need to adjust the hook or the permissions first.

@@ -1,8 +1,0 @@
-{
-  "code": 0,
-  "is_error": false,
-  "num_turns": 9,
-  "duration_ms": 20372,
-  "output_tokens": 2256,
-  "harness_lines_stripped": 2
-}

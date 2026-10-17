@@ -118,7 +118,7 @@ describe('assets/settings.json', () => {
     ([event, groups]) => groups.flatMap((g) => g.hooks.map((h) => ({ event, matcher: g.matcher, command: h.command }))),
   );
 
-  it('wires each hook to its events (spec §7.1)', () => {
+  it('wires each hook to its events', () => {
     const wired = entries.map((e) => `${e.event}${e.matcher ? `(${e.matcher})` : ''} ${e.command.slice(FRAMEWORK_HOOK_PREFIX.length)}`);
     expect(wired.sort()).toEqual([
       'PostToolBatch context-band',

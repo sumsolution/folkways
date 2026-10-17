@@ -95,7 +95,7 @@ function main(argv: string[]): void {
     }
     case 'review':
     case 'run':
-      throw new FolkwaysError(`'${command}' is not built yet (spec §7.2)`);
+      throw new FolkwaysError(`'${command}' is not built yet`);
     case 'help':
     case '--help':
     case '-h':

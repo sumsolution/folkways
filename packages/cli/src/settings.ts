@@ -1,7 +1,7 @@
 import { FolkwaysError } from './errors.ts';
 
 /**
- * Hook entries whose command starts with this are framework-owned (spec §3.1): the Go binary from
+ * Hook entries whose command starts with this are framework-owned: the Go binary from
  * `@folkways/hooks-<os>-<cpu>` (ADR 0002). Change the command form here only.
  */
 export const FRAMEWORK_HOOK_PREFIX = '"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook ';

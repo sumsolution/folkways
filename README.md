@@ -82,7 +82,7 @@ From a clone, build it and load it in place: [packages/claude-plugin](packages/c
 | `review`, `run` | coming soon; today they say "not built yet" |
 | npm release | coming soon |
 
-The design record is in [docs/design/](docs/design/00-STATUS.md).
+The design record is in [docs/design/](https://github.com/sumsolution/folkways-command/blob/main/state/framework.md).
 
 ## License
 

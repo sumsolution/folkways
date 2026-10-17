@@ -42,7 +42,7 @@ export interface InitOptions {
   pkg?: string;
 }
 
-/** Scaffold a team repo at `path`, pin this package version, sync, and commit (spec §8.1). */
+/** Scaffold a team repo at `path`, pin this package version, sync, and commit. */
 export function init(path: string, options: InitOptions = {}): string {
   const pkg = options.pkg ?? PACKAGE_ROOT;
   const dest = resolve(path);

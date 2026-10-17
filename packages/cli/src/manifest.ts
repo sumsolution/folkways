@@ -18,7 +18,7 @@ const SHA256 = /^[a-f0-9]{64}$/;
 const OVERLAY_PATH = /^overlays\/[A-Za-z0-9][A-Za-z0-9._-]*\/OVERLAY\.md$/;
 
 /**
- * Whether `path` is a plain relative path in a framework-owned location (spec §3.1).
+ * Whether `path` is a plain relative path in a framework-owned location.
  * sync deletes these, so a tampered manifest must not reach outside them.
  */
 export function isOwnedPath(path: string, skills: string[]): boolean {

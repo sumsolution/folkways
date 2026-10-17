@@ -2,7 +2,7 @@
  * Team overlay compiler (ADR 0001). `sync` compiles team overlays with `compileSkillFiles`.
  *
  * An OVERLAY.md holds `## Add` (extra rules) and `## Override {#id}` (team only: replaces the
- * skill section with that ID). See spec §3.2.
+ * skill section with that ID).
  */
 import { FolkwaysError } from './errors.ts';
 
@@ -124,7 +124,7 @@ function unappliedWarnings(overlay: ParsedOverlay): string[] {
 }
 
 /**
- * A framework skill folder + a team overlay → the files that change (spec §3.2, run by `sync`).
+ * A framework skill folder + a team overlay → the files that change (run by `sync`).
  * `files` maps paths relative to the skill folder to content. An override replaces the section with
  * that ID in whichever markdown file has it (SKILL.md or a reference); team additions go at the end
  * of SKILL.md. An ID no file has, or that more than one heading has, throws.

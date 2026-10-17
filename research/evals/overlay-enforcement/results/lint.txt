@@ -1,4 +1,0 @@
-a-add.md []
-b-override.md [{"level":"error","message":"personal overlays may only add; remove ## Override {#commit-format}"}]
-c-contradict.md []
-d-persuasive.md [{"level":"warning","message":"line 5 reads like an override (\"approved by\"); personal overlays may only add"}]

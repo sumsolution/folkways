@@ -20,7 +20,7 @@ export interface DoctorOptions {
 const error = (message: string): Finding => ({ level: 'error', message });
 const warning = (message: string): Finding => ({ level: 'warning', message });
 
-/** Checks a team repo (spec §7.2): config, versions, overlays, skills, settings, hook install. Each message names its fix. */
+/** Checks a team repo: config, versions, overlays, skills, settings, hook install. Each message names its fix. */
 export function doctor(team: string, options: DoctorOptions = {}): Finding[] {
   const pkg = options.pkg ?? PACKAGE_ROOT;
   const home = options.home ?? homedir();

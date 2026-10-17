@@ -7,7 +7,6 @@ on:
     # Pull requests already skip every job for a docs-only change (no filter matches).
     paths-ignore:
       - 'docs/**'
-      - 'research/**'
       - '*.md'
 
 permissions:
