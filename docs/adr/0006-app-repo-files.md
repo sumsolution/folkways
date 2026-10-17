@@ -36,12 +36,16 @@ tool? What files does an app repo carry?
   `.claude/settings.json` ([20 §7b hands-on][r-hands]). The hooks and plugin results contradict its docs,
   which say the cloud agent "does not load `settings.json`" and reads hooks only from `.github/hooks/*.json`
   ([hooks-reference](https://docs.github.com/en/copilot/reference/hooks-reference)). Skills were
-  self-reported, not invoked.
-- **Copilot code review reads part of it.** Docs: `AGENTS.md` and `CLAUDE.md`, plus `REVIEW.md`; review
-  criteria from `.github/copilot-instructions.md`, project context from root `AGENTS.md`. Skills: the
-  concept page lists `.claude/skills`, the how-to names only `.github/skills` ([20 §7b][r-7b]). In the
-  hands-on run it used a `code-review` skill; the record doesn't say which directory that skill was in
-  (unconfirmed).
+  self-reported, not invoked. A second probe (private repo `folkways-copilot-probe-2`, one run per
+  question) repeated the plugin result: a plugin enabled only in `.claude/settings.json` was installed and
+  its `SessionStart` hook ran in 2 of 2 runs ([PR #3][p-3], [PR #8][p-8]). It also showed the agent
+  expands an `@` import in `AGENTS.md` at startup ([issue #7][p-i7] → [PR #8][p-8]).
+- **Copilot code review reads the Claude format, but not imports.** Its docs conflict on skills: the
+  concept page lists `.claude/skills`, the how-to names only `.github/skills` ([20 §7b][r-7b]). The second
+  probe tested each folder alone, and review followed a `code-review` skill from `.claude/skills`
+  ([PR #4][p-4]) and from `.github/skills` ([PR #5][p-5]). It followed rules in `CLAUDE.md`, `AGENTS.md`,
+  `REVIEW.md` and `.github/copilot-instructions.md` all at once ([PR #2][p-2]), and `CLAUDE.md` on its own
+  ([PR #6][p-6]). It did **not** follow a rule behind an `@` import in `AGENTS.md`, in either PR.
 - **Claude Code** reads only its own format, locally and in cloud sessions, where repo-enabled plugins are
   not installed ([20 §7b][r-cc]).
 - **Prior art:** one `CLAUDE.md` and one `.claude/skills/` tree serve Claude Code, Copilot CLI and OpenCode
@@ -55,17 +59,17 @@ tool? What files does an app repo carry?
 `.claude/settings.json`. folkways writes no parallel Copilot-format copies (`.github/copilot-instructions.md`,
 `.github/skills/`, `.github/hooks/`, `.github/copilot/settings.json`).**
 
-Rationale: every first-class agent reads the Claude format for instructions, and three of four are
-documented to read it for skills. One copy has nothing to drift and gives the Copilot tools no second source
-to load twice. The gaps (code review skills and criteria, cloud-agent settings) are named below with what
-would make us add a Copilot-format file. Adding a file later costs one `sync` change; removing mirrors from
+Rationale: every first-class agent reads `CLAUDE.md` / `AGENTS.md` and `.claude/skills`, by docs or by a
+probe; Copilot code review needs no Copilot-format file for skills or criteria. One copy has nothing to
+drift and gives the Copilot tools no second source to load twice. The remaining gaps (an untested
+logged-in Copilot CLI, cloud-agent settings its docs deny, imports in code review) are named below. Adding a file later costs one `sync` change; removing mirrors from
 many app repos costs more.
 
 ## Options considered
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
-| **1** | **Claude format only** | One copy, nothing to keep in step; matches what `sync` writes today; no double loading in Copilot CLI | Relies on Copilot reading another tool's paths; for the cloud agent's settings, on behaviour its docs deny | Least to maintain, with a known gap on code review and undocumented cloud-agent settings. |
+| **1** | **Claude format only** | One copy, nothing to keep in step; matches what `sync` writes today; no double loading in Copilot CLI | Relies on Copilot reading another tool's paths; for the cloud agent's settings, on behaviour its docs deny | Least to maintain; the cloud agent's settings rest on observed, undocumented behaviour. |
 | 2 | Claude format plus Copilot mirrors under `.github/` | Every tool reads a path its own docs name | Two copies per file to keep in step; Copilot CLI scans both `.claude/skills` and `.github/skills` and reads hooks from `.claude/settings.json` and `.github/hooks`, so the same skill or hook can load twice (unconfirmed); more files in every app repo | Buys documented paths at the cost of drift and double loading. |
 | 3 | Tool-neutral paths: `AGENTS.md` and `.agents/skills/` | Not tied to one vendor; Copilot reads `.agents/skills` | Claude Code reading `.agents/skills` is not established in the research (unconfirmed); settings and hooks have no neutral path, so `.claude/settings.json` stays anyway | Neutral in name, but still needs Claude paths and risks losing Claude Code. |
 
@@ -75,11 +79,12 @@ many app repos costs more.
 - **Revisit** (add a Copilot-format file, not a full mirror) if any of these hold:
   - a logged-in Copilot CLI test shows `.claude/skills` or `.claude/settings.json` hooks not running
     ([21, open item 1][h-open]);
-  - Copilot code review is shown to skip `.claude/skills`, or folkways needs review criteria there:
-    `REVIEW.md` or `.github/copilot-instructions.md` would be the candidate;
+  - a repeat run shows Copilot code review skipping `.claude/skills` (one run each so far);
   - the cloud agent stops honouring `.claude/settings.json`, matching its docs.
-- **Open, untested:** whether the cloud agent and code review expand the `@.folkways/instructions.md` import
-  in `AGENTS.md` (unconfirmed). If they don't, the framework rules don't reach them.
+- **Code review doesn't see the framework rules.** It doesn't expand `@.folkways/instructions.md` in
+  `AGENTS.md` ([PR #2][p-2], [PR #6][p-6]; the probe imported `docs/…`, not a dot folder). Anything review
+  must enforce has to sit directly in a file review reads, or in a skill under `.claude/skills`. The
+  reference form is ADR 0008's call.
 - **Lost:** Copilot's path-scoped `.github/instructions/*.instructions.md` (`applyTo` globs). folkways
   doesn't use them today.
 - **Related, decided elsewhere:** how hooks reach each surface (ADR 0007); who owns `AGENTS.md` (ADR 0008);
@@ -94,3 +99,10 @@ many app repos costs more.
 [r-7c]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#L475-L546
 [r-7d]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#L548-L634
 [h-open]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/21-handoff-app-repo-research.md#L43-L57
+[p-2]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/2
+[p-3]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/3
+[p-4]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/4
+[p-5]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/5
+[p-6]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/6
+[p-8]: https://github.com/sumsolution/folkways-copilot-probe-2/pull/8
+[p-i7]: https://github.com/sumsolution/folkways-copilot-probe-2/issues/7
