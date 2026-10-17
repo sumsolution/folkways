@@ -136,4 +136,4 @@ Review the branch, push, open a PR. After it merges, everyone pulls and reinstal
 | `folkways: framework files were edited:` | Someone changed a synced file. Move the change into `overlays/`, or rerun with `--force` to discard it |
 | `folkways: team skills clash with new framework skills: ...` | A team skill has a framework skill's name. Rename yours |
 | `warning: AGENTS.md has no '@.folkways/instructions.md' line; agents won't see the framework instructions.` | Agents won't see the framework rules. Put the line back |
-| `folkways: 'review' is not built yet (spec §7.2)` | Expected in v0.1.0; same for `run` |
+| `folkways: 'review' is not built yet` | Expected in v0.1.0; same for `run` |

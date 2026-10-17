@@ -14,7 +14,7 @@ function listFiles(dir: string): string[] {
     .sort();
 }
 
-// Rules from docs/skill-authoring.md. Limits from docs/design/09-research-skill-authoring.md.
+// Rules from docs/skill-authoring.md.
 const SKILLS_DIR = join(REPO, 'skills');
 const REQUIRED = ['commit', 'handoff', 'pr', 'review', 'start'];
 const NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -60,7 +60,7 @@ function configSection(text: string): string | undefined {
   return /^## Config\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(text)?.[1];
 }
 
-/** The line every `## Config` ends with: the session-start hook supplies the values (spec §3.2). */
+/** The line every `## Config` ends with: the session-start hook supplies the values. */
 const configLine =
   "The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.";
 

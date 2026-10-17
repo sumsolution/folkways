@@ -152,7 +152,7 @@ its overlay, and keeps its own gold-standard examples next to `overlays/adr/OVER
 ## Architecture knowledge {#architecture-knowledge}
 
 Reserved. Guidance on decision quality (principles, quality-attribute trade-offs, common patterns)
-will come from a dedicated session (spec §9.2). Until then, a team can add its architecture
+will come in a later release. Until then, a team can add its architecture
 principles here with `## Override {#architecture-knowledge}` in `overlays/adr/OVERLAY.md`, and the
 skill checks each option against them.
 

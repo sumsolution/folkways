@@ -1,8 +1,0 @@
-{
-  "arms": [
-    { "name": "before", "ref": "28fbd63" },
-    { "name": "after", "ref": "WORKTREE" }
-  ],
-  "model": "sonnet",
-  "judge_model": "sonnet"
-}

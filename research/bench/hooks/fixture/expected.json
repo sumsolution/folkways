@@ -1,1 +1,0 @@
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Scope \"api\" is not in team.yaml git.scopes (web-app, auth, ci)."}}

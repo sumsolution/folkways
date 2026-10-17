@@ -15,10 +15,10 @@ text assets that `sync` copies into team repos (skills, instructions, prompts) n
 ## Context
 
 - Team repos are usually private company repos. `sync` copies text assets into them, and teams extend
-  them with overlays ([spec §3](../design/06-v1-spec.md)). Company open-source policies allow permissive
-  licenses and often ban AGPL ([15](../design/15-research-license.md), comparison table).
+  them with overlays ([spec §3](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)). Company open-source policies allow permissive
+  licenses and often ban AGPL ([15](https://github.com/sumsolution/folkways-command/blob/main/efforts/license/15-research-license.md), comparison table).
 - The closest comparable projects each use one permissive license for code and skills: Anthropic's skills repo and
-  OpenAI Codex use Apache-2.0; spec-kit and obra/superpowers use MIT ([15 §2](../design/15-research-license.md)).
+  OpenAI Codex use Apache-2.0; spec-kit and obra/superpowers use MIT ([15 §2](https://github.com/sumsolution/folkways-command/blob/main/efforts/license/15-research-license.md)).
 - The name `folkways` is pending a trademark check.
 - Dependencies: `mvdan.cc/sh/v3` (BSD-3-Clause) and `gopkg.in/yaml.v3` (MIT and Apache-2.0, with a `NOTICE`)
   are compiled into the hook binary. The CLI has no runtime dependencies.
@@ -47,5 +47,5 @@ folkways `NOTICE` file, a team repo that receives synced skills owes nothing ext
   `THIRD_PARTY_NOTICES` file with the notices of the Go dependencies (including yaml.v3's `NOTICE`) and the Go standard library.
 - The unscoped `folkways` placeholder on npm gets a `0.0.2` under Apache-2.0; `0.0.1` stays `UNLICENSED`.
 - **Before the repo goes public:** the owner checks the employment agreement and the employer's open-source
-  policy ([15 §4](../design/15-research-license.md)). Not legal advice.
+  policy ([15 §4](https://github.com/sumsolution/folkways-command/blob/main/efforts/license/15-research-license.md)). Not legal advice.
 - Contributions: inbound = outbound (Apache-2.0 s5). Decide DCO sign-off before the first outside PR.

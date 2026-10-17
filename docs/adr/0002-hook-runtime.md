@@ -16,8 +16,8 @@ distribution, so that one committed `.claude/settings.json` works on macOS arm64
 
 ## Context
 
-Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-runtime.md). Benchmark:
-[bench/hooks/](../../research/bench/hooks).
+Details and citations: [08-research-hook-runtime.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/hooks-build/08-research-hook-runtime.md). Benchmark:
+[bench/hooks/](https://github.com/sumsolution/folkways-command/tree/main/efforts/hooks-build/bench).
 
 - **Speed (Linux x64, 50 runs, p50/p95 ms).** The same git-guard-like hook in each candidate, through each call path:
 
@@ -49,7 +49,7 @@ Details and citations: [08-research-hook-runtime.md](../design/08-research-hook-
 
   The proposed command through `sh -c`: Go 4.5 (npm) and 11.3 (pnpm) ms. The spawn floor is 1.2 ms. Even the
   best Node path is 27.9 ms, over the 20 ms bar, so Go stays the choice. Rust, Bun and Deno were not measured on
-  macOS (not installed). Full table: [bench/hooks/results/](../../research/bench/hooks/results).
+  macOS (not installed). Full table: [bench/hooks/results/](https://github.com/sumsolution/folkways-command/tree/main/efforts/hooks-build/bench/results).
 - **Every JS runtime lands at 46–82 ms on Linux** (25–41 ms on macOS), compiled or not; start-up dominates. Node
   optimizations save 13–19 ms of 65 on Linux. Compiled Bun, Deno and Node SEA also cost 100–127 MB per platform.
 - **A JS launcher in front of a native binary gives back ~31–33 ms** (esbuild, Biome, Turborepo). esbuild avoids

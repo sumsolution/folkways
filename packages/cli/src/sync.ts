@@ -190,7 +190,7 @@ function teamOverlays(team: string): { path: string; skill: string }[] {
 }
 
 /**
- * Compile each team overlay into the copies of its framework skill (spec §3.2, ADR 0001). Reads only,
+ * Compile each team overlay into the copies of its framework skill (ADR 0001). Reads only,
  * so an unknown section ID stops the sync before anything is written.
  */
 function compileOverlays(team: string, pkg: string, copies: FileCopy[]): { overlays: Record<string, string>; warnings: string[] } {
@@ -258,7 +258,7 @@ export interface SyncResult {
   warnings: string[];
 }
 
-/** Copy the package's text files into a team repo (spec §3.1). Does not commit. */
+/** Copy the package's text files into a team repo. Does not commit. */
 export function sync(team: string, pkg: string = PACKAGE_ROOT, options: SyncOptions = {}): SyncResult {
   const leftover = readdirSync(team).find((f) => f.startsWith(STAGE_PREFIX));
   if (leftover) {

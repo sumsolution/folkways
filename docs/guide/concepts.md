@@ -34,7 +34,7 @@ with one layer removed: what lives in `people/<handle>/` in a team repo lives at
 Skills call that folder the **personal root**.
 
 A repo is set up when it has a `folkways.yaml`. Without one, the plugin stays quiet: the first session
-points to the brain repo and offers `setup` once, and after that it says nothing ([spec §2.3](../design/06-v1-spec.md)).
+points to the brain repo and offers `setup` once, and after that it says nothing ([spec §2.3](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)).
 
 ## Knowledge, state, efforts, people
 
@@ -56,7 +56,7 @@ only, so the same file works in both.
 Framework skills are synced in from the package. Teams can add their own skills next to them. Sixteen
 ship: `setup`, `onboard`, `start`, `status`, `handoff`, `session-close`, `side-quest`, `research`,
 `ticket`, `adr`, `tests`, `commit`, `pr`, `review`, `qa` and `knowledge-audit`
-([spec §6](../design/06-v1-spec.md)).
+([spec §6](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)).
 
 ## Overlays
 
@@ -86,7 +86,7 @@ at session start, before compaction. They live in `.claude/settings.json`, which
 Copilot CLI read**.
 
 Each hook runs the pinned framework binary, `folkways-hook`, from `node_modules/`
-([spec §7.1](../design/06-v1-spec.md)): `git-guard` (commit format, review before push, no checkouts in
+([spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)): `git-guard` (commit format, review before push, no checkouts in
 your main clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time),
 `session-start` (points the agent at the `start` skill) and `precompact` (logs a missed handoff).
 `.claude/settings.json` also holds one framework rule: `git push` asks first.

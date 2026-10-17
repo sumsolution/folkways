@@ -45,4 +45,4 @@ Rebuild after changing skills, instructions or hooks; the next session picks it 
 - **Hooks without a team repo** read no `folkways.yaml` or `me.yaml`. `git-guard` still denies commits that
   aren't Angular `type(scope): subject`; `precompact` writes `.local/precompact.log` into the repo;
   `context-band` and the main-clone and pre-push checks stay off. Open question 3 in
-  [00-STATUS](../../docs/design/00-STATUS.md).
+  [00-STATUS](https://github.com/sumsolution/folkways-command/blob/main/state/framework.md).

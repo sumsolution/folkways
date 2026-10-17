@@ -11,7 +11,7 @@
 The repo root is the `@folkways/cli` package. `test/` holds both the CLI's unit tests and the hook contract
 suite, which tests a Go binary. The Go hooks ([ADR 0002](0002-hook-runtime.md)) add a module at `hooks/` and
 four published platform packages. Runnable research code sits in `docs/design/07-eval/` and `bench/`. More
-deliverables are coming: `review`, `run` and `doctor`, a sync GitHub Action (spec §9.7), and later a
+deliverables are coming: `review`, `run` and `doctor`, a sync GitHub Action ([spec §9.7](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)), and later a
 Claude Code plugin for solo projects. Spec §2.1 still says the hook source is `src/hooks/*.ts`.
 
 Each new package makes a later move more expensive, so we decide now. How do we lay out the repo, version
@@ -21,7 +21,7 @@ its packages, and build, test and publish them so each package can move at its o
 
 - **Deliverables today and planned.** `@folkways/cli` (TypeScript, published). `folkways-hook` (Go), published
   as `@folkways/hooks-<os>-<cpu>`, pinned exactly by the CLI ([ADR 0002](0002-hook-runtime.md)). Planned: the
-  sync Action (spec §9.7), a Claude Code plugin, and later other harnesses, for solo projects as well as
+  sync Action ([spec §9.7](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)), a Claude Code plugin, and later other harnesses, for solo projects as well as
   teams (see "Future direction").
 - **Tests by language.** CLI tests are vitest in `test/`. Go unit tests belong beside the code as
   `*_test.go`. The hook contract ([test/hooks/](../../packages/hooks/contract)) is JSON fixtures plus a TypeScript
@@ -30,7 +30,7 @@ its packages, and build, test and publish them so each package can move at its o
   rates: a lexer fix in `git-guard` shouldn't force a CLI release, and a new skill shouldn't rebuild four
   binaries.
 - **Committed pins to unpublished packages break installs.** `pnpm install` fails on a version that isn't on
-  npm yet, and `minimumReleaseAge` (7 days) blocks fresh ones. So [11](../design/11-plan-hooks-build.md)
+  npm yet, and `minimumReleaseAge` (7 days) blocks fresh ones. So [11](https://github.com/sumsolution/folkways-command/blob/main/efforts/hooks-build/11-plan-hooks-build.md)
   decision 3 adds `optionalDependencies` at pack time.
 - **Required checks and path filters.** A workflow skipped by a workflow-level `paths:` filter never
   reports, so a required check on it stays pending. A job skipped by `if:` reports as skipped, which counts
@@ -176,20 +176,20 @@ plugin carries all four `folkways-hook` builds and `hooks/run.sh` picks the host
 did not move: the plugin build reads `packages/cli/assets/` as data, so two packages now know that path.
 Moving it to a content package is a follow-up (00-STATUS). The solo-config question stays open.
 
-**Update (2026-10-02, later).** Solo config is decided ([plan 16](../design/16-plan-config-and-solo.md)): one
+**Update (2026-10-02, later).** Solo config is decided ([plan 16](https://github.com/sumsolution/folkways-command/blob/main/efforts/config-and-solo/16-plan-config-and-solo.md)): one
 config model with no second root. `team.yaml` is renamed `folkways.yaml` (no fallback; nothing was
 published) and gains `mode: team | solo`. A solo repo is the team layout with `people/<handle>/` removed;
 both read `folkways.yaml` at the project root. A repo without it is unconfigured: the hooks and the plugin
-stay silent except for a one-time setup offer, recorded in the user's config dir, never the repo (spec §2.3,
+stay silent except for a one-time setup offer, recorded in the user's config dir, never the repo ([spec §2.3](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md),
 §7.1). The CLI stays team-only; solo repos are set up by the plugin's `setup` skill. Like a team repo, a
 solo repo is a brain repo that holds no project code (plan 16, decision 6).
 
 ## Consequences
 
 - **The restructure** is one PR of `git mv` plus config, planned in
-  [12-plan-repo-layout.md](../design/12-plan-repo-layout.md). It landed before hooks PR 2, which rebases onto it.
-  `AGENTS.md`, spec §2.1 (which also fixes the stale `src/hooks/*.ts`) and the paths in
-  [11](../design/11-plan-hooks-build.md) change in that PR.
+  [12-plan-repo-layout.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/repo-layout/12-plan-repo-layout.md). It landed before hooks PR 2, which rebases onto it.
+  `AGENTS.md`, [spec §2.1](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md) (which also fixes the stale `src/hooks/*.ts`) and the paths in
+  [11](https://github.com/sumsolution/folkways-command/blob/main/efforts/hooks-build/11-plan-hooks-build.md) change in that PR.
 - **Hooks plan 11 changes:** decision 3 reads the pin from `folkways.hooks` instead of the root version, and
   PR 5 builds the per-package release above.
 - **Contributors:** root `pnpm test` needs Go 1.26+. CLI-only contributors filter to `@folkways/cli`. Every

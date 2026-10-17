@@ -6,7 +6,7 @@ why now, ending in the question), **Context** (linked facts), **Decision** (the 
 **Options considered** (at least two real options; the Trade-off column is one honest sentence), and
 **Consequences**. While **proposed**, the title is the question; once accepted it becomes the answer.
 Status values: **proposed** → **accepted** or **rejected**; later **superseded by NNNN** or **deprecated**.
-Team repos keep their own ADRs (spec §6.1 `adr` skill); this folder is for the framework.
+Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md) `adr` skill); this folder is for the framework.
 
 | # | Title | Status |
 |---|---|---|

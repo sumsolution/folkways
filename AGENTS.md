@@ -9,7 +9,7 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 
 | Path | Holds |
 |---|---|
-| `packages/cli/` | `@folkways/cli`, published to npm (spec §3). Team repos pin an exact version |
+| `packages/cli/` | `@folkways/cli`, published to npm. Team repos pin an exact version |
 | `packages/cli/src/` | TypeScript source of the `folkways` CLI. `tsc` compiles it to `dist/` on publish |
 | `packages/content/` | `@folkways/content` (private): the framework's skills, instructions, prompts, settings fragment and workflows. The CLI and the plugin both distribute it |
 | `packages/cli/assets/` | Generated at pack time from `packages/content/`; gitignored. Not edited |
@@ -20,8 +20,6 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 | `packages/claude-plugin/` | `@folkways/claude-plugin`: builds the Claude Code plugin into `dist/` from `packages/content/` and the hook binaries. The root `.claude-plugin/marketplace.json` installs it from npm |
 | `packages/evals/` | `@folkways/evals` (private, never published): behavior-eval runner. Builds a team repo per arm, runs `claude -p`, grades blind |
 | `scripts/` | Cross-package scripts: `smoke.ts` (packed-tarball smoke test), `release.ts` (builds and checks a tag's tarballs), `pack.ts` (shared by both) |
-| `research/` | Benchmarks and evals behind decisions, with their results. Not in the workspace; CI doesn't run it |
-| `docs/design/` | Design record. `00-STATUS.md` is the entry point; `06-v1-spec.md` is the spec |
 | `docs/adr/` | Framework decisions |
 
 ## Commands
@@ -41,7 +39,7 @@ From the repo root:
 | `cd packages/hooks && go build -o bin/folkways-hook .` | build the hook binary (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
 | `FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the hook contract suite against the built binary |
 | `node packages/cli/src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
-| `node packages/evals/src/cli.ts run research/evals/<suite> --dry-run` | plan a behavior eval; drop `--dry-run` to run it (model calls on your account; see `packages/evals/README.md`) |
+| `node packages/evals/src/cli.ts run ../folkways-command/efforts/<effort>/evals/<suite> --dry-run` | plan a behavior eval (suites live in the command repo); drop `--dry-run` to run it (model calls on your account; see `packages/evals/README.md`) |
 | `pnpm changeset` | record a change for the next release of the packages it touches |
 
 ## Rules
@@ -53,7 +51,7 @@ From the repo root:
 - **Dependencies:** runtime deps are fine when they earn their place; they install into team repos.
   `pnpm-workspace.yaml` blocks versions younger than 7 days, provenance downgrades, non-registry
   subdependencies and unapproved build scripts. Don't relax these to make an install pass; wait or ask.
-- **Package manager:** pnpm for this repo. Team repos use npm or pnpm (`packages/cli/src/package-manager.ts`, spec §3.1).
+- **Package manager:** pnpm for this repo. Team repos use npm or pnpm (`packages/cli/src/package-manager.ts`).
 - **CI actions** are pinned to full commit SHAs with a version comment (the repo requires it).
 - **TDD:** write a failing test first, then fix. Run `pnpm run check && pnpm test` before every commit.
 - **Expected failures** throw `FolkwaysError`; the CLI prints `folkways: <message>` with no stack trace.
@@ -77,4 +75,6 @@ From the repo root:
   hooks release to team repos. Hook renames, removals and event changes are major hooks bumps.
 - **CI** runs only the jobs for the packages a change touches; the `ci` job is the required check. A new
   package gets a filter and jobs in `.github/workflows/ci.yml`.
-- Keep `docs/design/00-STATUS.md` current at milestones.
+- **Design record, plans, research and status** live in the team repo, [sumsolution/folkways-command](https://github.com/sumsolution/folkways-command)
+  (private): the spec in `knowledge/design/`, work in `efforts/`, what's built in `state/framework.md`. Clone it
+  next to this repo to read it or run eval suites.
