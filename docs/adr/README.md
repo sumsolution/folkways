@@ -6,7 +6,7 @@ why now, ending in the question), **Context** (linked facts), **Decision** (the 
 **Options considered** (at least two real options; the Trade-off column is one honest sentence), and
 **Consequences**. While **proposed**, the title is the question; once accepted it becomes the answer.
 Status values: **proposed** → **accepted** or **rejected**; later **superseded by NNNN** or **deprecated**.
-Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) `adr` skill); this folder is for the framework.
+Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) `adr` skill); this folder is for the framework.
 
 | # | Title | Status |
 |---|---|---|
@@ -14,3 +14,4 @@ Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folk
 | [0002](0002-hook-runtime.md) | Hooks are a Go binary, shipped as per-platform optional dependencies | accepted |
 | [0003](0003-repo-layout.md) | The repo is a pnpm workspace of independently versioned packages | accepted |
 | [0004](0004-license.md) | folkways is licensed under Apache-2.0 | accepted |
+| [0005](0005-closing-efforts.md) | A closed effort is lifted, indexed and removed | accepted |

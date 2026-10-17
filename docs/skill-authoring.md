@@ -1,8 +1,8 @@
 # Writing folkways skills
 
 How to write a framework skill in `packages/content/skills/<name>/`. It is based on
-[09-research-skill-authoring.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/skill-authoring/09-research-skill-authoring.md) (the evidence) and the spec
-([06 §3.2, §6, §7.5](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md)). `packages/content/test/skills.test.ts` checks the mechanical rules.
+[09-research-skill-authoring.md](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/skill-authoring/09-research-skill-authoring.md) (the evidence) and the spec
+([06 §3.2, §6, §7.5](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)). `packages/content/test/skills.test.ts` checks the mechanical rules.
 
 > **Overlays follow [ADR 0001](adr/0001-overlay-enforcement.md).** `folkways sync` compiles team
 > overlays into the synced skill. There are no personal overlays. Rules that must hold whatever an
@@ -12,7 +12,7 @@ How to write a framework skill in `packages/content/skills/<name>/`. It is based
 
 | Rule | Why | Checked by test |
 |---|---|---|
-| Frontmatter is `name` and `description` only | The only fields every tool reads the same way; Copilot CLI mishandles some extras ([09 §1](https://github.com/sumsolution/folkways-command/blob/main/efforts/skill-authoring/09-research-skill-authoring.md#1-frontmatter-and-limits)) | yes |
+| Frontmatter is `name` and `description` only | The only fields every tool reads the same way; Copilot CLI mishandles some extras ([09 §1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/skill-authoring/09-research-skill-authoring.md#1-frontmatter-and-limits)) | yes |
 | `name` is lowercase-hyphenated, at most 64 chars, equals the folder | Spec requirement | yes |
 | `description` is at most 500 chars, no `<` or `>` | Spec limit is 1,024; all skills share a listing budget of about 1% of context in Claude Code | yes |
 | `SKILL.md` is under 500 lines | Spec and Anthropic guidance; the body loads whole on every use | yes |
@@ -44,7 +44,7 @@ packages/content/skills/ticket/
 - A file two skills need is copied into both, because a skill can't link outside its folder. The test
   keeps copies identical (see `shared reference files` in `packages/content/test/skills.test.ts`).
 - No scripts yet. Add one only when agents keep rewriting the same logic, and make it non-interactive
-  with clear errors ([09 §6](https://github.com/sumsolution/folkways-command/blob/main/efforts/skill-authoring/09-research-skill-authoring.md#6-scripts-in-skills)). Deterministic
+  with clear errors ([09 §6](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/skill-authoring/09-research-skill-authoring.md#6-scripts-in-skills)). Deterministic
   checks belong in the `folkways` CLI or a hook, not a skill script.
 
 ## Descriptions
@@ -56,7 +56,7 @@ every skill's name and description in context and drop descriptions when the lis
   would actually type, in quotes. Optionally one `Not for ...` clause naming the neighbouring skill.
 - **Key use case first.** Listings truncate from the end.
 - **Triggers, not the workflow.** A description that summarizes the steps lets the agent follow the
-  summary and skip the body ([09 §2](https://github.com/sumsolution/folkways-command/blob/main/efforts/skill-authoring/09-research-skill-authoring.md#2-descriptions-and-triggering)).
+  summary and skip the body ([09 §2](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/skill-authoring/09-research-skill-authoring.md#2-descriptions-and-triggering)).
 - **A bit pushy.** Agents under-trigger. Name situations as well as phrases ("before a risky
   operation", "after a compaction").
 - **Third person** for the clause ("Writes...", "Reviews..."), never "I" or "you".
@@ -180,7 +180,7 @@ Lessons that apply to any skill:
    realistic prompt; ask which skill it would load, or none. Use 5 to 10 prompts per skill, half of
    them near-misses that should load a neighbouring skill or none. Run each prompt 3 times. Fix a
    description that misfires and re-run with new prompts, so you aren't tuning to the test set.
-   Record results in [09 §12](https://github.com/sumsolution/folkways-command/blob/main/efforts/skill-authoring/09-research-skill-authoring.md#12-trigger-eval).
+   Record results in [09 §12](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/skill-authoring/09-research-skill-authoring.md#12-trigger-eval).
 3. **Behavior eval** (for a new or heavily changed skill): run the same task in a fresh session with and
    without the skill, one variable changed, at least 3 runs, graded blind against an answer key where
    one exists. Watch where the agent skips or misreads a step; fix the wording there.

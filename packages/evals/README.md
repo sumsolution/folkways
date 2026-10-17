@@ -1,7 +1,7 @@
 # @folkways/evals
 
 A behavior-eval runner for folkways skills. Private; never published. Why we built it instead of adopting
-a tool: [14-research-eval-harness.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/review-rounds/14-research-eval-harness.md).
+a tool: [14-research-eval-harness.md](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/review-rounds/14-research-eval-harness.md).
 
 For each **arm** (a version of the framework) × **case** × **run**, it:
 
@@ -11,10 +11,8 @@ For each **arm** (a version of the framework) × **case** × **run**, it:
 3. grades every run. `llm` votes go to a judge one answer at a time, shuffled across arms, with nothing
    that names the arm.
 
-Suites live with the effort they back, in the team repo
-([sumsolution/folkways-command](https://github.com/sumsolution/folkways-command), `efforts/<effort>/evals/<suite>/`).
-The runner finds this repo from its own location, so a suite can sit anywhere. The examples assume the command
-repo is cloned next to this one.
+Suites live in [suites/](suites), one folder each. The runner finds this repo from its own location, so a
+suite can also sit elsewhere, e.g. in a team repo.
 
 ## Run
 
@@ -22,10 +20,10 @@ Needs Node 24+, git, and an authenticated `claude` CLI. Every subject run and ju
 your account; `--dry-run` prints the counts first.
 
 ```sh
-node packages/evals/src/cli.ts run ../folkways-command/efforts/review-rounds/evals/review-rounds --dry-run
-node packages/evals/src/cli.ts run ../folkways-command/efforts/review-rounds/evals/review-rounds --jobs 6
-node packages/evals/src/cli.ts run ../folkways-command/efforts/review-rounds/evals/review-rounds --model opus --runs 5 --arms after
-node packages/evals/src/cli.ts grade ../folkways-command/efforts/review-rounds/evals/review-rounds     # re-grade after a rubric change
+node packages/evals/src/cli.ts run packages/evals/suites/review-rounds --dry-run
+node packages/evals/src/cli.ts run packages/evals/suites/review-rounds --jobs 6
+node packages/evals/src/cli.ts run packages/evals/suites/review-rounds --model opus --runs 5 --arms after
+node packages/evals/src/cli.ts grade packages/evals/suites/review-rounds     # re-grade after a rubric change
 ```
 
 Results go to `<suite>/results/<model>/`: `summary.md`, `summary.json`, and per run `answer.md`,

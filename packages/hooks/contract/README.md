@@ -1,8 +1,8 @@
 # Hook contract suite
 
-Black-box tests for the four hooks in [spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md). They run **any** implementation as a subprocess, so the
+Black-box tests for the four hooks in [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md). They run **any** implementation as a subprocess, so the
 same suite checks a Node, Go or Rust build. Defined by [ADR 0002](../../../docs/adr/0002-hook-runtime.md);
-tool behavior behind each rule: [08-research-hook-runtime.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/hooks-build/08-research-hook-runtime.md).
+tool behavior behind each rule: [08-research-hook-runtime.md](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/hooks-build/08-research-hook-runtime.md).
 
 ## Run
 
@@ -49,16 +49,16 @@ major hooks bump and needs a matching CLI change. New rules or fixtures that tig
 
 ## The contract
 
-Rules every implementation must follow. Where [spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) leaves details open, this contract pins them down;
+Rules every implementation must follow. Where [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) leaves details open, this contract pins them down;
 change them here and in the fixtures together.
 
 **All hooks**
 
 - Exit 0, always, including on bad input. Copilot CLI denies the tool call when a `preToolUse` hook exits
-  nonzero or crashes ([08 §1](https://github.com/sumsolution/folkways-command/blob/main/efforts/hooks-build/08-research-hook-runtime.md)), so a bug must fail open.
+  nonzero or crashes ([08 §1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/hooks-build/08-research-hook-runtime.md)), so a bug must fail open.
 - Find the team repo from `CLAUDE_PROJECT_DIR`, else the process cwd. Claude Code's hook cwd follows the
   Bash tool's `cd`; `CLAUDE_PROJECT_DIR` doesn't. Copilot CLI runs repo hooks in the project root.
-- **Config gates every hook** ([spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md)). No `folkways.yaml` at the project root: print nothing and write
+- **Config gates every hook** ([spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)). No `folkways.yaml` at the project root: print nothing and write
   nothing in the repo (`session-start` alone makes the one-time offer, below). `hooks.<name>: false` in
   `folkways.yaml`: that hook prints nothing and writes nothing; a missing key is on.
 - Accept Claude Code payloads and both Copilot CLI shapes: PascalCase events (snake_case fields, ISO
@@ -151,7 +151,7 @@ folkways.yaml:
 
 In an unconfigured repo it makes the one-time offer instead. Key: the git top level of the project dir, else
 the project dir (absolute). When that key holds a `folkways.yaml` (a session in a subfolder of a configured repo): no offer, nothing recorded. Look it up in `${XDG_CONFIG_HOME:-$HOME/.config}/folkways/offered` (one path per
-line). Absent: append it (creating directories) and inject the [spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) line, naming the `setup` skill (`folkways:setup`
+line). Absent: append it (creating directories) and inject the [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) line, naming the `setup` skill (`folkways:setup`
 in the plugin). Present, or the file can't be read or written: print nothing. Never write in the repo.
 
 **`precompact`** (`PreCompact`): append a line with the session id and `trigger` to `.local/precompact.log`.
