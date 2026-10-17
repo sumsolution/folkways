@@ -1,6 +1,6 @@
 ---
 name: status
-description: Updates an effort's 00-STATUS.md at a milestone, rolls up team status or a standup from all efforts, and promotes a personal effort to the team. Use when the user says "update the status", "we hit a milestone", "standup", "what's the team working on", "status roll-up", "what's blocked", "promote this effort" or "share this effort with the team". Not for handing off to a fresh session (use handoff).
+description: Updates an effort's 00-STATUS.md at a milestone, rolls up team status or a standup from all efforts, promotes a personal effort to the team, and closes a finished effort. Use when the user says "update the status", "we hit a milestone", "standup", "what's the team working on", "status roll-up", "what's blocked", "promote this effort", "share this effort with the team" or "close this effort". Not for handing off to a fresh session (use handoff).
 ---
 
 # status
@@ -12,10 +12,11 @@ those files and `state/`. This skill keeps them current and reads them back.
 
 - `folkways.yaml`: `members`, `tracker`.
 - `.local/me.yaml`: `handle`.
+- The personal root, for `<personal root>` paths.
 
 The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
 
-Then pick the task: [Update](#update), [Roll-up](#roll-up), or [Promote](#promote).
+Then pick the task: [Update](#update), [Roll-up](#roll-up), [Promote](#promote), or [Close](#close).
 
 ## Update
 
@@ -60,7 +61,33 @@ team needs to see it.
 3. Update links inside the effort and the owner line in `00-STATUS.md`.
 4. Commit and push on approval (`efforts/` goes straight to the default branch, rebased).
 
+## Close {#close}
+
+When an effort's work is done, its folder is lifted, indexed and removed, so the effort folders show only
+live work. The folder is `efforts/<KEY>-<slug>/` or `<personal root>/work/<KEY>-<slug>/`; a solo repo has
+only the second. Show the plan for all five steps and act on approval.
+
+1. **Lift** what is still true and expensive to re-derive into `knowledge/`, by PR, each file ending in
+   `Last verified: YYYY-MM-DD (<method>)`. A decision without an ADR gets one (`adr` skill). Plans and dated
+   retros are not lifted; the index keeps them reachable. Lifting can trail the removal.
+2. **Move** anything still in use (a template, an eval suite, a script) to the effort or repo that uses it.
+3. **Index** it with one row in `state/closed-efforts.md`. Create the file with this header if it is
+   missing. `<sha>` is the last pushed commit on the default branch that has the folder.
+
+   ```markdown
+   # Closed efforts
+
+   | Effort | Closed | Outcome | Links | Files | To lift |
+   |---|---|---|---|---|---|
+   | EX-123-handle-expired-tokens | 2026-09-29 | Expired tokens refresh; fix in prod | ADRs, PRs, knowledge entries | <sha> link to the folder | candidates not yet lifted, or `none` |
+   ```
+
+4. **Repoint** every link to the folder or its files (`git grep` for the folder name) to a permalink at
+   `<sha>` (`blob/<sha>/<path>`). Links from a project repo change there, in a worktree and PR.
+5. **Remove** the folder with `git rm -r`. Commit steps 3 to 5 together and push on approval (team repo:
+   straight to the default branch, rebased; solo repo: ask where it lands).
+
 ## Headless
 
 Roll-ups: write the report to the path the prompt gives, or print it. Updates: write the status doc
-but don't commit to the default branch. Never promote an effort headless; list candidates instead.
+but don't commit to the default branch. Never promote or close an effort headless; list candidates instead.

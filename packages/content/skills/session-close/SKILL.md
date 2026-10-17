@@ -46,6 +46,7 @@ The session-start hook puts these values in the session context; read `folkways.
    what was left out and why, and any side quests still unfiled. Then:
    - If the knowledge audit is due (see `state/knowledge-audit.md`, or no tracker and `knowledge/` is
      non-empty), offer to run `knowledge-audit`. Don't start it unasked.
+   - If the session finished the effort, offer the `status` skill's Close. Don't start it unasked.
    - Commit nothing unless asked. Landing paths: `knowledge/` changes go on a branch and a PR;
      in a team repo, `state/`, efforts and `people/` go straight to the default branch, rebased, after
      approval; in a solo repo, ask where they land.
