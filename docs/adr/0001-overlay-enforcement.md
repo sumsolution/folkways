@@ -23,7 +23,7 @@ them, and how are the remaining rules layered?
   them "context, not enforced configuration"
   ([memory](https://code.claude.com/docs/en/memory#claudemd-vs-auto-memory)). Copilot CLI "does not define a
   general precedence order" ([add-custom-instructions](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions)).
-  [07 §1–2](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/07-research-overlay-enforcement.md#1-how-instructions-compose-in-claude-code).
+  [07 §1–2](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#1-how-instructions-compose-in-claude-code).
 - **Settings are enforced.** Deny rules can't be loosened by any other scope; `PreToolUse` hooks block
   before allow rules ([permissions](https://code.claude.com/docs/en/permissions#settings-precedence)). Copilot
   CLI reads the same `.claude/settings.json` hooks ([hooks-reference](https://docs.github.com/en/copilot/reference/hooks-reference)).
@@ -31,19 +31,19 @@ them, and how are the remaining rules layered?
   `--settings`, `--bare`; a project `"disableAllHooks": false` beats a user-settings `true`); only
   managed settings or Copilot policy hooks can't be. A team repo can't deploy either. Tested here: a
   project hook held under `--dangerously-skip-permissions` and fell to one `--settings` flag
-  ([07 §4.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/07-research-overlay-enforcement.md#41-empirical-hooks-and-rules-under-bypass-mode)).
+  ([07 §4.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#41-empirical-hooks-and-rules-under-bypass-mode)).
 - **Skill shadowing:** in Claude Code a personal skill of the same name replaces the project skill; in
-  Copilot CLI the project skill wins ([07 §3](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/07-research-overlay-enforcement.md#3-skill-loading-and-name-collisions)).
-- **Eval** ([07 §6](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule), Sonnet,
+  Copilot CLI the project skill wins ([07 §3](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#3-skill-loading-and-name-collisions)).
+- **Eval** ([07 §6](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule), Sonnet,
   fresh process per run): with "apply the overlays" and no stated precedence, a personal `## Override`
   won 10/10 and a persuasive "team lead approved" `## Add` won 8/10. With one framework-written
   precedence paragraph: 0 failures in every cell (10/10 on the deciding cells). Compiling personal
   additions into the shared skill dropped the harmless one in 2 of 6 runs.
-- **Prior decisions:** agent-side enforcement only, no CI in project repos ([spec §1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md), round 7);
-  personal review trigger may differ from the team's (round 7); personal skills out of v1 ([spec §9](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md), item 4);
+- **Prior decisions:** agent-side enforcement only, no CI in project repos ([spec §1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md), round 7);
+  personal review trigger may differ from the team's (round 7); personal skills out of v1 ([spec §9](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md), item 4);
   overlays never touch framework files (round 11).
 - **Framing** (Summer, raised for this workstream): Sumner (1906), whose *folkways* gave the project its
-  name ([02-naming](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/02-naming.md)), split group norms into *folkways* (customs people may vary)
+  name ([02-naming](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/02-naming.md)), split group norms into *folkways* (customs people may vary)
   and *mores* (norms the group enforces).
 
 ## Decision
@@ -52,7 +52,7 @@ them, and how are the remaining rules layered?
 team overrides compiled in and precedence stated by the framework.**
 
 1. **Every rule is either a more or a folkway**, listed below. A new rule is classified when it is added.
-2. **Mores live in config** (`team.yaml`, now `folkways.yaml` ([16](https://github.com/sumsolution/folkways-command/blob/main/efforts/config-and-solo/16-plan-config-and-solo.md)), framework `settings.json`), which changes by PR. They are
+2. **Mores live in config** (`team.yaml`, now `folkways.yaml` ([16](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/config-and-solo/16-plan-config-and-solo.md)), framework `settings.json`), which changes by PR. They are
    enforced by hooks, permission rules and `folkways sync` / `doctor`. Skills may *describe* a more;
    the hook reads the config, so an overlay can't change it.
 3. **Folkways live in skill sections and overlays.** At `sync`, the team overlay is compiled into the
@@ -78,12 +78,12 @@ out of the shared file (the eval shows why) and needs no per-person build.
 
 | # | Rule | Mechanism | Configured in | Status |
 |---|---|---|---|---|
-| M1 | Commit header format and allowed scopes | `git-guard` on `git commit`: checks the message | `team.yaml` `git.commit_convention`, `git.scopes` (+ proposed `git.commit_pattern` for non-Angular formats) | planned, [spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) |
+| M1 | Commit header format and allowed scopes | `git-guard` on `git commit`: checks the message | `team.yaml` `git.commit_convention`, `git.scopes` (+ proposed `git.commit_pattern` for non-Angular formats) | planned, [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) |
 | M2 | Push needs the user's approval | permission `ask: Bash(git push:*)`; never auto-approved, even in bypass mode | framework `assets/settings.json` | built |
-| M3 | A review covers HEAD before push (trigger `pre-push`) | `git-guard` on `git push` | `team.yaml` `review.trigger` | planned, [spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) |
-| M4 | The main clone's checkout is never changed | `git-guard` denies `checkout`, `switch`, `pull`, `reset`, `rebase` there | `.local/me.yaml` `projects_dir` | planned, [spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) |
+| M3 | A review covers HEAD before push (trigger `pre-push`) | `git-guard` on `git push` | `team.yaml` `review.trigger` | planned, [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) |
+| M4 | The main clone's checkout is never changed | `git-guard` denies `checkout`, `switch`, `pull`, `reset`, `rebase` there | `.local/me.yaml` `projects_dir` | planned, [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) |
 | M5 | Branch names follow the team pattern | `git-guard` on `git push` and branch creation | `team.yaml` `git.branch_pattern` | **new** |
-| M6 | Headless runs: no push to a default branch, nothing destructive | `folkways run` passes deny rules (`--disallowedTools`); `git-guard` checks headless | `team.yaml` `repos[].default_branch` | **new** ([spec §7.5](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md) is prose today) |
+| M6 | Headless runs: no push to a default branch, nothing destructive | `folkways run` passes deny rules (`--disallowedTools`); `git-guard` checks headless | `team.yaml` `repos[].default_branch` | **new** ([spec §7.5](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md) is prose today) |
 | M7 | Framework files are not edited | `sync` checksum check | `.folkways/manifest.json` | built |
 | M8 | Personal overlays only add | `lintPersonalOverlay` in `sync` (warning) and `doctor` (error). **Detect only**: at runtime it's the step-0 prose (a folkway), and the lint misses a quiet contradiction | framework | built in `sync` (`src/overlays.ts`); `doctor` not built |
 | M9 | Team overrides apply | compiled into `SKILL.md` at `sync`; unknown section ID fails the sync | `overlays/<skill>/OVERLAY.md` | built |
@@ -107,7 +107,7 @@ where side quests go.
 - `lintPersonalOverlay` over `people/*/overlays/*/OVERLAY.md`: done in `sync` (warnings); `doctor` not built.
 - Done: framework skills: step 0 is one shared block: read `team.yaml` and `.local/me.yaml`, then the
   personal overlay, under the precedence text tested as `hybrid`
-  ([07-eval/fixtures/step0-hybrid.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/eval/fixtures/step0-hybrid.md)). A framework-repo test
+  ([07-eval/fixtures/step0-hybrid.md](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/eval/fixtures/step0-hybrid.md)). A framework-repo test
   checks every `assets/skills/*/SKILL.md` contains it.
 - `compileSkill`'s personal branch exists for the eval (Option 4); production doesn't use it.
 
@@ -115,7 +115,7 @@ where side quests go.
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
-| 1 | Keep [spec §3.2](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md): runtime read of three files; each skill states the precedence | No new code; eval shows it holds when the text is present | Every skill author must remember the paragraph, and without it personal overlays won 18/20; team overrides depend on a file read; no mores concept | Works in the lab, fails on the first skill that forgets one paragraph. |
+| 1 | Keep [spec §3.2](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md): runtime read of three files; each skill states the precedence | No new code; eval shows it holds when the text is present | Every skill author must remember the paragraph, and without it personal overlays won 18/20; team overrides depend on a file read; no mores concept | Works in the lab, fails on the first skill that forgets one paragraph. |
 | 2 | Instructions only, made stronger: framework-owned precedence block, lint, `SessionStart` reminders | Cheap; fixes the forgotten-paragraph risk; eval shows 0 failures with it | Every rule, commit format included, still rests on the model; Opus-vs-Sonnet gap shows it varies by model | Good enough for folkways, not for rules whose failure lands in a shared repo. |
 | **3** | **Mores by mechanism, folkways by overlay (team compiled, personal at runtime), `doctor` for visibility** | Mores hold whatever the overlay or model does; folkways get the eval's best layout; bypass is visible | Mores must be expressible as config; `sync` gains a compile step; a determined member can still turn hooks off | Accident-proof for the rules that matter, at the cost of one sync step and config for every more. |
 | 4 | Compile everything per person into `~/.claude/skills/<name>`, using Claude Code's personal-over-project rule | One file per person; overlays can't be skipped | Copilot CLI inverts the rule (project wins); writes outside the repo; eval: compiled personal adds dropped 2/6; clashes if a person ever joins two teams | Uses a shadowing rule that one of the two tools reverses. |
@@ -137,9 +137,9 @@ where side quests go.
 - **Docs:** `assets/instructions.md` and the team README explain mores vs folkways in two lines each.
   `AGENTS.md` ("Step 0 reads `team.yaml`, `.local/me.yaml` and both overlays") changes to the new step 0.
 - **Closed:** round 7 let a person set their own review trigger, which could loosen M3. The trigger is now a
-  floor: `.local/me.yaml` can only tighten the team's value ([spec §4.2](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md)).
+  floor: `.local/me.yaml` can only tighten the team's value ([spec §4.2](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)).
 - **Open:** interactive bypass mode and push-ruleset behaviour on PR merges are untested
-  ([07, unknowns](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/07-research-overlay-enforcement.md#unknown-or-unverified)).
+  ([07, unknowns](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#unknown-or-unverified)).
 
 **Update (2026-10-03): personal overlays removed.** The personal layer cost more than it gave. Every
 framework skill opened with a 16-line step 0 that read `folkways.yaml`, `.local/me.yaml` and the
@@ -154,8 +154,8 @@ their own user-level instructions, which already sit below the team's. So:
   `compileSkill`'s personal branch (and `compileSkill` itself, which only tests and the 07 eval used).
 - Step 0 is replaced by a `## Config` section per skill: the fields it uses. The `session-start` hook
   prints `folkways.yaml`, `.local/me.yaml`, the personal root and the effective review trigger once per
-  session and after each compaction ([spec §7.1](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md)); a skill reads the files only when that block is missing.
+  session and after each compaction ([spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)); a skill reads the files only when that block is missing.
 - **Accepted gap:** a solo repo's `overlays/` held personal overlays (the plugin can't compile). Solo repos
   have no overlays until the Go CLI brings compile to the plugin.
-- The eval in [07 §6](https://github.com/sumsolution/folkways-command/blob/main/efforts/overlay-enforcement/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)
+- The eval in [07 §6](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)
   stays as the record of why the precedence text mattered; its personal arm is historical.
