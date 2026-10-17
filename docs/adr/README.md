@@ -15,3 +15,4 @@ Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folk
 | [0003](0003-repo-layout.md) | The repo is a pnpm workspace of independently versioned packages | accepted |
 | [0004](0004-license.md) | folkways is licensed under Apache-2.0 | accepted |
 | [0005](0005-closing-efforts.md) | A closed effort is lifted, indexed and removed | accepted |
+| [0007](0007-hook-delivery.md) | How do hooks reach agents in an app repo? | proposed |
