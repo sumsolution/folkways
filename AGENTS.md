@@ -76,5 +76,5 @@ From the repo root:
 - **CI** runs only the jobs for the packages a change touches; the `ci` job is the required check. A new
   package gets a filter and jobs in `.github/workflows/ci.yml`.
 - **Design record, plans, research and status** live in the team repo, [sumsolution/folkways-command](https://github.com/sumsolution/folkways-command)
-  (private): the spec in `knowledge/design/`, work in `efforts/`, what's built in `state/framework.md`. Clone it
+  (private): the v1 spec in `efforts/v1-design/`, other work in `efforts/`, what's built in `state/framework.md`. Clone it
   next to this repo to read it or run eval suites.

@@ -2,7 +2,7 @@
 
 How to write a framework skill in `packages/content/skills/<name>/`. It is based on
 [09-research-skill-authoring.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/skill-authoring/09-research-skill-authoring.md) (the evidence) and the spec
-([06 §3.2, §6, §7.5](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)). `packages/content/test/skills.test.ts` checks the mechanical rules.
+([06 §3.2, §6, §7.5](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md)). `packages/content/test/skills.test.ts` checks the mechanical rules.
 
 > **Overlays follow [ADR 0001](adr/0001-overlay-enforcement.md).** `folkways sync` compiles team
 > overlays into the synced skill. There are no personal overlays. Rules that must hold whatever an

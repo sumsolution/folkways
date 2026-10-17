@@ -11,7 +11,7 @@ five minutes.
 | [The name](the-name.md) | Sumner, folkways and mores, and the names we didn't pick |
 
 New here? Read Concepts, then Getting started. Evaluating the design? How it works, then the
-[v1 spec](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md).
+[v1 spec](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md).
 
 ## Where things stand
 

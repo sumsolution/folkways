@@ -15,7 +15,7 @@ text assets that `sync` copies into team repos (skills, instructions, prompts) n
 ## Context
 
 - Team repos are usually private company repos. `sync` copies text assets into them, and teams extend
-  them with overlays ([spec §3](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md)). Company open-source policies allow permissive
+  them with overlays ([spec §3](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md)). Company open-source policies allow permissive
   licenses and often ban AGPL ([15](https://github.com/sumsolution/folkways-command/blob/main/efforts/license/15-research-license.md), comparison table).
 - The closest comparable projects each use one permissive license for code and skills: Anthropic's skills repo and
   OpenAI Codex use Apache-2.0; spec-kit and obra/superpowers use MIT ([15 §2](https://github.com/sumsolution/folkways-command/blob/main/efforts/license/15-research-license.md)).

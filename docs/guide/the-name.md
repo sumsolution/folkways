@@ -50,5 +50,5 @@ the idea, and it meant the name had to come from further afield. Sociology was f
 | `collegium` | Roman body of people sharing a function; the root of *colleague* | Free on npm; not picked |
 | `quorate` | Enough members present for decisions to count | Taken on npm, and an LLM tool already uses it |
 
-The full research, with checks and dates, is in [02-naming.md](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/02-naming.md). For now
+The full research, with checks and dates, is in [02-naming.md](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/02-naming.md). For now
 `folkways` is a working name.

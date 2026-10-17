@@ -2,7 +2,7 @@
 
 The mechanics under [Concepts](concepts.md): how framework files reach a team repo, who owns what,
 how upgrades land, and how the review gate stays honest. Details and reasoning:
-[v1 spec §3 and §7](https://github.com/sumsolution/folkways-command/blob/main/knowledge/design/06-v1-spec.md).
+[v1 spec §3 and §7](https://github.com/sumsolution/folkways-command/blob/main/efforts/v1-design/06-v1-spec.md).
 
 ## Code runs from npm, text lives in git
 
