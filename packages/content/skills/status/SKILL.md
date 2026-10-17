@@ -72,7 +72,8 @@ only the second. Show the plan for all five steps and act on approval.
    retros are not lifted; the index keeps them reachable. Lifting can trail the removal.
 2. **Move** anything still in use (a template, an eval suite, a script) to the effort or repo that uses it.
 3. **Index** it with one row in `state/closed-efforts.md`. Create the file with this header if it is
-   missing. `<sha>` is the last pushed commit on the default branch that has the folder.
+   missing. Push the folder's last commits first, on approval; `<sha>` is then the last pushed commit on
+   the default branch that has the folder.
 
    ```markdown
    # Closed efforts
