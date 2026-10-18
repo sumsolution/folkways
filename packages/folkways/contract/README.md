@@ -7,14 +7,24 @@ tool behavior behind each rule: [08-research-hook-runtime.md](https://github.com
 ## Run
 
 ```
-FOLKWAYS_HOOK_CMD="/abs/path/to/folkways-hook" pnpm --filter @folkways/hooks test
-FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOKS=git-guard,precompact pnpm --filter @folkways/hooks test
+cd packages/folkways
+go test ./contract
+FOLKWAYS_HOOK_CMD="/abs/path/to/folkways-hook" go test ./contract
+FOLKWAYS_HOOK_CMD="/abs/path/to/folkways hook" FOLKWAYS_HOOKS=git-guard,precompact go test ./contract
 ```
 
+The runner is Go (`*_test.go` in this directory); the fixtures stay JSON.
+
 - The harness runs `/bin/sh -c "$FOLKWAYS_HOOK_CMD <hook>"`, as both tools do, with the payload on stdin.
-- Without `FOLKWAYS_HOOK_CMD` the contract tests skip ("set FOLKWAYS_HOOK_CMD to run"). `harness.test.ts`
-  and a fixture-count check still run, so `pnpm test` stays green.
+  Any implementation works: the command is run as a black box.
+- Without `FOLKWAYS_HOOK_CMD`, `TestMain` builds `./cmd/folkways` into a temp dir and runs `<bin> hook`, so
+  a plain `go test ./...` runs the whole suite.
 - `FOLKWAYS_HOOKS` limits the run to some hooks (a prototype that only has `git-guard`).
+- `FOLKWAYS_HOOK_BUDGET_MS=10` also runs the latency budget of [ADR 0011](../../../docs/adr/0011-cli-in-go.md):
+  each hook is called 50 times through `sh -c`, and the test fails when a hook's p50 exceeds the budget.
+  Skipped when unset. CI sets it in the hooks job.
+- Patterns are Go (RE2) regexes, so no lookahead (`(?!` is an error). `!re:<regex>` must not match; a list of
+  `re:` / `!re:` strings means all must hold (`["re:200K", "!re:125K"]`).
 
 ## Fixtures
 
@@ -32,7 +42,7 @@ FOLKWAYS_HOOK_CMD="node /abs/path/to/packages/cli/src/cli.ts hook" FOLKWAYS_HOOK
 | `env.transcript` | transcript lines: a number is a main-chain assistant line with that many tokens in context, `{ "sidechain": n }` a subagent line, an object is written as is |
 | `steps[]` | one or more calls in the same environment: `payload` (stdin), optional `cwd`, optional `transcript` (replaces the file), `expect` |
 | `expect.exit` | default `0` |
-| `expect.stdout` | `null` = empty; an object = stdout is JSON containing it (deep subset). Strings starting `re:` are case-insensitive regexes |
+| `expect.stdout` | `null` = empty; an object = stdout is JSON containing it (deep subset). Strings starting `re:` are case-insensitive, dot-all regexes that must match; `!re:` must not match; a list of them must all hold |
 | `expect.exists` / `absent` / `contains` | files after the step (`contains`: path → regex) |
 
 Placeholders, filled in payloads, files and expectations: `${TEAM}` (team repo, the default cwd and

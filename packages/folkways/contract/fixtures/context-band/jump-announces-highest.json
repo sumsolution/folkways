@@ -17,7 +17,7 @@
         "stdout": {
           "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": "re:^(?!.*125K)(?!.*150K).*200K"
+            "additionalContext": ["re:200K", "!re:125K", "!re:150K"]
           }
         }
       }
