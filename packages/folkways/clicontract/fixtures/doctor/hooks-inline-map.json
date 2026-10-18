@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('flags an inline hooks map it cannot check'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "hooks: { git-guard: false }\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "warning: folkways.yaml hooks: write one hook per line (git-guard: false) so doctor can check the values\n0 errors, 1 warning.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "description": "extra (no TS test): sync and doctor outside a git repo say to run inside the team repo",
+  "steps": [
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: run this inside the team repo\n"
+      }
+    },
+    {
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: run this inside the team repo\n"
+      }
+    }
+  ]
+}

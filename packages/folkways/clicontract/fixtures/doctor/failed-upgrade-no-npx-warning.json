@@ -1,0 +1,25 @@
+{
+  "description": "TS doctor.test.ts: it('does not send a failed upgrade to npx when the running CLI is the installed one'); pinned 0.0.1, installed and running ${VERSION}: the mismatch error only, no warning",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n",
+        ".folkways/manifest.json": "{\"version\": \"0.0.1\", \"skills\": [], \"files\": {}}\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "re:^error: node_modules has @folkways/cli ${VERSION} but package\\.json pins 0\\.0\\.1.*npm install.*\n1 error, 0 warnings\\.\n$",
+        "stderr": ""
+      }
+    }
+  ]
+}

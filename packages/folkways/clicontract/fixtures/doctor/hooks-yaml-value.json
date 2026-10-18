@@ -1,0 +1,24 @@
+{
+  "description": "TS doctor.test.ts: it('checks the hooks: values in folkways.yaml'); git-guard: off in a full team repo",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git-guard: off\n  context-band: true\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks.git-guard: off reads as false (hook off); write false\n1 error, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

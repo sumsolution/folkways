@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('flags values that leave the hook on'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git-guard: \"false\"\n  context-band: 0\n  precompact: falsey\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks.git-guard: \"false\" is not a boolean, so the hook stays on; write true or false\nerror: folkways.yaml hooks.context-band: 0 is not a boolean, so the hook stays on; write true or false\nerror: folkways.yaml hooks.precompact: falsey is not a boolean, so the hook stays on; write true or false\n3 errors, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}
