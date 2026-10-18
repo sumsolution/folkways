@@ -1,0 +1,17 @@
+{
+  "description": "With no flag and no launching package manager, init installs with npm. From package-manager.test.ts: detectPackageManager > defaults to npm (init default)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ],
+      "expect": {
+        "files": {
+          "${CALLS}": "${TEAM}: npm install\n"
+        },
+        "stdout": "Created ${TEAM} with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${TEAM} and run the setup skill.\n"
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "description": "init runs a plain 'install' for npm, with no extra arguments. From package-manager.test.ts: commands > installs from the lockfile (npm)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--package-manager",
+        "npm"
+      ],
+      "expect": {
+        "files": {
+          "${CALLS}": "${TEAM}: npm install\n"
+        },
+        "stdout": "Created ${TEAM} with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${TEAM} and run the setup skill.\n"
+      }
+    }
+  ]
+}

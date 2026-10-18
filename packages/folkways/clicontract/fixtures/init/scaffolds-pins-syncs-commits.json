@@ -1,0 +1,58 @@
+{
+  "description": "init writes the scaffold, pins the version, syncs and makes one commit. From init.test.ts: init > scaffolds, pins, syncs and commits",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ],
+      "expect": {
+        "stderr": "",
+        "files": {
+          "folkways.yaml": true,
+          ".gitignore": "re:(?m)^node_modules/$",
+          "CLAUDE.md": "re:(?m)^@AGENTS\\.md$",
+          "knowledge/README.md": true,
+          ".folkways/instructions.md": true,
+          "AGENTS.md": "re:(?m)^@\\.folkways/instructions\\.md$",
+          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"${VERSION}\"\n  }\n}\n",
+          ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",",
+          ".claude/settings.json": "re:\"Bash\\(git push:\\*\\)\""
+        },
+        "git": [
+          {
+            "args": [
+              "log",
+              "--format=%s"
+            ],
+            "stdout": "chore(folkways): init at ${VERSION}"
+          },
+          {
+            "args": [
+              "rev-list",
+              "--count",
+              "HEAD"
+            ],
+            "stdout": "1"
+          },
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ],
+        "stdout": "Created ${TEAM} with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${TEAM} and run the setup skill.\n"
+      }
+    }
+  ]
+}

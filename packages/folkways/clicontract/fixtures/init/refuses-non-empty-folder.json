@@ -1,0 +1,26 @@
+{
+  "description": "init refuses an existing folder that has files and leaves it untouched. From init.test.ts: init > refuses a non-empty folder",
+  "steps": [
+    {
+      "files": {
+        "x": ""
+      }
+    },
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: ${TEAM} exists and is not empty\n",
+        "unchanged": true,
+        "tree": [
+          "x"
+        ]
+      }
+    }
+  ]
+}

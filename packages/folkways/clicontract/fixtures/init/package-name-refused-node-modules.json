@@ -1,0 +1,21 @@
+{
+  "description": "init refuses the folder 'node_modules': no valid npm package name, and nothing is created. From init.test.ts: packageName > refuses \"node_modules\"",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${ROOT}/node_modules",
+        "--no-install"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: can't derive a valid npm package name from 'node_modules'; use another folder name\n",
+        "files": {
+          "${ROOT}/node_modules": null,
+          "${CALLS}": null
+        }
+      }
+    }
+  ]
+}
