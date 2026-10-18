@@ -27,25 +27,25 @@ needs and each request has one obvious skill?
 
 ## Context
 
-- Skill audit at folkways `fd86000`: [01](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/01-research-skill-audit.md). It covers the overlaps, the
+- Skill audit at folkways `fd86000`: [01](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/01-research-skill-audit.md). It covers the overlaps, the
   repetition (about 2,300 words), the headless conflicts, and what hooks already enforce.
-- Eval evidence for the close miss: [evals-next 01](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/evals-next/01-trigger-results-close.md).
-- Platform limits ([02](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/02-research-agents-and-modes.md)):
+- Eval evidence for the close miss: [evals-next 01](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/evals-next/01-trigger-results-close.md).
+- Platform limits ([02](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/02-research-agents-and-modes.md)):
   - A Claude subagent's `skills:` preloads skills but doesn't limit them.
   - Subagents can't ask the user, and workflows can't pause for input partway through.
   - Copilot `handoffs` are ignored by the cloud agent.
-- Mode signals per surface ([02](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/02-research-agents-and-modes.md)):
+- Mode signals per surface ([02](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/02-research-agents-and-modes.md)):
   - `COPILOT_AGENT_SESSION_ID` for the cloud agent, seen in
-    [app-repo-first 23](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/app-repo-first/23-probe-copilot-github.md);
+    [app-repo-first 23](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/app-repo-first/23-probe-copilot-github.md);
   - `GITHUB_ACTIONS` for Actions;
   - `CLAUDE_CODE_SESSION_ATTENDED=0` and `CLAUDE_CODE_ENTRYPOINT=sdk-cli` for `claude -p`. Both are
     undocumented.
-- SessionStart hooks can return different context per mode on both tools ([02](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/02-research-agents-and-modes.md)).
+- SessionStart hooks can return different context per mode on both tools ([02](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/02-research-agents-and-modes.md)).
 - Hiding skills: `disable-model-invocation: true` removes a skill's description from context in both tools.
   In Copilot `-p` the skill then can't be reached at all.
 - Platform targets (Summer, 2026-10-18): headless work and CI evals are built for Copilot first (cloud
   agent, Copilot CLI in Actions). Interactive sessions are built for Claude Code first.
-- The TypeScript CLI takes only deletions until the Go port ([ADR 0011](0011-cli-in-go.md), [go-cli](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/go-cli/00-STATUS.md)), so
+- The TypeScript CLI takes only deletions until the Go port ([ADR 0011](0011-cli-in-go.md), [go-cli](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/go-cli/00-STATUS.md)), so
   deterministic steps can't move into the CLI yet.
 
 ## Decision
@@ -90,7 +90,7 @@ The headless rule set (one place):
 - Flag every judgement call with what a reviewer needs.
 
 Non-goals:
-- Moving deterministic steps into the CLI or hooks ([06](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/06-adr-deterministic-steps.md)).
+- Moving deterministic steps into the CLI or hooks ([06](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/06-adr-deterministic-steps.md)).
 - The rule that `knowledge/` lands by PR (a separate ADR).
 - Fixing git-guard's `-F` gap.
 - Any change to how hooks reach app repos (ADR 0007).
@@ -104,7 +104,7 @@ Size:
 
 ## Options considered
 
-Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/03-options-architecture.md).
+Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/03-options-architecture.md).
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
@@ -134,12 +134,12 @@ Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/a4592a9
   - Teams with overlays for `start`, `status` or `handoff` must move them to `effort`. `folkways sync`
     should warn about overlays for removed skills.
 - **Not tried:** the `effort` merge has no proof of concept. The eval baseline on main
-  ([07](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/07-plan-evals.md)) runs before the merge PRs, and the merge PR has to match or beat it.
+  ([07](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/07-plan-evals.md)) runs before the merge PRs, and the merge PR has to match or beat it.
 - **Follow-on work:**
   - The Tier 0 lint: budgets and shared-trigger checks.
   - The Copilot CLI eval driver and a baseline on main before the merge PRs.
   - The `knowledge/` push-rule ADR.
-  - A docs PR for bugs 1, 2 and 4 in [01](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/01-research-skill-audit.md).
+  - A docs PR for bugs 1, 2 and 4 in [01](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/01-research-skill-audit.md).
 - **Held PRs:**
   - folkways#40's Close task moves into `effort`; the PR is closed or rebased onto it.
   - ADR 0007 (folkways#41) stands. The plugin hooks it chooses are how the mode reaches the cloud agent.
@@ -159,7 +159,7 @@ Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/a4592a9
 - ADR 0008 ([folkways#43](https://github.com/sumsolution/folkways/pull/43)): constrains where the
   headless fallback line lives.
 - Separate ADR (to come): `knowledge/` lands by PR, enforced by git-guard.
-- Separate ADR (draft, [06](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/06-adr-deterministic-steps.md)): deterministic skill steps move to the Go CLI or
+- Separate ADR (draft, [06](https://github.com/sumsolution/folkways-command/blob/810700a/efforts/architecture-review/06-adr-deterministic-steps.md)): deterministic skill steps move to the Go CLI or
   hooks.
 
 ## Interested parties
