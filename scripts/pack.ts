@@ -3,10 +3,10 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { packageName, TARGETS } from '../packages/hooks/scripts/build.ts';
+import { packageName, TARGETS } from '../packages/folkways/scripts/build.ts';
 
 export const CLI = resolve(import.meta.dirname, '..', 'packages', 'cli');
-export const HOOKS = resolve(import.meta.dirname, '..', 'packages', 'hooks');
+export const HOOKS = resolve(import.meta.dirname, '..', 'packages', 'folkways');
 export const CLAUDE_PLUGIN = resolve(import.meta.dirname, '..', 'packages', 'claude-plugin');
 /** Every `@folkways/hooks-<os>-<cpu>` package, sorted. */
 export const PLATFORMS: readonly string[] = TARGETS.map(packageName).sort();

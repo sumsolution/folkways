@@ -162,7 +162,7 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-pnpmfileChecksum: sha256-f79Uy4Q8Dw1Ib7R2YPcF4/Qe5Ee9pxDaiZ03c6pVziQ=
+pnpmfileChecksum: sha256-LqSM2DceGgqmo9Tq8jWwS8kbnVM3vFZ7opUQzdJjtko=
 
 importers:
 
@@ -182,7 +182,7 @@ importers:
     devDependencies:
       '@folkways/hooks':
         specifier: workspace:*
-        version: link:../hooks
+        version: link:../folkways
       '@types/node':
         specifier: ^26.6.4
         version: 26.6.4
@@ -229,7 +229,7 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.4)(vite@8.3.0(@types/node@26.6.4))
 
-  packages/hooks:
+  packages/folkways:
     devDependencies:
       '@types/node':
         specifier: ^26.6.4

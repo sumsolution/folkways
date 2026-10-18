@@ -38,7 +38,7 @@ export function platformManifest(t: Target, version: string): Record<string, unk
     repository: {
       type: 'git',
       url: 'git+https://github.com/sumsolution/folkways.git',
-      directory: 'packages/hooks',
+      directory: 'packages/folkways',
     },
     os: [t.os],
     cpu: [t.cpu],
@@ -60,7 +60,7 @@ export function build(out: string, version: string): string[] {
     mkdirSync(join(dir, 'bin'), { recursive: true });
     const r = spawnSync(
       'go',
-      ['build', '-trimpath', '-ldflags', `-s -w -X main.version=${version}`, '-o', join(dir, 'bin', 'folkways-hook'), '.'],
+      ['build', '-trimpath', '-ldflags', `-s -w -X main.version=${version}`, '-o', join(dir, 'bin', 'folkways-hook'), './cmd/folkways-hook'],
       { cwd: PACKAGE, env: { ...process.env, CGO_ENABLED: '0', GOOS: t.os, GOARCH: t.goarch }, encoding: 'utf8' },
     );
     if (r.error || r.status !== 0) {

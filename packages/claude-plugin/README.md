@@ -3,7 +3,7 @@
 Builds the folkways Claude Code plugin: the framework's skills, instructions and hooks, for repos that
 aren't synced team repos. `pnpm --filter "@folkways/claude-plugin..." run build` cross-compiles
 `folkways-hook` with `@folkways/hooks`'s build (needs Go), then writes a complete plugin to `dist/`. The
-plugin's own build only reads the hooks build in `packages/hooks/npm/`; `node src/build.ts <out> <hooks-build>`
+plugin's own build only reads the hooks build in `packages/folkways/npm/`; `node src/build.ts <out> <hooks-build>`
 takes another one.
 
 | In `dist/` | From |

@@ -33,7 +33,7 @@ updates:
       include: scope
 
   - package-ecosystem: gomod
-    directory: /packages/hooks
+    directory: /packages/folkways
     schedule:
       interval: weekly
     cooldown:

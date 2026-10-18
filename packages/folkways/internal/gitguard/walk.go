@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sumsolution/folkways/packages/hooks/internal/team"
+	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 	"mvdan.cc/sh/v3/syntax"
 )
 

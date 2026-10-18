@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sumsolution/folkways/packages/hooks/internal/team"
+	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
 func gitIn(t *testing.T, dir string, args ...string) string {

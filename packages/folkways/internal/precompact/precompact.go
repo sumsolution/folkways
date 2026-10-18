@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sumsolution/folkways/packages/hooks/internal/payload"
-	"github.com/sumsolution/folkways/packages/hooks/internal/team"
+	"github.com/sumsolution/folkways/packages/folkways/internal/payload"
+	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
 // Run appends one JSON line (time, session id, trigger) to .local/precompact.log. It prints nothing, so it
