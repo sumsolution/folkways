@@ -56,6 +56,9 @@ describe('loadSuite', () => {
       loadSuite(suiteDir({ ...base, 'cases/a/prompt.md': 'Hi.\n', 'cases/a/graders/x.md': '---\ntype: vibes\n---\n' })),
     ).toThrow(/vibes/);
     expect(() => loadSuite(suiteDir({ 'suite.json': SUITE, 'cases/a/prompt.md': 'Hi.\n' }))).toThrow(/no graders/);
+    expect(() =>
+      loadSuite(suiteDir({ ...base, 'cases/a/prompt.md': 'Hi.\n', 'cases/a/graders/x.md': '---\ntype: tool_used\ntool: Edit\nmax: 0\n---\n' })),
+    ).toThrow(/below min/);
   });
 
   it('rejects a bad regex and an empty rubric at load time', () => {

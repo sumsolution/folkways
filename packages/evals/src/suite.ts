@@ -144,14 +144,10 @@ function loadGrader(label: string, path: string): Grader {
   }
   if (type === 'tool_used') {
     const inputMatch = str(data.input_match);
-    return {
-      ...base,
-      type,
-      tool: str(data.tool) ?? '',
-      ...(inputMatch !== undefined && { inputMatch }),
-      min: num(data.min, 1),
-      max: data.max === undefined ? undefined : num(data.max, 0),
-    };
+    const min = num(data.min, 1);
+    const max = data.max === undefined ? undefined : num(data.max, 0);
+    if (max !== undefined && max < min) throw new EvalError(`${label}: max ${max} is below min ${min} (min defaults to 1)`);
+    return { ...base, type, tool: str(data.tool) ?? '', ...(inputMatch !== undefined && { inputMatch }), min, max };
   }
   if (body === '') throw new EvalError(`${label}: an llm grader needs a rubric in its body`);
   return { ...base, type, criteria: body, focus: target(data.focus), votes: num(data.votes, 3) };
