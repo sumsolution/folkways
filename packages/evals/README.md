@@ -20,6 +20,19 @@ Needs Node 24+, git, the `claude` CLI, and `CLAUDE_CODE_OAUTH_TOKEN` (from `clau
 `ANTHROPIC_API_KEY` in the environment: each run gets an empty config dir, which has no login. Every subject
 run and judge vote is a model call on your account; `--dry-run` prints the counts first.
 
+Keep the token in the macOS Keychain, not in a dotfile or shell history. Store it once (it prompts for
+the token):
+
+```sh
+security add-generic-password -a "$USER" -s claude-eval-token -w
+```
+
+Load it into the terminal you run evals from, and `unset CLAUDE_CODE_OAUTH_TOKEN` when done:
+
+```sh
+export CLAUDE_CODE_OAUTH_TOKEN="$(security find-generic-password -a "$USER" -s claude-eval-token -w)"
+```
+
 ```sh
 node packages/evals/src/cli.ts run packages/evals/suites/review-rounds --dry-run
 node packages/evals/src/cli.ts run packages/evals/suites/review-rounds --jobs 6
