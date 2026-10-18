@@ -32,7 +32,9 @@ tool? What files does an app repo carry?
   its `SessionStart` and `PreToolUse` hooks run; the `@` import in `AGENTS.md` is expanded. Headless
   `copilot -p` gets the plugin only after an interactive start with "Yes, and remember this folder" or an
   explicit `copilot plugin install`; with session-only trust the skill is "not found", with no error. The
-  skill tested was a plugin skill; a skill committed under `.claude/skills` rests on the changelog.
+  repo skill at `.claude/skills/repo-check/SKILL.md`, not from a plugin, also ran headless, both in a
+  trusted config and in a never-trusted one with no plugin installed ([23 Q5 row 7][q5-7]). So repo
+  skills don't need folder trust; repo-enabled plugins do.
 - **The Copilot cloud agent reads the Claude format.** Docs: `AGENTS.md`, `CLAUDE.md`, and skills in
   `.claude/skills` ([custom-instructions-support](https://docs.github.com/en/copilot/reference/custom-instructions-support),
   [about-agent-skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills), [20 §7b][r-7b]).
@@ -105,7 +107,8 @@ costs one `sync` change; removing mirrors from many app repos costs more.
 [r-hands]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#L398-L431
 [r-7c]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#L475-L546
 [r-7d]: https://github.com/sumsolution/folkways-command/blob/991d759c19cb77530bd2619150c84de52de4a5d8/efforts/app-repo-first/20-research-app-repo-architecture.md#L548-L634
-[q5]: https://github.com/sumsolution/folkways-command/blob/e7781d5/efforts/app-repo-first/23-probe-copilot-github.md#L226-L291
+[q5]: https://github.com/sumsolution/folkways-command/blob/6f02a62/efforts/app-repo-first/23-probe-copilot-github.md#L226-L292
+[q5-7]: https://github.com/sumsolution/folkways-command/blob/6f02a62/efforts/app-repo-first/23-probe-copilot-github.md#L243
 [p-2]: https://github.com/sumsolution/folkways-agent-sandbox/pull/2
 [p-3]: https://github.com/sumsolution/folkways-agent-sandbox/pull/3
 [p-4]: https://github.com/sumsolution/folkways-agent-sandbox/pull/4
