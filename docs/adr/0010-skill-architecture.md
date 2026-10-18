@@ -2,11 +2,12 @@
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | accepted |
 | Date | 2026-10-18 |
 | Owner | Summer Jordan |
 | Reviewers | none required (`adr.reviewers.min: 0`) |
 | Review window | until 2026-10-25 |
+| Accepted | 2026-10-18, Summer Jordan |
 
 ## Issue
 
@@ -113,7 +114,7 @@ Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/810700a
 | 3 | No agents | Nothing new to maintain | Headless runs depend on description triggers, the failure we measured | Simplest, but leaves the headless roles to chance |
 | 4 | The hook states the mode; interactive-only skills are hidden | Headless rules exist once; skills lose ~450 words; agents know their mode | Relies on undocumented Claude variables for `claude -p`; a hidden skill can't be reached in Copilot `-p` | A small Go change replaces 17 copies of the rules |
 | 5 | Keep `## Headless` per skill (today) | No change | The conflicts in 01 stay; nothing tells the agent its mode | Keeps the status quo and its contradictions |
-| 6 | Full consolidation (16 → 14 skills: 12 model-invocable, 2 user-only) | Removes the main overlap cluster and the duplicated duties; one status template | Merging four skills into `effort` risks a large skill and new trigger misses; the most PRs | Fixes the cause, at the cost of the riskiest rewrite |
+| 6 | Full consolidation (16 → 14 skills: 12 model-invocable, 2 user-only) | Removes the main overlap cluster and the duplicated duties; one status template | Merging three skills and the Close task into `effort` risks a large skill and new trigger misses; the most PRs | Fixes the cause, at the cost of the riskiest rewrite |
 | 7 | Boilerplate removal plus the `effort` merge only | Most of the word saving at about half the PRs | Leaves the smaller clashes (tests/qa, side-quest/ticket, the review prompt) | Cheaper, but leaves known clashes for later |
 
 ## Consequences
