@@ -1,0 +1,15 @@
+{
+  "description": "an unknown command prints the usage on stderr and exits 1",
+  "steps": [
+    {
+      "args": [
+        "nope"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:^usage: folkways <command> \\[options\\]\\n(?s:.*)  review \\| run +not built yet\\n$"
+      }
+    }
+  ]
+}
