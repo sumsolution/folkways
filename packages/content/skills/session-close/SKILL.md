@@ -1,6 +1,6 @@
 ---
 name: session-close
-description: Banks what a session learned - proposes where each durable fact, status change and lesson should be saved, then writes it on approval. Use when the user says "close the session", "wrap up", "bank this", "end of day", "what should we save", "before I go" or "anything worth keeping". Not for writing the status doc for a fresh session (use handoff).
+description: Banks what a session learned - proposes where each durable fact, status change and lesson should be saved, then writes it on approval. Use when the user says "close the session", "wrap up", "bank this", "end of day", "what should we save", "before I go" or "anything worth keeping". Not for writing the status doc for a fresh session (use handoff) or closing a finished effort (use status).
 ---
 
 # session-close
