@@ -1,0 +1,8 @@
+{
+  "arms": [
+    { "name": "before", "ref": "ec8f1fc" },
+    { "name": "after", "ref": "fde5b69" }
+  ],
+  "model": "sonnet",
+  "judge_model": "sonnet"
+}
