@@ -25,27 +25,27 @@ headless rules are copied into 16 skills, and they disagree about pushes and not
 How should folkways partition its skills, agents and instructions so each session loads only what it
 needs and each request has one obvious skill?
 
-## Relevant context
+## Context
 
-- Skill audit at folkways `fd86000`: [01](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/01-research-skill-audit.md). It covers the overlaps, the
+- Skill audit at folkways `fd86000`: [01](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/01-research-skill-audit.md). It covers the overlaps, the
   repetition (about 2,300 words), the headless conflicts, and what hooks already enforce.
-- Eval evidence for the close miss: [evals-next 01](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/evals-next/01-trigger-results-close.md).
-- Platform limits ([02](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/02-research-agents-and-modes.md)):
+- Eval evidence for the close miss: [evals-next 01](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/evals-next/01-trigger-results-close.md).
+- Platform limits ([02](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/02-research-agents-and-modes.md)):
   - A Claude subagent's `skills:` preloads skills but doesn't limit them.
   - Subagents can't ask the user, and workflows can't pause for input partway through.
   - Copilot `handoffs` are ignored by the cloud agent.
-- Mode signals per surface ([02](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/02-research-agents-and-modes.md)):
+- Mode signals per surface ([02](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/02-research-agents-and-modes.md)):
   - `COPILOT_AGENT_SESSION_ID` for the cloud agent, seen in
-    [app-repo-first 23](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/app-repo-first/23-probe-copilot-github.md);
+    [app-repo-first 23](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/app-repo-first/23-probe-copilot-github.md);
   - `GITHUB_ACTIONS` for Actions;
   - `CLAUDE_CODE_SESSION_ATTENDED=0` and `CLAUDE_CODE_ENTRYPOINT=sdk-cli` for `claude -p`. Both are
     undocumented.
-- SessionStart hooks can return different context per mode on both tools ([02](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/02-research-agents-and-modes.md)).
+- SessionStart hooks can return different context per mode on both tools ([02](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/02-research-agents-and-modes.md)).
 - Hiding skills: `disable-model-invocation: true` removes a skill's description from context in both tools.
   In Copilot `-p` the skill then can't be reached at all.
 - Platform targets (Summer, 2026-10-18): headless work and CI evals are built for Copilot first (cloud
   agent, Copilot CLI in Actions). Interactive sessions are built for Claude Code first.
-- The TypeScript CLI takes only deletions until the Go port ([ADR 0011](0011-cli-in-go.md), [go-cli](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/go-cli/00-STATUS.md)), so
+- The TypeScript CLI takes only deletions until the Go port ([ADR 0011](0011-cli-in-go.md), [go-cli](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/go-cli/00-STATUS.md)), so
   deterministic steps can't move into the CLI yet.
 
 ## Decision
@@ -57,8 +57,8 @@ Options 2, 4 and 6 below, decided together because each depends on the others:
    - Each is a short file: a role, its limits, and the skill it uses.
    - Interactive work stays in one main session that picks skills.
    - Agent files go in `.claude/agents/`, which Claude Code, VS Code and Copilot CLI read. A copy in
-     `.github/agents/` is added if the cloud agent needs it **(unconfirmed: pending the control probe in
-     02)**.
+     `.github/agents/` ships too until a probe on a default branch shows whether the cloud agent reads
+     either format. Probes F and G, on a non-default branch, saw neither (02 Open-1).
 2. **The session-start hook states the mode (option 4).** It prints `Mode: interactive` or
    `Mode: headless (<surface>)`, checking Copilot's variables before Claude's.
    - In headless runs it also prints the single headless rule set.
@@ -90,7 +90,7 @@ The headless rule set (one place):
 - Flag every judgement call with what a reviewer needs.
 
 Non-goals:
-- Moving deterministic steps into the CLI or hooks ([06](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/06-adr-deterministic-steps.md)).
+- Moving deterministic steps into the CLI or hooks ([06](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/06-adr-deterministic-steps.md)).
 - The rule that `knowledge/` lands by PR (a separate ADR).
 - Fixing git-guard's `-F` gap.
 - Any change to how hooks reach app repos (ADR 0007).
@@ -98,13 +98,13 @@ Non-goals:
 Size:
 - `instructions.md` ≤ 600 words.
 - SKILL.md total ≤ 10,000 words (−30%).
-- 13 model-invocable skills.
+- 14 skills, 12 of them model-invocable.
 - About 6 PRs (implementation plan 05, to be written).
 - One Go change in `sessionstart.go`.
 
 ## Options considered
 
-Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/03-options-architecture.md).
+Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/03-options-architecture.md).
 
 | # | Option | Pros | Cons | Trade-off |
 |---|---|---|---|---|
@@ -113,7 +113,7 @@ Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/272523f
 | 3 | No agents | Nothing new to maintain | Headless runs depend on description triggers, the failure we measured | Simplest, but leaves the headless roles to chance |
 | 4 | The hook states the mode; interactive-only skills are hidden | Headless rules exist once; skills lose ~450 words; agents know their mode | Relies on undocumented Claude variables for `claude -p`; a hidden skill can't be reached in Copilot `-p` | A small Go change replaces 17 copies of the rules |
 | 5 | Keep `## Headless` per skill (today) | No change | The conflicts in 01 stay; nothing tells the agent its mode | Keeps the status quo and its contradictions |
-| 6 | Full consolidation (16 → 13 model-invocable skills, plus 2 user-only) | Removes the main overlap cluster and the duplicated duties; one status template | Merging four skills into `effort` risks a large skill and new trigger misses; the most PRs | Fixes the cause, at the cost of the riskiest rewrite |
+| 6 | Full consolidation (16 → 14 skills: 12 model-invocable, 2 user-only) | Removes the main overlap cluster and the duplicated duties; one status template | Merging four skills into `effort` risks a large skill and new trigger misses; the most PRs | Fixes the cause, at the cost of the riskiest rewrite |
 | 7 | Boilerplate removal plus the `effort` merge only | Most of the word saving at about half the PRs | Leaves the smaller clashes (tests/qa, side-quest/ticket, the review prompt) | Cheaper, but leaves known clashes for later |
 
 ## Consequences
@@ -122,22 +122,24 @@ Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/272523f
   - One skill per request for the effort lifecycle.
   - Agents know their mode.
   - Headless rules change in one place.
-  - About 1,100 fewer always-loaded words, and about 4,000 fewer words of skill text.
+  - About 480 fewer always-loaded words (`instructions.md`), and about 4,000 fewer words of skill text.
 - **Harder or costlier:**
   - `effort` is a large skill, and its description must cover six tasks without colliding with
     `session-close`.
   - Mode detection on Claude rests on two undocumented variables, so a test must pin them.
+  - A local `copilot -p` outside Actions has no mode signal (`COPILOT_CLI=1` is set interactively too),
+    so the hook reports it as interactive.
   - `test/skills.test.ts` has to change before any boilerplate goes, because it requires the config line,
     the personal-root line and `## Headless`.
   - Teams with overlays for `start`, `status` or `handoff` must move them to `effort`. `folkways sync`
     should warn about overlays for removed skills.
 - **Not tried:** the `effort` merge has no proof of concept. The eval baseline on main
-  ([07](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/07-plan-evals.md)) runs before the merge PRs, and the merge PR has to match or beat it.
+  ([07](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/07-plan-evals.md)) runs before the merge PRs, and the merge PR has to match or beat it.
 - **Follow-on work:**
   - The Tier 0 lint: budgets and shared-trigger checks.
   - The Copilot CLI eval driver and a baseline on main before the merge PRs.
   - The `knowledge/` push-rule ADR.
-  - A docs PR for bugs 1, 2 and 4 in [01](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/01-research-skill-audit.md).
+  - A docs PR for bugs 1, 2 and 4 in [01](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/01-research-skill-audit.md).
 - **Held PRs:**
   - folkways#40's Close task moves into `effort`; the PR is closed or rebased onto it.
   - ADR 0007 (folkways#41) stands. The plugin hooks it chooses are how the mode reaches the cloud agent.
@@ -157,7 +159,7 @@ Deep analysis: [03](https://github.com/sumsolution/folkways-command/blob/272523f
 - ADR 0008 ([folkways#43](https://github.com/sumsolution/folkways/pull/43)): constrains where the
   headless fallback line lives.
 - Separate ADR (to come): `knowledge/` lands by PR, enforced by git-guard.
-- Separate ADR (draft, [06](https://github.com/sumsolution/folkways-command/blob/272523f/efforts/architecture-review/06-adr-deterministic-steps.md)): deterministic skill steps move to the Go CLI or
+- Separate ADR (draft, [06](https://github.com/sumsolution/folkways-command/blob/a4592a9/efforts/architecture-review/06-adr-deterministic-steps.md)): deterministic skill steps move to the Go CLI or
   hooks.
 
 ## Interested parties
