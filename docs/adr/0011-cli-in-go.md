@@ -1,8 +1,8 @@
-# 0011. What is the CLI written in, and how is it installed?
+# 0011. The CLI is one Go binary, installed without Node first
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | accepted (Summer Jordan, 2026-10-18) |
 | Date | 2026-10-18 |
 | Owner | Summer Jordan |
 | Reviewers | none required (`adr.reviewers.min: 0`) |
