@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -24,11 +24,14 @@ function makeSuite(): string {
 }
 
 /** A fake claude: subjects in the "after" arm's repo say hello; the judge passes answers containing "hello". */
-function fakeClaude(): { runner: Runner; judgeInputs: string[]; subjectCwds: string[] } {
+function fakeClaude(): { runner: Runner; judgeInputs: string[]; subjectCwds: string[]; configDirs: string[] } {
   const judgeInputs: string[] = [];
   const subjectCwds: string[] = [];
+  const configDirs: string[] = [];
   const line = (o: unknown) => JSON.stringify(o);
-  const runner: Runner = async (args, { cwd, input }) => {
+  const runner: Runner = async (args, { cwd, configDir, input }) => {
+    expect(readdirSync(configDir)).toEqual([]);
+    configDirs.push(configDir);
     if (input !== undefined) {
       judgeInputs.push(input);
       const verdict = input.includes('hello') ? 'PASS' : 'FAIL';
@@ -43,7 +46,7 @@ function fakeClaude(): { runner: Runner; judgeInputs: string[]; subjectCwds: str
     expect(args).toContain('--setting-sources');
     return { code: 0, stdout, stderr: '', timedOut: false };
   };
-  return { runner, judgeInputs, subjectCwds };
+  return { runner, judgeInputs, subjectCwds, configDirs };
 }
 
 describe('runSuite', () => {
@@ -64,6 +67,9 @@ describe('runSuite', () => {
 
     expect(fake.subjectCwds).toHaveLength(4);
     expect(new Set(fake.subjectCwds).size).toBe(4);
+    const subjectConfigs = fake.configDirs.filter((d) => !d.includes('folkways-judge-config-'));
+    expect(new Set(subjectConfigs).size).toBe(4); // an empty config dir per run, outside the team repo
+    for (const [i, d] of subjectConfigs.entries()) expect(d.startsWith(fake.subjectCwds[i]!)).toBe(false);
     expect(fake.judgeInputs).toHaveLength(12);
     for (const input of fake.judgeInputs) expect(input).not.toMatch(/before|after|WORKTREE|HEAD/);
 

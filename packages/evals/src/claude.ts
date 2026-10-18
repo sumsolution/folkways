@@ -8,8 +8,21 @@ export interface RunResult {
   timedOut: boolean;
 }
 
-/** Runs `claude` with args in cwd. `input` goes to stdin. Injected so tests never call a model. */
-export type Runner = (args: string[], options: { cwd: string; input?: string; timeoutMs: number }) => Promise<RunResult>;
+/**
+ * Runs `claude` with args in cwd. `input` goes to stdin. `configDir` becomes `CLAUDE_CONFIG_DIR`, so no
+ * user skills, plugins, CLAUDE.md or memory load. Injected so tests never call a model.
+ */
+export type Runner = (
+  args: string[],
+  options: { cwd: string; configDir: string; input?: string; timeoutMs: number },
+) => Promise<RunResult>;
+
+/** An empty config dir has no login, so auth must come from the environment. */
+export const AUTH_VARS = ['CLAUDE_CODE_OAUTH_TOKEN', 'ANTHROPIC_API_KEY'];
+
+export function claudeEnv(configDir: string, env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  return { ...env, CLAUDE_CONFIG_DIR: configDir };
+}
 
 /**
  * The subject: one headless session in the team repo. Project settings, CLAUDE.md and skills load;
@@ -42,9 +55,9 @@ export function judgeArgs(model: string): string[] {
   ];
 }
 
-export const spawnClaude: Runner = (args, { cwd, input, timeoutMs }) =>
+export const spawnClaude: Runner = (args, { cwd, configDir, input, timeoutMs }) =>
   new Promise((resolve) => {
-    const child = spawn('claude', args, { cwd, stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'] });
+    const child = spawn('claude', args, { cwd, env: claudeEnv(configDir), stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     let timedOut = false;

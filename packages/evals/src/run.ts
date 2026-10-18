@@ -57,7 +57,9 @@ export async function runSuite(o: RunOptions): Promise<Summary> {
   await pool(work, o.jobs, async ({ arm, c, run }) => {
     const ws = join(scratch, arm.name, c.name, `run-${run}`, 'team');
     buildTeamRepo(pkgs.get(arm.name)!, ws, c.repo);
-    const res = await o.runner(subjectArgs(c, o.model), { cwd: ws, timeoutMs: c.timeoutSeconds * 1000 });
+    const configDir = join(scratch, arm.name, c.name, `run-${run}`, 'claude-config');
+    mkdirSync(configDir);
+    const res = await o.runner(subjectArgs(c, o.model), { cwd: ws, configDir, timeoutMs: c.timeoutSeconds * 1000 });
     const trace = parseTrace(res.stdout);
     const saved: SavedRun = {
       arm: arm.name,
@@ -98,9 +100,10 @@ export async function gradeSuite(o: Common): Promise<Summary> {
   );
   shuffle(tasks);
   const judgeDir = mkdtempSync(join(tmpdir(), 'folkways-judge-'));
+  const judgeConfig = mkdtempSync(join(tmpdir(), 'folkways-judge-config-'));
   let judgeCost = 0;
   await pool(tasks, o.jobs, async ({ key, g, text }) => {
-    const res = await o.runner(judgeArgs(o.judgeModel), { cwd: judgeDir, input: judgePrompt(g.criteria, text), timeoutMs: 180_000 });
+    const res = await o.runner(judgeArgs(o.judgeModel), { cwd: judgeDir, configDir: judgeConfig, input: judgePrompt(g.criteria, text), timeoutMs: 180_000 });
     let reply = res.stdout;
     try {
       const json = JSON.parse(res.stdout) as { result?: string; total_cost_usd?: number };

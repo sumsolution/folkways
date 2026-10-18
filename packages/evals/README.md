@@ -16,8 +16,9 @@ suite can also sit elsewhere, e.g. in a team repo.
 
 ## Run
 
-Needs Node 24+, git, and an authenticated `claude` CLI. Every subject run and judge vote is a model call on
-your account; `--dry-run` prints the counts first.
+Needs Node 24+, git, the `claude` CLI, and `CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) or
+`ANTHROPIC_API_KEY` in the environment: each run gets an empty config dir, which has no login. Every subject
+run and judge vote is a model call on your account; `--dry-run` prints the counts first.
 
 ```sh
 node packages/evals/src/cli.ts run packages/evals/suites/review-rounds --dry-run
@@ -83,12 +84,14 @@ Write rubrics as concrete PASS and FAIL conditions. The judge sees only the rubr
 |---|---|
 | Team repo | built in the OS temp dir, outside any git repo, so no host `CLAUDE.md` or `AGENTS.md` loads |
 | Settings | `--setting-sources project,local`: user settings, hooks and permissions don't load |
+| User config | an empty `CLAUDE_CONFIG_DIR` per run: no user skills, plugins, `CLAUDE.md` or memory |
 | MCP | `--strict-mcp-config`, no servers |
 | Tools | `--tools` = the case's `allowed_tools` |
 | Git | fixture commits ignore your git config (`GIT_CONFIG_GLOBAL=/dev/null`) |
-| Judge | no tools, no settings sources, an empty directory |
+| Judge | no tools, no settings sources, an empty directory and config dir |
 
-Not isolated: your user memory (`~/.claude/CLAUDE.md`) and user skills still load. `summary.md` flags runs
-where a team-repo skill didn't load or an MCP server did; check `run.json` `trace.skills` for extras. For
-clean runs use a container or a cloud session. A case that grants `Bash`, `Edit` or `Write` runs them as
+Still loaded: the skills bundled with the `claude` CLI (`code-review`, `debug`, `run` and others), as for
+every user and cloud agent. Hooks don't run: `folkways init --no-install` leaves no `folkways-hook`.
+Not isolated: the machine, the CLI version and environment variables. `summary.md` flags runs where a
+team-repo skill didn't load or an MCP server did; `run.json` `trace.skills` lists what loaded. A case that grants `Bash`, `Edit` or `Write` runs them as
 you, in the temp team repo.

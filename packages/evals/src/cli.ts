@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { spawnClaude } from './claude.ts';
+import { AUTH_VARS, spawnClaude } from './claude.ts';
 import { EvalError } from './errors.ts';
 import { gradeSuite, runSuite } from './run.ts';
 import { loadSuite } from './suite.ts';
@@ -71,6 +71,9 @@ async function main(argv: string[]): Promise<void> {
       `${command === 'run' ? `${subjects} subject runs (${model}), ` : ''}${votes} judge votes (${judgeModel}) -> ${common.out}`,
   );
   if (values['dry-run']) return;
+  if ((command === 'run' || votes > 0) && !AUTH_VARS.some((v) => process.env[v])) {
+    throw new EvalError(`each run gets an empty CLAUDE_CONFIG_DIR, so set ${AUTH_VARS.join(' or ')} (claude setup-token)`);
+  }
 
   const summary =
     command === 'run'

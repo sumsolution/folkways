@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { judgeArgs, subjectArgs } from '../src/claude.ts';
+import { claudeEnv, judgeArgs, subjectArgs } from '../src/claude.ts';
 import type { Case } from '../src/suite.ts';
 
 const c: Case = {
@@ -42,5 +42,13 @@ describe('judgeArgs', () => {
     expect(args[args.indexOf('--tools') + 1]).toBe('');
     expect(args[args.indexOf('--setting-sources') + 1]).toBe('');
     expect(args).toContain('--strict-mcp-config');
+  });
+});
+
+describe('claudeEnv', () => {
+  it('points CLAUDE_CONFIG_DIR at the run dir and keeps the rest, auth included', () => {
+    const env = claudeEnv('/tmp/run-1/claude-config', { CLAUDE_CONFIG_DIR: '/home/me/.claude', CLAUDE_CODE_OAUTH_TOKEN: 't' });
+    expect(env.CLAUDE_CONFIG_DIR).toBe('/tmp/run-1/claude-config');
+    expect(env.CLAUDE_CODE_OAUTH_TOKEN).toBe('t');
   });
 });
