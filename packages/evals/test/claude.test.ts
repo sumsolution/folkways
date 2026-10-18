@@ -27,6 +27,12 @@ describe('subjectArgs', () => {
     expect(args).toContain('--strict-mcp-config');
     expect(args).toContain('--no-session-persistence');
     expect(args).not.toContain('--mcp-config');
+    expect(flag('--disallowed-tools')).toBe('Monitor,PushNotification,RemoteTrigger,DesignSync');
+  });
+
+  it("doesn't deny an unlisted tool the case allows", () => {
+    const args = subjectArgs({ ...c, allowedTools: ['Read', 'Monitor'] }, 'sonnet');
+    expect(args[args.indexOf('--disallowed-tools') + 1]).toBe('PushNotification,RemoteTrigger,DesignSync');
   });
 
   it('uses the case model over the default', () => {

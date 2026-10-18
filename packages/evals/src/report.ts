@@ -52,6 +52,7 @@ export function summarize(graded: Graded[], arms: string[], cases: string[], jud
     if (s.timedOut) out.push(`${id}: timed out`);
     else if (s.code !== 0 || s.trace.isError) out.push(`${id}: exit ${s.code}${s.trace.isError ? ', error result' : ''}`);
     if (s.missingSkills.length > 0) out.push(`${id}: skills not loaded: ${s.missingSkills.join(', ')}`);
+    if (s.extraTools?.length) out.push(`${id}: tools beyond the case: ${s.extraTools.join(', ')}`);
     if (s.trace.mcpServers.length > 0) out.push(`${id}: MCP servers loaded: ${s.trace.mcpServers.join(', ')}`);
     return out;
   });

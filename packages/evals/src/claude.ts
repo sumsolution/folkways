@@ -24,6 +24,9 @@ export function claudeEnv(configDir: string, env: NodeJS.ProcessEnv = process.en
   return { ...env, CLAUDE_CONFIG_DIR: configDir };
 }
 
+/** Tools that `--tools` leaves in place (claude 2.1.161, seen 2026-10-18), so they are denied by name. */
+export const UNLISTED_TOOLS = ['Monitor', 'PushNotification', 'RemoteTrigger', 'DesignSync'];
+
 /**
  * The subject: one headless session in the team repo. Project settings, CLAUDE.md and skills load;
  * user settings, hooks and MCP servers don't; only the case's tools exist.
@@ -39,6 +42,7 @@ export function subjectArgs(c: Case, model: string): string[] {
     '--strict-mcp-config',
     '--no-session-persistence',
     '--tools', c.allowedTools.join(','),
+    '--disallowed-tools', UNLISTED_TOOLS.filter((t) => !c.allowedTools.includes(t)).join(','),
   ];
 }
 

@@ -40,6 +40,8 @@ export interface SavedRun {
   stderr: string;
   /** Skills in the team repo that the session didn't load: a broken arm, not a result. */
   missingSkills: string[];
+  /** Tools the session had beyond the case's `allowed_tools`: the run wasn't held to the case. */
+  extraTools: string[];
   trace: Trace;
 }
 
@@ -71,6 +73,7 @@ export async function runSuite(o: RunOptions): Promise<Summary> {
       timedOut: res.timedOut,
       stderr: res.stderr.slice(-2000),
       missingSkills: workspaceSkills(ws).filter((s) => !trace.skills.includes(s)),
+      extraTools: trace.tools.filter((t) => !c.allowedTools.includes(t)),
       trace,
     };
     const dir = runDir(o.out, arm.name, c.name, run);

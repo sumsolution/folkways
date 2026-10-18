@@ -40,7 +40,7 @@ function fakeClaude(): { runner: Runner; judgeInputs: string[]; subjectCwds: str
     subjectCwds.push(cwd);
     const text = subjectCwds.length % 2 === 0 ? 'hello there' : 'go away';
     const stdout = [
-      line({ type: 'system', subtype: 'init', tools: ['Read'], skills: ['pr', 'review'], plugins: [], mcp_servers: [] }),
+      line({ type: 'system', subtype: 'init', tools: ['Read', 'Monitor'], skills: ['pr', 'review'], plugins: [], mcp_servers: [] }),
       line({ type: 'result', result: text, total_cost_usd: 0.01, num_turns: 1, is_error: false }),
     ].join('\n');
     expect(args).toContain('--setting-sources');
@@ -83,6 +83,8 @@ describe('runSuite', () => {
     const run = JSON.parse(readFileSync(join(out, 'before/demo/run-1/run.json'), 'utf8'));
     expect(run.trace.skills).toEqual(['pr', 'review']);
     expect(run.missingSkills.length).toBeGreaterThan(0); // the fake loaded 2 of the repo's skills
+    expect(run.extraTools).toEqual(['Monitor']);
+    expect(summary.flags).toContain('before/demo/run-1: tools beyond the case: Monitor');
     expect(readFileSync(join(out, 'summary.md'), 'utf8')).toContain('| demo |');
   });
 

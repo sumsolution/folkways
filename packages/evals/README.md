@@ -99,7 +99,7 @@ Write rubrics as concrete PASS and FAIL conditions. The judge sees only the rubr
 | Settings | `--setting-sources project,local`: user settings, hooks and permissions don't load |
 | User config | an empty `CLAUDE_CONFIG_DIR` per run: no user skills, plugins, `CLAUDE.md` or memory |
 | MCP | `--strict-mcp-config`, no servers |
-| Tools | `--tools` = the case's `allowed_tools` |
+| Tools | `--tools` = the case's `allowed_tools`; `--disallowed-tools` for the tools `--tools` leaves in (`Monitor`, `PushNotification`, `RemoteTrigger`, `DesignSync`). `summary.md` flags a run that still had others |
 | Git | fixture commits ignore your git config (`GIT_CONFIG_GLOBAL=/dev/null`) |
 | Judge | no tools, no settings sources, an empty directory and config dir |
 
