@@ -1,0 +1,47 @@
+{
+  "description": "upgrade refuses a tree with an untracked file before running anything. TS: it 'refuses a dirty tree'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        "scratch.md": "x"
+      },
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: working tree is dirty; commit or stash first\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

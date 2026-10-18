@@ -1,0 +1,72 @@
+{
+  "description": "upgrade refuses when chore/folkways-<version> already exists. TS: it 'refuses an existing branch'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
+      },
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e 's/\"version\": \"${VERSION}\"/\"version\": \"0.0.1\"/' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ],
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "pin 0.0.1"
+        ]
+      ]
+    },
+    {
+      "git": [
+        [
+          "branch",
+          "chore/folkways-${VERSION}"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: branch chore/folkways-${VERSION} already exists\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

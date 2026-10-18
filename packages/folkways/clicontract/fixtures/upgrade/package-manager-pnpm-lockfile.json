@@ -1,0 +1,89 @@
+{
+  "description": "upgrade falls back to pnpm when only pnpm-lock.yaml exists. TS: package-manager.test.ts 'falls back to pnpm-lock.yaml'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n",
+        "pnpm-lock.yaml": ""
+      },
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e 's/\"version\": \"${VERSION}\"/\"version\": \"0.0.1\"/' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ],
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "pin 0.0.1"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "stdout": "Committed 0.0.1 -> ${VERSION} on chore/folkways-${VERSION}. Review, push, open a PR.\n",
+        "stderr": "",
+        "files": {
+          "${CALLS}": "${TEAM}: pnpm add --save-dev --save-exact @folkways/cli@${VERSION}\n",
+          ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",\n  \"skills\": \\[\n",
+          ".claude/skills/start/SKILL.md": true
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "chore/folkways-${VERSION}"
+          },
+          {
+            "args": [
+              "log",
+              "-1",
+              "--format=%s"
+            ],
+            "stdout": "chore(folkways): upgrade to ${VERSION}"
+          },
+          {
+            "args": [
+              "log",
+              "-1",
+              "--format=%b"
+            ],
+            "stdout": "From 0.0.1."
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "rev-list",
+              "--count",
+              "main..HEAD"
+            ],
+            "stdout": "1"
+          }
+        ]
+      }
+    }
+  ]
+}
