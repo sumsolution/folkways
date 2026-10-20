@@ -24,7 +24,7 @@ export function tmp(): string {
 }
 
 /**
- * A copy of this package at `version`: package.json, assets/, templates/, src/.
+ * A copy of this package at `version`: package.json, assets/ (with templates/), src/.
  * `src/` lets tests run the copy's CLI directly with Node's type stripping.
  * Skills, prompts and workflows are left out so tests control them (`addFrameworkContent`).
  */
@@ -32,7 +32,8 @@ export function makePackage(version: string): string {
   const pkg = join(tmp(), 'pkg');
   mkdirSync(pkg);
   for (const f of ['instructions.md', 'settings.json']) cpSync(join(ASSETS, f), join(pkg, 'assets', f));
-  for (const d of ['templates', 'src']) cpSync(join(REPO, d), join(pkg, d), { recursive: true });
+  cpSync(join(ASSETS, 'templates'), join(pkg, 'assets', 'templates'), { recursive: true });
+  cpSync(join(REPO, 'src'), join(pkg, 'src'), { recursive: true });
   writeFileSync(join(pkg, 'package.json'), JSON.stringify({ name: '@folkways/cli', version, type: 'module' }));
   return pkg;
 }

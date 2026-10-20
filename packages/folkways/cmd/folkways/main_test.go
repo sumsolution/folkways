@@ -27,11 +27,42 @@ func TestRun(t *testing.T) {
 		{[]string{"help"}, 0, usage + "\n", ""},
 		{nil, 1, "", usage + "\n"},
 		{[]string{"nope"}, 1, "", usage + "\n"},
+		// TS ignored extra arguments to version; Go rejects them everywhere (go-cli 05, quirk 2).
+		{[]string{"version", "extra"}, 1, "", "folkways: Unexpected argument 'extra'. This command does not take positional arguments\n"},
+		{[]string{"help", "--x"}, 1, "", "folkways: Unknown option '--x'\n"},
+		{[]string{"review"}, 1, "", "folkways: 'review' is not built yet\n"},
+		{[]string{"sync", "--nope"}, 1, "", "folkways: Unknown option '--nope'\n"},
+		{[]string{"init"}, 1, "", "folkways: usage: folkways init <path> [--no-install] [--package-manager npm|pnpm]\n"},
+		{[]string{"init", "x", "--package-manager", "yarn"}, 1, "", "folkways: --package-manager must be npm or pnpm\n"},
+		{[]string{"init", "x", "--package-manager="}, 1, "", "folkways: --package-manager must be npm or pnpm\n"},
 	}
 	for _, c := range cases {
 		var out, errOut bytes.Buffer
 		if code := run(c.args, &out, &errOut); code != c.code || out.String() != c.stdout || errOut.String() != c.stderr {
 			t.Errorf("run(%q) = %d, %q, %q; want %d, %q, %q", c.args, code, out.String(), errOut.String(), c.code, c.stdout, c.stderr)
+		}
+	}
+}
+
+func TestParseArgs(t *testing.T) {
+	bools, strs := []string{"force"}, []string{"pm"}
+	pos, opts, err := parseArgs([]string{"a", "--force", "--pm", "pnpm", "b", "--", "--force"}, bools, strs, true)
+	if err != nil || strings.Join(pos, ",") != "a,b,--force" || opts["force"] != "true" || opts["pm"] != "pnpm" {
+		t.Errorf("parseArgs = %q, %q, %v", pos, opts, err)
+	}
+	if _, opts, err := parseArgs([]string{"--pm=npm"}, bools, strs, false); err != nil || opts["pm"] != "npm" {
+		t.Errorf("--pm=npm: %q, %v", opts, err)
+	}
+	errs := map[string][]string{
+		"Unknown option '-x'":                        {"-x"},
+		"Unknown option '--nope'":                    {"--nope=1"},
+		"Option '--force' does not take an argument": {"--force=1"},
+		"Option '--pm <value>' argument missing":     {"--pm"},
+		"Unexpected argument 'extra'. This command does not take positional arguments": {"extra"},
+	}
+	for want, args := range errs {
+		if _, _, err := parseArgs(args, bools, strs, false); err == nil || err.Error() != want {
+			t.Errorf("parseArgs(%q) = %v, want %q", args, err, want)
 		}
 	}
 }
@@ -58,7 +89,7 @@ func TestHookAlwaysExitsZero(t *testing.T) {
 // func literals, errors.New, or regexp.MustCompile of a string literal. This test compiles each of those
 // patterns, so a bad one fails here even in a package with no tests of its own.
 func TestNoPackageLevelWork(t *testing.T) {
-	root := filepath.Join("..", "..")
+	root := filepath.Join("..", "..", "..", "..") // the whole module: every package the binary can link
 	fset := token.NewFileSet()
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
