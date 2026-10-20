@@ -1,0 +1,24 @@
+{
+  "description": "TS doctor.test.ts: it('disableAllHooks (M11) reports project settings that no longer set it to false'); the project settings are replaced by {}",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "files": {
+        ".claude/settings.json": "{}"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "re:^error: \\.claude/settings\\.json must set \"disableAllHooks: false\".*folkways sync.*\n1 error, 0 warnings\\.\n$",
+        "stderr": ""
+      }
+    }
+  ]
+}

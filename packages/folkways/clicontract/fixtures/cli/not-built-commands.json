@@ -1,0 +1,25 @@
+{
+  "description": "extra (no TS test): review and run print 'not built yet' as an expected error",
+  "steps": [
+    {
+      "args": [
+        "review"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: 'review' is not built yet\n"
+      }
+    },
+    {
+      "args": [
+        "run"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: 'run' is not built yet\n"
+      }
+    }
+  ]
+}

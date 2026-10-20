@@ -1,0 +1,27 @@
+{
+  "description": "TS doctor.test.ts: it('warns about personal skills that shadow framework or team skills (M10)'); a team-only skill (deploy) and a framework skill (start) are shadowed, an unrelated one is not",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "files": {
+        ".claude/skills/deploy/SKILL.md": "---\nname: deploy\n---\n",
+        "${HOME}/.claude/skills/start/SKILL.md": "x",
+        "${HOME}/.copilot/skills/deploy/SKILL.md": "x",
+        "${HOME}/.agents/skills/unrelated/SKILL.md": "x"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "re:^(?:warning: ~/\\.claude/skills/start shadows the skill start in this repo; .*\n)(?:warning: ~/\\.copilot/skills/deploy shadows the skill deploy in this repo; .*\n)0 errors, 2 warnings\\.\n$",
+        "stderr": ""
+      }
+    }
+  ]
+}

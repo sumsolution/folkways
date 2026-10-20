@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('reads a plain value continued on the next line, and does not guess at tags or aliases'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git-guard:\n    off\n  precompact: !!bool \"false\"\n  context-band: *f\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks.git-guard: off reads as false (hook off); write false\nerror: folkways.yaml hooks.precompact: doctor can't check !!bool \"false\" (a tag, anchor or alias); write true or false\nerror: folkways.yaml hooks.context-band: doctor can't check *f (a tag, anchor or alias); write true or false\n3 errors, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

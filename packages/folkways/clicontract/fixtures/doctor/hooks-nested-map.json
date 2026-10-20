@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('reports a nested map under a hook, which leaves it on'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git-guard:\n    enabled: false\n  precompact: false\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks.git-guard: a nested map is not a boolean, so the hook stays on; write true or false\n1 error, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

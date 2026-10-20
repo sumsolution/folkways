@@ -1,0 +1,20 @@
+{
+  "description": "TS cli.test.ts: it('prints expected errors without a stack trace')",
+  "steps": [
+    {
+      "files": {
+        "${ROOT}/dest/x": ""
+      },
+      "args": [
+        "init",
+        "${ROOT}/dest",
+        "--no-install"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: ${ROOT}/dest exists and is not empty\n"
+      }
+    }
+  ]
+}

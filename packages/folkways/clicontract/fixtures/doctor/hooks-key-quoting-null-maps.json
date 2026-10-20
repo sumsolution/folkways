@@ -1,0 +1,52 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('unquotes and trims keys, and accepts an empty or null hooks map'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  \"git-guard\": off\n  precompact : false\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks.git-guard: off reads as false (hook off); write false\n1 error, 0 warnings.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "files": {
+        "folkways.yaml": "hooks: null\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "No problems found.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "files": {
+        "folkways.yaml": "hooks: ~ # none\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "No problems found.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}
