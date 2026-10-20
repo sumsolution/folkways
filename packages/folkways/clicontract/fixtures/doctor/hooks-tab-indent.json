@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('reports tabs, which make the hook binary ignore folkways.yaml'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "hooks:\n\tgit-guard: false\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks: line 2 is indented with a tab, which YAML forbids, so the hooks ignore folkways.yaml; indent with spaces\n1 error, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

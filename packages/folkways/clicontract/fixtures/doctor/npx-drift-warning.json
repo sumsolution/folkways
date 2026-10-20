@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts: it('warns when the running CLI is not the pinned one (npx drift)'); repo pinned, installed and synced at 0.0.1, running ${VERSION}",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n",
+        "node_modules/@folkways/cli/package.json": "{\"name\": \"@folkways/cli\", \"version\": \"0.0.1\"}",
+        ".folkways/manifest.json": "{\"version\": \"0.0.1\", \"skills\": [], \"files\": {}}\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "re:^warning: this is folkways ${VERSION}, but the repo pins 0\\.0\\.1; .*npx folkways doctor.*\n0 errors, 1 warning\\.\n$",
+        "stderr": ""
+      }
+    }
+  ]
+}

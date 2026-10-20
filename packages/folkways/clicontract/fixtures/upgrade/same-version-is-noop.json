@@ -1,0 +1,56 @@
+{
+  "description": "upgrade to the version already pinned installs, finds nothing to commit, goes back and leaves no branch. TS: it 'is a no-op at the same version'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "stdout": "Already at ${VERSION}; nothing to change.\n",
+        "stderr": "",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": "${TEAM}: npm install\n${TEAM}: npm install --save-dev --save-exact @folkways/cli@${VERSION}\n"
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "log",
+              "--format=%s"
+            ],
+            "stdout": "chore(folkways): init at ${VERSION}"
+          }
+        ]
+      }
+    }
+  ]
+}

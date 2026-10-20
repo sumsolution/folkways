@@ -1,0 +1,24 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'warns when folkways.yaml is missing, since the hooks are silent without it'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "folkways.yaml": null
+      },
+      "expect": {
+        "stdout": "warning: no folkways.yaml; the hooks stay silent until the repo has one.\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

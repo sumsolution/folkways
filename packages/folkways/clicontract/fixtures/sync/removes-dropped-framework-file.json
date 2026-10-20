@@ -1,0 +1,22 @@
+{
+  "description": "sync.test.ts 'sync to a new version' > 'removes files and hooks the new version dropped' (file half: a manifest-listed framework file this version does not ship is removed, and its emptied folder with it)",
+  "steps": [
+    { "args": ["init", "${TEAM}", "--no-install"] },
+    {
+      "files": { ".folkways/old/old.md": "old prompt\n" },
+      "git": [
+        ["-c", "alias.edit=!sed -e 's|\"files\": {|\"files\": { \".folkways/old/old.md\": \"e746c131d68e2900927ca7463a0b84191ad47056deb75941db0ee7dbc042b889\",|' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json", "edit"],
+        ["add", "-A"],
+        ["commit", "-qm", "track old file"]
+      ]
+    },
+    {
+      "args": ["sync"],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": { ".folkways/old/old.md": null, ".folkways/old": null, ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",(?s:.)*$" }
+      }
+    }
+  ]
+}

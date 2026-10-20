@@ -1,0 +1,26 @@
+{
+  "description": "settings.test.ts 'mergeSettings with unexpected shapes' > 'refuses what it cannot merge: %j' (.claude/settings.json must be a JSON object); nothing is written",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/settings.json": "null"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: .claude/settings.json must be a JSON object\n",
+        "unchanged": true
+      }
+    }
+  ]
+}

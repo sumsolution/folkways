@@ -3,7 +3,7 @@
 // The binaries come from `@folkways/hooks`'s own build, which this reads and never runs: `pnpm -r run build`
 // builds the hooks first (a workspace devDependency), and `pnpm --filter "@folkways/claude-plugin..." run build`
 // builds both.
-// Usage: node src/build.ts [out-dir] [hooks-build]   (defaults dist/ and packages/hooks/npm/)
+// Usage: node src/build.ts [out-dir] [hooks-build]   (defaults dist/ and packages/folkways/npm/)
 import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
@@ -12,7 +12,7 @@ const REPO = resolve(PACKAGE, '..', '..');
 /** The framework content (`@folkways/content`): the files `sync` copies into team repos. Read as data, never imported. */
 export const ASSETS = join(REPO, 'packages', 'content');
 /** Where `@folkways/hooks` builds its platform packages by default. */
-const HOOKS_BUILD = join(REPO, 'packages', 'hooks', 'npm');
+const HOOKS_BUILD = join(REPO, 'packages', 'folkways', 'npm');
 
 /** `<os>-<cpu>` of every folkways-hook build, as `@folkways/hooks` names its platform packages. */
 export const HOOK_TARGETS = ['darwin-arm64', 'darwin-x64', 'linux-arm64', 'linux-x64'] as const;

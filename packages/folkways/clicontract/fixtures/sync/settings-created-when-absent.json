@@ -1,0 +1,33 @@
+{
+  "description": "settings.test.ts 'mergeSettings' > 'adds framework hooks and ask rules to empty settings' (via sync with no .claude/settings.json)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/settings.json": null
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "git": [
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "description": "sync.test.ts 'sync without a manifest (adopting a repo)' > 'keeps files that already match'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".folkways/manifest.json": "re:^\\{\\n  \"version\": \"${VERSION}\","
+        }
+      }
+    }
+  ]
+}

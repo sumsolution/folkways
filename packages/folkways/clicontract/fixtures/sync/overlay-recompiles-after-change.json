@@ -1,0 +1,52 @@
+{
+  "description": "sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'recompiles after the overlay changes, without reporting an edit'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n- team rule\n\n## Override {#types}\n\nteam types\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n- newer rule\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/skills/commit/SKILL.md": "re:(?s)## Types \\{#types\\}\\n.*- newer rule\\n$"
+        }
+      }
+    }
+  ]
+}

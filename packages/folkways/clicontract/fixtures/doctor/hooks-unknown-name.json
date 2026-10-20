@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('warns about unknown hook names'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git_guard: false\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "warning: folkways.yaml hooks.git_guard: no hook by that name (hooks: context-band, git-guard, precompact, session-start)\n0 errors, 1 warning.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

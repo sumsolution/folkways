@@ -1,0 +1,43 @@
+{
+  "description": "sync.test.ts 'sync without a manifest (adopting a repo)' > 'refuses to overwrite files that differ, and lists them'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".folkways/instructions.md": "ours\n",
+        ".folkways/prompts/review.md": "name: ours\n"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: sync would overwrite team files that differ from this version:\n  replaced  .folkways/instructions.md\n  replaced  .folkways/prompts/review.md\nMove team changes into overlays/, then rerun.\nOr rerun with --force to overwrite them.\n",
+        "unchanged": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "description": "when the commit fails (no git identity) upgrade goes back, deletes the branch and keeps git's error; a retry with an identity then succeeds. TS: describe 'upgrade when the commit fails' it 'goes back, cleans up and keeps git's error'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
+      },
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e 's/\"version\": \"${VERSION}\"/\"version\": \"0.0.1\"/' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ],
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "pin 0.0.1"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "env": {
+        "GIT_AUTHOR_NAME": null,
+        "GIT_AUTHOR_EMAIL": null,
+        "GIT_COMMITTER_NAME": null,
+        "GIT_COMMITTER_EMAIL": null,
+        "EMAIL": null,
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "user.useConfigOnly",
+        "GIT_CONFIG_VALUE_0": "true"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:^folkways: git commit failed; back on main:\\n[\\s\\S]*(?i:identity|user\\.email|name)",
+        "files": {
+          "${CALLS}": "${TEAM}: npm install --save-dev --save-exact @folkways/cli@${VERSION}\n",
+          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "stdout": "Committed 0.0.1 -> ${VERSION} on chore/folkways-${VERSION}. Review, push, open a PR.\n",
+        "stderr": "",
+        "files": {
+          "${CALLS}": "${TEAM}: npm install --save-dev --save-exact @folkways/cli@${VERSION}\n${TEAM}: npm install --save-dev --save-exact @folkways/cli@${VERSION}\n",
+          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"${VERSION}\"\n  }\n}\n",
+          ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",\n  \"skills\": \\[\n",
+          ".claude/skills/start/SKILL.md": true
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "chore/folkways-${VERSION}"
+          },
+          {
+            "args": [
+              "log",
+              "-1",
+              "--format=%s"
+            ],
+            "stdout": "chore(folkways): upgrade to ${VERSION}"
+          },
+          {
+            "args": [
+              "log",
+              "-1",
+              "--format=%b"
+            ],
+            "stdout": "From 0.0.1."
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "rev-list",
+              "--count",
+              "main..HEAD"
+            ],
+            "stdout": "1"
+          }
+        ]
+      }
+    }
+  ]
+}

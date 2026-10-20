@@ -1,0 +1,23 @@
+{
+  "description": "TS doctor.test.ts: it('stops at a repo with no folkways.yaml'); any git repo without folkways.yaml",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "re:^error: no folkways\\.yaml in ${TEAM}; .*setup skill.*\n1 error, 0 warnings\\.\n$",
+        "stderr": ""
+      }
+    }
+  ]
+}

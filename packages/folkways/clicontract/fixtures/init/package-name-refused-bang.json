@@ -1,0 +1,21 @@
+{
+  "description": "init refuses the folder '!': no valid npm package name, and nothing is created. From init.test.ts: packageName > refuses \"!\"",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${ROOT}/!",
+        "--no-install"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: can't derive a valid npm package name from '!'; use another folder name\n",
+        "files": {
+          "${ROOT}/!": null,
+          "${CALLS}": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "description": "overlays.test.ts 'parseOverlay' > 'ignores headings inside a fence, matching fence character and length'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n````md\n```\n## Inner\n```\n````\n\n~~~\n```\n## Also inner\n~~~\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/skills/commit/SKILL.md": "re:## Team additions\\n\\n````md\\n```\\n## Inner\\n```\\n````\\n\\n~~~\\n```\\n## Also inner\\n~~~\\n$"
+        }
+      }
+    }
+  ]
+}

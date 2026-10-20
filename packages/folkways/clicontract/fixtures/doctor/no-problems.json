@@ -1,0 +1,19 @@
+{
+  "description": "doctor in a repo init installed finds no problems",
+  "steps": [
+    {
+      "args": ["init", "${TEAM}"],
+      "expect": {
+        "files": {
+          "${CALLS}": "${TEAM}: npm install\n",
+          "node_modules/@folkways/cli/package.json": "re:\"version\":\"${VERSION}\""
+        },
+        "git": [{ "args": ["ls-files", "node_modules", "package-lock.json"], "stdout": "package-lock.json" }]
+      }
+    },
+    {
+      "args": ["doctor"],
+      "expect": { "stdout": "No problems found.\n", "stderr": "", "unchanged": true }
+    }
+  ]
+}

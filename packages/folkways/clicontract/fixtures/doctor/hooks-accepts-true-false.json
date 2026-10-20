@@ -1,0 +1,52 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('accepts true and false, with comments'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git-guard: true\n  context-band: false # quiet\n\n  # a comment\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "No problems found.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "No problems found.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "files": {
+        "folkways.yaml": "hooks: {}\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout": "No problems found.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

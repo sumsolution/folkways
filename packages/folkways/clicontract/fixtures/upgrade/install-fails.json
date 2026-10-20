@@ -1,0 +1,76 @@
+{
+  "description": "when the install fails upgrade goes back to the start branch, deletes the new branch and keeps the tool's error. TS: it 'goes back and cleans up when the install fails'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
+      },
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e 's/\"version\": \"${VERSION}\"/\"version\": \"0.0.1\"/' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ],
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "pin 0.0.1"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "9.9.9"
+      ],
+      "env": {
+        "STUB_NPM_FAIL": "No matching version 9.9.9"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: upgrade to 9.9.9 failed; back on main:\nNo matching version 9.9.9\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": "${TEAM}: npm install --save-dev --save-exact @folkways/cli@9.9.9\n",
+          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

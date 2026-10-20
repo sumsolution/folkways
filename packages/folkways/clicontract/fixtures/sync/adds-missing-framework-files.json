@@ -1,0 +1,45 @@
+{
+  "description": "sync.test.ts 'sync to a new version' > 'adds new framework files and records them' (adopting variant: files a repo lacks are added and recorded)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null,
+        ".folkways/prompts/review.md": null,
+        ".claude/skills/start": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".folkways/prompts/review.md": true,
+          ".claude/skills/start/SKILL.md": true,
+          ".folkways/manifest.json": "re:(?s)^\\{\\n  \"version\": \"${VERSION}\",\\n  \"skills\": \\[.*\"start\".*\\],\\n  \"files\": \\{.*\".claude/skills/start/SKILL.md\": \"[a-f0-9]{64}\"",
+          ".claude/settings.json": "re:\"command\": \"\\\\\"\\$\\{CLAUDE_PROJECT_DIR:-\\.\\}\\\\\"/node_modules/\\.bin/folkways-hook session-start\""
+        }
+      }
+    }
+  ]
+}
