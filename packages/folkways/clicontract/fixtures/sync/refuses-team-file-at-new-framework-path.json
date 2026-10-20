@@ -15,7 +15,7 @@
       "git": [
         [
           "-c",
-          "alias.edit=!sed -e '/prompts\\/review.md/d' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "alias.edit=!perl -0pe 's/\\n\\s*\"[^\"\\n]*prompts\\/review\\.md\": \"[a-f0-9]+\",?//; s/,(\\s*\\})/$1/g' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
           "edit"
         ]
       ]

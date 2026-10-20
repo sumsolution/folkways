@@ -3,6 +3,7 @@ package git
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -43,4 +44,15 @@ func IsClean(cwd string) (bool, error) {
 func BranchExists(cwd, branch string) bool {
 	_, err := Run(cwd, "rev-parse", "--quiet", "--verify", "refs/heads/"+branch)
 	return err == nil
+}
+
+// Detail is what to show for a failed call: git's trimmed stderr, else the error's own text.
+func Detail(err error) string {
+	var ge *Error
+	if errors.As(err, &ge) {
+		if s := strings.TrimSpace(ge.Stderr); s != "" {
+			return s
+		}
+	}
+	return err.Error()
 }
