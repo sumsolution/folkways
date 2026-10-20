@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | accepted |
+| Status | accepted; partly superseded by [0011](0011-cli-in-go.md): the CLI is Go, and hooks run as `folkways hook <name>` |
 | Date | 2026-09-29 |
 | Owner | Summer Jordan |
 
