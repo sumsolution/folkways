@@ -11,11 +11,11 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 |---|---|
 | `packages/cli/` | `@folkways/cli`, published to npm. Team repos pin an exact version |
 | `packages/cli/src/` | TypeScript source of the `folkways` CLI. `tsc` compiles it to `dist/` on publish |
-| `packages/content/` | `@folkways/content` (private): the framework's skills, instructions, prompts, settings fragment and workflows. The CLI and the plugin both distribute it |
+| `packages/content/` | `@folkways/content` (private): the framework's skills, instructions, prompts, settings fragment, workflows and init templates. The CLI and the plugin both distribute it; `content.go` embeds it in the Go binary |
 | `packages/cli/assets/` | Generated at pack time from `packages/content/`; gitignored. Not edited |
-| `packages/cli/templates/` | One-time scaffold for `init`. `dot-x` becomes `.x`; `name.tmpl` becomes `name` |
+| `packages/content/templates/` | One-time scaffold for `init`. `dot-x` becomes `.x`; `name.tmpl` becomes `name` |
 | `packages/cli/test/` | vitest suites for the CLI |
-| `packages/folkways/` | `@folkways/hooks` (private): the Go module. `cmd/folkways` is the CLI being ported (ADR 0011), with `folkways hook <name>`; `cmd/folkways-hook` is the hook binary shipped as `@folkways/hooks-<os>-<cpu>` (ADR 0002) until the port's cutover |
+| `go.mod`, `packages/folkways/` | The Go module (repo root, `github.com/sumsolution/folkways`). `packages/folkways` is `@folkways/hooks` (private). `cmd/folkways` is the CLI being ported (ADR 0011), with `folkways hook <name>`; `cmd/folkways-hook` is the hook binary shipped as `@folkways/hooks-<os>-<cpu>` (ADR 0002) until the port's cutover |
 | `packages/folkways/contract/` | Black-box hook contract suite: fixtures, rules, and the Go runner (`*_test.go`, run by `go test`) |
 | `packages/folkways/clicontract/` | Black-box CLI contract suite (Go, `go test`): fixtures pinning the TS CLI for the Go port (ADR 0011) |
 | `packages/claude-plugin/` | `@folkways/claude-plugin`: builds the Claude Code plugin into `dist/` from `packages/content/` and the hook binaries. The root `.claude-plugin/marketplace.json` installs it from npm |
@@ -38,7 +38,7 @@ From the repo root:
 | `pnpm --filter "@folkways/claude-plugin..." run build` | build the hooks, then the Claude Code plugin into `packages/claude-plugin/dist/` (needs Go); dogfood with `claude --plugin-dir packages/claude-plugin/dist` |
 | `pnpm --filter @folkways/hooks run build` | cross-compile the `@folkways/hooks-<os>-<cpu>` packages into `packages/folkways/npm/` |
 | `cd packages/folkways && go build -o bin/folkways-hook ./cmd/folkways-hook` | build the hook binary (`./cmd/folkways` for the Go CLI) (Go 1.26+; `bin/` is gitignored; add `-ldflags "-X main.version=x.y.z"` to set `--version`) |
-| `cd packages/folkways && go vet ./... && go test ./...` | Go tests and the hook contract suite; the suite builds `./cmd/folkways` and runs `folkways hook` |
+| `go vet ./... && go test ./...` | Go tests (from the root, includes the `packages/content` embed) and the hook contract suite; the suite builds `./cmd/folkways` and runs `folkways hook` |
 | `cd packages/folkways && FOLKWAYS_HOOK_CMD="$PWD/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard go test ./contract` | the contract suite against any build (`FOLKWAYS_HOOK_CMD="$PWD/bin/folkways hook"` works too); `FOLKWAYS_HOOK_BUDGET_MS=10` adds the hook latency check |
 | `pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the vitest suite for the build script |
 | `cd packages/folkways && go test -count=1 ./clicontract/` | the CLI contract suite against the TS CLI; set `FOLKWAYS_CLI_CMD` to run it against another build |

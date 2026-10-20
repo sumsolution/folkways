@@ -5,7 +5,7 @@ import { FolkwaysError } from './errors.ts';
 import { listFiles } from './files.ts';
 import { PNPM_WORKSPACE } from './hooks.ts';
 import { git } from './git.ts';
-import { PACKAGE_NAME, PACKAGE_ROOT, packageVersion } from './package.ts';
+import { assetsDir, PACKAGE_NAME, PACKAGE_ROOT, packageVersion } from './package.ts';
 import { installCommand, type PackageManager, packageManagerField } from './package-manager.ts';
 import { sync } from './sync.ts';
 
@@ -62,10 +62,10 @@ export function init(path: string, options: InitOptions = {}): string {
 }
 
 function scaffold(dest: string, name: string, pkg: string, options: InitOptions): void {
-  for (const rel of listFiles(join(pkg, 'templates'))) {
+  for (const rel of listFiles(join(assetsDir(pkg), 'templates'))) {
     const out = join(dest, templateTarget(rel));
     mkdirSync(dirname(out), { recursive: true });
-    copyFileSync(join(pkg, 'templates', rel), out);
+    copyFileSync(join(assetsDir(pkg), 'templates', rel), out);
   }
 
   const pm = options.packageManager ?? 'npm';

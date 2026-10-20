@@ -58,7 +58,7 @@ func TestHookAlwaysExitsZero(t *testing.T) {
 // func literals, errors.New, or regexp.MustCompile of a string literal. This test compiles each of those
 // patterns, so a bad one fails here even in a package with no tests of its own.
 func TestNoPackageLevelWork(t *testing.T) {
-	root := filepath.Join("..", "..")
+	root := filepath.Join("..", "..", "..", "..") // the whole module: every package the binary can link
 	fset := token.NewFileSet()
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
