@@ -165,14 +165,11 @@ jobs:
           go build -ldflags "-X main.version=$(node -p "require('../cli/package.json').version")" -o bin/folkways ./cmd/folkways
       - name: Go vet and tests, whole module (builds ./cmd/folkways for the contract suite)
         run: go vet ./... && go test ./...
-      - name: CLI contract suite (sync, cli) against the Go CLI, with init from the TS CLI until it is ported
+      - name: CLI contract suite against the Go CLI
         working-directory: packages/folkways
-        # Skipped until init and doctor are ported: a TS init writes manifest keys unsorted and a Go sync sorts them.
-        run: |
-          printf '#!/bin/sh\nif [ "$1" = init ]; then exec node %s/../cli/src/cli.ts "$@"; fi\nexec %s/bin/folkways "$@"\n' "$PWD" "$PWD" > "$RUNNER_TEMP/cli-wrap.sh"
-          chmod +x "$RUNNER_TEMP/cli-wrap.sh"
-          FOLKWAYS_CLI_CMD="$RUNNER_TEMP/cli-wrap.sh" go test -count=1 ./clicontract/ -run 'TestContract/(sync|cli)/' \
-            -skip 'TestContract/(sync|cli)/(fresh-scaffold|force-discards-edits|records-previous-version|settings-created-when-absent|init-then-sync-from-subfolder|doctor-prints-findings-and-exits-1)$'
+        env:
+          FOLKWAYS_CLI_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways
+        run: go test -count=1 ./clicontract/
       - name: Contract suite against folkways-hook
         working-directory: packages/folkways
         env:
