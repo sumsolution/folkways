@@ -60,6 +60,7 @@ func TestCopyFileKeepsMode(t *testing.T) {
 	if err := os.Chmod(src, 0o755); err != nil {
 		t.Fatal(err)
 	}
+	put(t, dest, "old") // an existing file takes the source's mode too
 	if err := CopyFile(src, dest); err != nil {
 		t.Fatal(err)
 	}

@@ -56,12 +56,17 @@ func invalid(why string) error {
 	return clierr.New("%s: %s. Restore it with 'git checkout -- %s'.", Path, why, Path)
 }
 
+// quote is JSON.stringify for a decoded value: no HTML escaping.
 func quote(v any) string {
-	b, _ := json.Marshal(v)
-	return string(b)
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(v)
+	return strings.TrimSuffix(buf.String(), "\n")
 }
 
-// validate checks a decoded manifest the way the TS CLI does, in its order, and converts it.
+// validate checks a decoded manifest the way the TS CLI does and converts it. Entries are checked in sorted
+// key order (TS: file order), so with several faults the first one reported can differ.
 func validate(value any) (*Manifest, error) {
 	obj, ok := value.(map[string]any)
 	if _, isArray := value.([]any); isArray {

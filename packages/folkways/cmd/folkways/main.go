@@ -80,11 +80,11 @@ func dispatch(args []string, stdout, stderr io.Writer) (int, error) {
 		if len(pos) != 1 {
 			return 1, clierr.New("usage: folkways init <path> [--no-install] [--package-manager npm|pnpm]")
 		}
-		pm := opts["package-manager"]
-		if pm == "" {
+		pm, set := opts["package-manager"]
+		if !set {
 			pm = pkgmgr.FromUserAgent(os.Getenv("npm_config_user_agent"))
 		}
-		if pm == "" {
+		if !set && pm == "" {
 			pm = "npm"
 		}
 		if !slices.Contains(pkgmgr.Supported, pm) {
@@ -170,10 +170,16 @@ func dispatch(args []string, stdout, stderr io.Writer) (int, error) {
 			return 1, nil
 		}
 	case "version", "--version":
+		if _, _, err := parseArgs(rest, nil, nil, false); err != nil {
+			return 1, err
+		}
 		fmt.Fprintln(stdout, version)
 	case "review", "run":
 		return 1, clierr.New("'%s' is not built yet", command)
 	case "help", "--help", "-h":
+		if _, _, err := parseArgs(rest, nil, nil, false); err != nil {
+			return 1, err
+		}
 		fmt.Fprintln(stdout, usage)
 	default:
 		fmt.Fprintln(stderr, usage)

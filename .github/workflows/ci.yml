@@ -161,8 +161,7 @@ jobs:
       - name: Build the binaries
         working-directory: packages/folkways
         run: go build -o bin/folkways-hook ./cmd/folkways-hook && go build -o bin/folkways ./cmd/folkways
-      - name: Go vet and tests (builds ./cmd/folkways for the contract suite)
-        working-directory: packages/folkways
+      - name: Go vet and tests, whole module (builds ./cmd/folkways for the contract suite)
         run: go vet ./... && go test ./...
       - name: Contract suite against folkways-hook
         working-directory: packages/folkways

@@ -41,6 +41,10 @@ func CopyFile(src, dest string) error {
 		out.Close()
 		return err
 	}
+	if err := out.Chmod(info.Mode().Perm()); err != nil { // OpenFile keeps an existing file's mode
+		out.Close()
+		return err
+	}
 	return out.Close()
 }
 
@@ -63,7 +67,8 @@ func SHA256Text(content []byte) string {
 func ignored(name string) bool { return name == ".gitkeep" || name == ".DS_Store" }
 
 // List returns the files under dir as sorted slash paths relative to it. Empty if dir is missing.
-// It follows symlinks to files, as the TS CLI's statSync does.
+// It lists symlinks to files, as the TS CLI does. Unlike the TS CLI it doesn't descend symlinked folders
+// (no loops) and skips dangling links instead of failing; framework content and skill folders have neither.
 func List(dir string) ([]string, error) {
 	return ListFS(os.DirFS(dir), ".")
 }

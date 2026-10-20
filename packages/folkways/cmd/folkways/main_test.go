@@ -27,10 +27,14 @@ func TestRun(t *testing.T) {
 		{[]string{"help"}, 0, usage + "\n", ""},
 		{nil, 1, "", usage + "\n"},
 		{[]string{"nope"}, 1, "", usage + "\n"},
+		// TS ignored extra arguments to version; Go rejects them everywhere (go-cli 05, quirk 2).
+		{[]string{"version", "extra"}, 1, "", "folkways: Unexpected argument 'extra'. This command does not take positional arguments\n"},
+		{[]string{"help", "--x"}, 1, "", "folkways: Unknown option '--x'\n"},
 		{[]string{"review"}, 1, "", "folkways: 'review' is not built yet\n"},
 		{[]string{"sync", "--nope"}, 1, "", "folkways: Unknown option '--nope'\n"},
 		{[]string{"init"}, 1, "", "folkways: usage: folkways init <path> [--no-install] [--package-manager npm|pnpm]\n"},
 		{[]string{"init", "x", "--package-manager", "yarn"}, 1, "", "folkways: --package-manager must be npm or pnpm\n"},
+		{[]string{"init", "x", "--package-manager="}, 1, "", "folkways: --package-manager must be npm or pnpm\n"},
 	}
 	for _, c := range cases {
 		var out, errOut bytes.Buffer

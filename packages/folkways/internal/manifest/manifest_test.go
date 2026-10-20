@@ -52,6 +52,7 @@ func TestReadRejects(t *testing.T) {
 		`{"version": 1}`:       "missing version",
 		`{"version": "0.1.0"}`: "missing skills",
 		`{"version": "0.1.0", "skills": ["../../outside"], "files": {}}`:                                           `unsafe skill name "../../outside"`,
+		`{"version": "0.1.0", "skills": ["a<b"], "files": {}}`:                                                     `unsafe skill name "a<b"`,
 		`{"version": "0.1.0", "skills": [5], "files": {}}`:                                                         `unsafe skill name 5`,
 		`{"version": "0.1.0", "skills": [], "files": []}`:                                                          "missing files",
 		`{"version": "0.1.0", "skills": [], "files": {"../../outside": "` + hash + `"}}`:                           `unsafe path "../../outside"`,

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,7 +32,9 @@ func TestGit(t *testing.T) {
 	if !BranchExists(dir, "main") || BranchExists(dir, "nope") {
 		t.Error("BranchExists: want main only")
 	}
-	if _, err := Run(dir, "rev-parse", "--verify", "nope"); err == nil || !strings.Contains(err.Error(), "git rev-parse --verify nope") {
-		t.Errorf("Run error = %v; want the command in it", err)
+	_, err := Run(dir, "rev-parse", "--verify", "nope")
+	var gitErr *Error
+	if !errors.As(err, &gitErr) || !strings.Contains(err.Error(), "git rev-parse --verify nope") || !strings.Contains(gitErr.Stderr, "fatal:") {
+		t.Errorf("Run error = %#v; want an *Error with the command and git's stderr", err)
 	}
 }
