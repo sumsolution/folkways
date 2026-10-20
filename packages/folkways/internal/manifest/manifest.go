@@ -4,8 +4,6 @@ package manifest
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -137,16 +135,13 @@ func sortedKeys(m map[string]any) []string {
 
 // Read returns the team repo's manifest, or nil when it has none. A broken or unsafe manifest is an error.
 func Read(team string) (*Manifest, error) {
-	b, err := os.ReadFile(filepath.Join(team, Path))
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
+	p := filepath.Join(team, Path)
+	if _, err := os.Stat(p); err != nil {
+		return nil, nil // as existsSync: missing, or a parent is a file
 	}
 	var value any
-	if json.Unmarshal(b, &value) != nil {
-		value = nil
+	if b, err := os.ReadFile(p); err != nil || json.Unmarshal(b, &value) != nil {
+		value = nil // unreadable (a folder) or not JSON: invalid, as in TS
 	}
 	return validate(value)
 }

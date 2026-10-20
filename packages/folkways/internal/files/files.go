@@ -13,14 +13,36 @@ import (
 	"sort"
 )
 
-// Ops are the file operations sync stages with. A seam, so tests can inject failures.
+// Ops are the file operations sync stages with. A seam, so tests can inject failures. Copy reads src from
+// fsys (the bundle's content) and writes dest on disk.
 type Ops struct {
-	Copy   func(src, dest string) error
+	Copy   func(fsys fs.FS, src, dest string) error
 	Rename func(from, to string) error
 }
 
 // OS is Ops on the real filesystem.
-var OS = Ops{Copy: CopyFile, Rename: os.Rename}
+var OS = Ops{Copy: CopyFS, Rename: os.Rename}
+
+// CopyFS copies src in fsys to dest on disk, creating or truncating dest. dest is 0755 if src has an
+// executable bit, else 0644: embedded files carry no permission bits worth keeping.
+func CopyFS(fsys fs.FS, src, dest string) error {
+	b, err := fs.ReadFile(fsys, src)
+	if err != nil {
+		return err
+	}
+	info, err := fs.Stat(fsys, src)
+	if err != nil {
+		return err
+	}
+	perm := fs.FileMode(0o644)
+	if info.Mode()&0o111 != 0 {
+		perm = 0o755
+	}
+	if err := os.WriteFile(dest, b, perm); err != nil {
+		return err
+	}
+	return os.Chmod(dest, perm) // WriteFile keeps an existing file's mode
+}
 
 // CopyFile copies src to dest, creating or truncating dest, with src's permission bits.
 func CopyFile(src, dest string) error {
