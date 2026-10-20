@@ -108,10 +108,12 @@ func TestNoPackageLevelWork(t *testing.T) {
 // cheap reports whether a package-level initializer is allowed by TestNoPackageLevelWork.
 func cheap(e ast.Expr) bool {
 	switch e := e.(type) {
-	case *ast.BasicLit, *ast.Ident, *ast.SelectorExpr, *ast.FuncLit:
+	case *ast.BasicLit, *ast.Ident, *ast.FuncLit:
 		return true
+	case *ast.SelectorExpr:
+		return cheap(e.X) // pkg.Name is cheap; f().Name runs f
 	case *ast.UnaryExpr:
-		return cheap(e.X)
+		return e.Op != token.ARROW && cheap(e.X) // a channel receive blocks
 	case *ast.ParenExpr:
 		return cheap(e.X)
 	case *ast.BinaryExpr:
@@ -139,6 +141,33 @@ func cheap(e ast.Expr) bool {
 		return lit && (call == "errors.New" || call == "regexp.MustCompile")
 	}
 	return false
+}
+
+func TestCheap(t *testing.T) {
+	cases := map[string]bool{
+		`"x"`:                         true,
+		`os.Args`:                     true,
+		`&T{A: 1, B: pkg.C}`:          true,
+		`-1 + 2`:                      true,
+		`func() {}`:                   true,
+		`errors.New("x")`:             true,
+		`regexp.MustCompile("x")`:     true,
+		`team.Load().Configured`:      false,
+		`<-ready`:                     false,
+		`!(<-ready)`:                  false,
+		`T{A: f()}`:                   false,
+		`regexp.MustCompile(pattern)`: false,
+		`os.Getenv("HOME")`:           false,
+	}
+	for src, want := range cases {
+		e, err := parser.ParseExpr(src)
+		if err != nil {
+			t.Fatalf("%s: %v", src, err)
+		}
+		if got := cheap(e); got != want {
+			t.Errorf("cheap(%s) = %v, want %v", src, got, want)
+		}
+	}
 }
 
 // checkPatterns compiles every regexp.MustCompile string literal in a package-level initializer.
