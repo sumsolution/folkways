@@ -55,3 +55,32 @@ func TestFailedSyncLeavesNothingBehind(t *testing.T) {
 		t.Error("HEAD moved")
 	}
 }
+
+// Upgrading to the version the manifest already records returns before any git or install work.
+func TestSameVersionIsNoop(t *testing.T) {
+	for k, v := range map[string]string{
+		"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1",
+		"GIT_AUTHOR_NAME": "test", "GIT_AUTHOR_EMAIL": "test@example.com",
+		"GIT_COMMITTER_NAME": "test", "GIT_COMMITTER_EMAIL": "test@example.com",
+	} {
+		t.Setenv(k, v)
+	}
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not installed")
+	}
+	team := filepath.Join(t.TempDir(), "team")
+	if _, err := scaffold.Init(team, bundle.Embedded("0.0.1"), scaffold.Options{PackageManager: "npm"}); err != nil {
+		t.Fatal(err)
+	}
+	install := func(team, version string) error {
+		t.Error("installer called")
+		return nil
+	}
+	r, err := Upgrade(team, "v0.0.1", install)
+	if err != nil || r.Branch != "" || r.From != "0.0.1" || r.To != "0.0.1" {
+		t.Fatalf("Upgrade = %+v, %v", r, err)
+	}
+	if out, _ := git.Run(team, "branch", "--list", "chore/*"); strings.TrimSpace(out) != "" {
+		t.Errorf("branch created: %s", out)
+	}
+}
