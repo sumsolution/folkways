@@ -372,15 +372,17 @@ func swap(team, stage string, outgoing, incoming []string) error {
 		return nil
 	}()
 	if undo != nil {
-		return &restoreError{fmt.Sprintf("sync failed and could not restore the old files; they are in %s/old.\n%v\n%v", stage, err, undo)}
+		return &restoreError{&clierr.Error{Msg: fmt.Sprintf("sync failed and could not restore the old files; they are in %s/old.\n%v\n%v", stage, err, undo)}}
 	}
 	return err
 }
 
 // restoreError is a failed sync whose undo failed too: the staging folder holds the old files, so it stays.
-type restoreError struct{ msg string }
+// It wraps a *clierr.Error, as TS RestoreError extends FolkwaysError.
+type restoreError struct{ cause *clierr.Error }
 
-func (e *restoreError) Error() string { return e.msg }
+func (e *restoreError) Error() string { return e.cause.Msg }
+func (e *restoreError) Unwrap() error { return e.cause }
 
 type teamOverlay struct{ path, skill string }
 

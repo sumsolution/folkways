@@ -12,6 +12,7 @@ import (
 	"testing/fstest"
 
 	"github.com/sumsolution/folkways/packages/folkways/internal/bundle"
+	"github.com/sumsolution/folkways/packages/folkways/internal/clierr"
 	"github.com/sumsolution/folkways/packages/folkways/internal/files"
 	"github.com/sumsolution/folkways/packages/folkways/internal/manifest"
 )
@@ -197,6 +198,9 @@ func TestSyncKeepsStageWhenRestoreFails(t *testing.T) {
 	_, err := Sync(dir, next03(), Options{})
 	if err == nil || !strings.Contains(err.Error(), "sync failed and could not restore the old files; they are in ") {
 		t.Fatalf("err = %v", err)
+	}
+	if !errors.As(err, new(*clierr.Error)) {
+		t.Error("a restore failure is not a *clierr.Error")
 	}
 	entries, _ := os.ReadDir(dir)
 	kept := false

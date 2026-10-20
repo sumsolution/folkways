@@ -2,8 +2,10 @@
 package pkgmgr
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -79,4 +81,21 @@ func PackageManagerField(pm string) (string, error) {
 		return "", clierr.New("pnpm is not installed; install it or use --package-manager npm")
 	}
 	return "pnpm@" + strings.TrimSpace(string(out)), nil
+}
+
+// Exec runs argv in dir with stdin closed and stdout to stdout (nil discards it). A failure is an error whose
+// message is the command's trimmed stderr, or Go's error when stderr is empty: what init and upgrade print.
+func Exec(dir string, argv []string, stdout io.Writer) error {
+	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd.Dir, cmd.Stdout = dir, stdout
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err == nil {
+		return nil
+	}
+	if detail := strings.TrimSpace(stderr.String()); detail != "" {
+		return errors.New(detail)
+	}
+	return err
 }
