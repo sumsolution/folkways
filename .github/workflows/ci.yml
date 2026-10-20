@@ -159,10 +159,22 @@ jobs:
       - name: Build the binaries
         working-directory: packages/folkways
         run: go build -o bin/folkways-hook ./cmd/folkways-hook && go build -o bin/folkways ./cmd/folkways
-      - name: Go tests and contract suite
-        run: FOLKWAYS_HOOK_CMD="$PWD/packages/folkways/bin/folkways-hook" pnpm --filter @folkways/hooks test
-      - name: Contract suite through folkways hook
-        run: FOLKWAYS_HOOK_CMD="$PWD/packages/folkways/bin/folkways hook" pnpm --filter @folkways/hooks exec vitest run
+      - name: Go vet and tests (builds ./cmd/folkways for the contract suite)
+        working-directory: packages/folkways
+        run: go vet ./... && go test ./...
+      - name: Contract suite against folkways-hook
+        working-directory: packages/folkways
+        env:
+          FOLKWAYS_HOOK_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways-hook
+        run: go test -count=1 ./contract
+      - name: Contract suite through folkways hook, with the hook latency budget
+        working-directory: packages/folkways
+        env:
+          FOLKWAYS_HOOK_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways hook
+          FOLKWAYS_HOOK_BUDGET_MS: '10'
+        run: go test -count=1 ./contract
+      - name: Build script tests
+        run: pnpm --filter @folkways/hooks exec vitest run
 
   evals:
     name: evals

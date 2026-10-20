@@ -20,7 +20,7 @@ import {
   PLATFORMS,
   readJson,
   run,
-  skippedTests,
+  runContract,
   tarballs,
 } from './pack.ts';
 
@@ -52,8 +52,7 @@ function releaseHooks(out: string): void {
     const host = hostTarget();
     assert(host !== undefined, `no folkways-hook target for ${process.platform}-${process.arch}`);
     const bin = join(hooks.dirs.get(packageName(host))!, 'bin', 'folkways-hook');
-    const suite = run('pnpm', ['exec', 'vitest', 'run', 'contract'], HOOKS, { ...process.env, FOLKWAYS_HOOK_CMD: bin });
-    assert(skippedTests(suite) === 0, `the contract suite skipped cases:\n${suite}`);
+    runContract(bin);
   } finally {
     rmSync(build, { recursive: true, force: true });
   }

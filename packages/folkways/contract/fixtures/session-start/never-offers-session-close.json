@@ -14,7 +14,7 @@
         "stdout": {
           "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": "re:^(?!.*session-close).*start"
+            "additionalContext": ["re:start", "!re:session-close"]
           }
         }
       }
