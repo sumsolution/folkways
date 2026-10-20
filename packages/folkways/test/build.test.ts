@@ -34,7 +34,7 @@ describe('platformManifest', () => {
       name: '@folkways/hooks-darwin-x64',
       version: '1.2.3',
       license: 'Apache-2.0',
-      repository: { url: 'git+https://github.com/sumsolution/folkways.git', directory: 'packages/hooks' },
+      repository: { url: 'git+https://github.com/sumsolution/folkways.git', directory: 'packages/folkways' },
       publishConfig: { access: 'public' },
     });
   });

@@ -8,7 +8,7 @@
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { hostTarget, packageName } from '../packages/hooks/scripts/build.ts';
+import { hostTarget, packageName } from '../packages/folkways/scripts/build.ts';
 import {
   assert,
   CLAUDE_PLUGIN,

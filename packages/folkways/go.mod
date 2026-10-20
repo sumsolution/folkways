@@ -1,4 +1,4 @@
-module github.com/sumsolution/folkways/packages/hooks
+module github.com/sumsolution/folkways/packages/folkways
 
 go 1.26.0
 

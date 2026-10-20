@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sumsolution/folkways/packages/hooks/internal/output"
-	"github.com/sumsolution/folkways/packages/hooks/internal/payload"
-	"github.com/sumsolution/folkways/packages/hooks/internal/team"
+	"github.com/sumsolution/folkways/packages/folkways/internal/output"
+	"github.com/sumsolution/folkways/packages/folkways/internal/payload"
+	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
 func run(t *testing.T, cfg team.Config) string {

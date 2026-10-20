@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sumsolution/folkways/packages/hooks/internal/output"
-	"github.com/sumsolution/folkways/packages/hooks/internal/payload"
-	"github.com/sumsolution/folkways/packages/hooks/internal/skill"
-	"github.com/sumsolution/folkways/packages/hooks/internal/team"
+	"github.com/sumsolution/folkways/packages/folkways/internal/output"
+	"github.com/sumsolution/folkways/packages/folkways/internal/payload"
+	"github.com/sumsolution/folkways/packages/folkways/internal/skill"
+	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
 // Run injects the start reminder, plus a 00-STATUS.md update after a compaction, then the config block.

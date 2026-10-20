@@ -12,11 +12,11 @@ describe('hooksVersion', () => {
 
   it('pins an exact version the hooks package has reached', () => {
     const pin = hooksVersion().split('.').map(Number);
-    const current = (json(join(REPO, '..', 'hooks', 'package.json')).version as string).split('.').map(Number);
+    const current = (json(join(REPO, '..', 'folkways', 'package.json')).version as string).split('.').map(Number);
     expect(pin).toHaveLength(3);
     expect(pin.every(Number.isInteger)).toBe(true);
     const cmp = pin.map((n, i) => n - current[i]!).find((d) => d !== 0) ?? 0;
-    expect(cmp, `pin ${hooksVersion()} is ahead of packages/hooks`).toBeLessThanOrEqual(0);
+    expect(cmp, `pin ${hooksVersion()} is ahead of packages/folkways`).toBeLessThanOrEqual(0);
   });
 });
 

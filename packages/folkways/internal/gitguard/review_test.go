@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sumsolution/folkways/packages/hooks/internal/team"
+	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
 const head = "abc1234def5678901234567890abcdef12345678"

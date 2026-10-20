@@ -48,7 +48,7 @@ jobs:
             content:
               - 'packages/content/**'
             hooks:
-              - 'packages/hooks/**'
+              - 'packages/folkways/**'
             evals:
               - 'packages/evals/**'
               - 'packages/cli/**'     # the runner builds team repos with the CLI's init
@@ -56,7 +56,7 @@ jobs:
             claude-plugin:
               - 'packages/claude-plugin/**'
               - 'packages/content/**'     # the plugin's skills, instructions and hooks come from here
-              - 'packages/hooks/**'       # and its binaries
+              - 'packages/folkways/**'    # and its binaries
               - '.claude-plugin/**'
             shared:
               - 'package.json'
@@ -152,15 +152,17 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: packages/folkways/go.mod
+          cache-dependency-path: packages/folkways/go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/hooks run check
-      - name: Build the hook binary
-        working-directory: packages/hooks
-        run: go build -o bin/folkways-hook .
+      - name: Build the binaries
+        working-directory: packages/folkways
+        run: go build -o bin/folkways-hook ./cmd/folkways-hook && go build -o bin/folkways ./cmd/folkways
       - name: Go tests and contract suite
-        run: FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" pnpm --filter @folkways/hooks test
+        run: FOLKWAYS_HOOK_CMD="$PWD/packages/folkways/bin/folkways-hook" pnpm --filter @folkways/hooks test
+      - name: Contract suite through folkways hook
+        run: FOLKWAYS_HOOK_CMD="$PWD/packages/folkways/bin/folkways hook" pnpm --filter @folkways/hooks exec vitest run
 
   evals:
     name: evals
@@ -199,8 +201,8 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: packages/folkways/go.mod
+          cache-dependency-path: packages/folkways/go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/claude-plugin run check
       - run: pnpm --filter @folkways/claude-plugin test
@@ -230,8 +232,8 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: packages/folkways/go.mod
+          cache-dependency-path: packages/folkways/go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm run smoke
 
