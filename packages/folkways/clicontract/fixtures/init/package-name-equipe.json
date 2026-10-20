@@ -1,0 +1,18 @@
+{
+  "description": "init derives the package name 'equipe' from the folder 'équipe'. From init.test.ts: packageName > équipe -> equipe",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${ROOT}/équipe",
+        "--no-install"
+      ],
+      "expect": {
+        "files": {
+          "${ROOT}/équipe/package.json": "re:^\\{\n  \"name\": \"equipe\",\n"
+        },
+        "stdout": "Created ${ROOT}/équipe with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${ROOT}/équipe and run the setup skill.\n"
+      }
+    }
+  ]
+}

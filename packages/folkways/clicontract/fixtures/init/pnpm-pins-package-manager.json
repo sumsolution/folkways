@@ -1,0 +1,21 @@
+{
+  "description": "init --package-manager pnpm pins pnpm@<installed version> in package.json. From init.test.ts: init with pnpm > pins pnpm in the packageManager field",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install",
+        "--package-manager",
+        "pnpm"
+      ],
+      "expect": {
+        "files": {
+          "package.json": "re:\n  \"packageManager\": \"pnpm@9\\.0\\.0\",\n",
+          "${CALLS}": "re:^.*: pnpm --version\n$"
+        },
+        "stdout": "Created ${TEAM} with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${TEAM} and run the setup skill.\n"
+      }
+    }
+  ]
+}
