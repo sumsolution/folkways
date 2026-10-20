@@ -61,6 +61,7 @@ func TestStringifyMatchesJSONStringify(t *testing.T) {
 		`{"b":1,"a":[],"c":{},"b":2}`:           "{\n  \"b\": 2,\n  \"a\": [],\n  \"c\": {}\n}",
 		`[1.50, 1e2, -0, 1e21, 1e-7, 0.000001]`: "[\n  1.5,\n  100,\n  0,\n  1e+21,\n  1e-7,\n  0.000001\n]",
 		`"<&> \u0001\t\"\\é"`:                   "\"<&> \\u0001\\t\\\"\\\\é\"",
+		`["\\u2028\u2029"]`:                     "[\n  \"\\\\u2028\u2029\"\n]",
 		`[null,true,{"x":[{"y":null}]}]`:        "[\n  null,\n  true,\n  {\n    \"x\": [\n      {\n        \"y\": null\n      }\n    ]\n  }\n]",
 	}
 	for in, want := range cases {

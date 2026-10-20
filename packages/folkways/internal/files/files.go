@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"path"
@@ -42,32 +41,6 @@ func CopyFS(fsys fs.FS, src, dest string) error {
 		return err
 	}
 	return os.Chmod(dest, perm) // WriteFile keeps an existing file's mode
-}
-
-// CopyFile copies src to dest, creating or truncating dest, with src's permission bits.
-func CopyFile(src, dest string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	info, err := in.Stat()
-	if err != nil {
-		return err
-	}
-	out, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-		return err
-	}
-	if err := out.Chmod(info.Mode().Perm()); err != nil { // OpenFile keeps an existing file's mode
-		out.Close()
-		return err
-	}
-	return out.Close()
 }
 
 // SHA256 is the hex sha256 of a file's content.

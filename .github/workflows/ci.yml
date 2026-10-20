@@ -160,14 +160,15 @@ jobs:
       - run: pnpm --filter @folkways/hooks run check
       - name: Build the binaries
         working-directory: packages/folkways
-        run: go build -o bin/folkways-hook ./cmd/folkways-hook && go build -o bin/folkways ./cmd/folkways
+        run: |
+          go build -o bin/folkways-hook ./cmd/folkways-hook
+          go build -ldflags "-X main.version=$(node -p "require('../cli/package.json').version")" -o bin/folkways ./cmd/folkways
       - name: Go vet and tests, whole module (builds ./cmd/folkways for the contract suite)
         run: go vet ./... && go test ./...
       - name: CLI contract suite (sync, cli) against the Go CLI, with init from the TS CLI until it is ported
         working-directory: packages/folkways
         # Skipped until init and doctor are ported: a TS init writes manifest keys unsorted and a Go sync sorts them.
         run: |
-          go build -ldflags "-X main.version=$(node -p "require('../cli/package.json').version")" -o bin/folkways ./cmd/folkways
           printf '#!/bin/sh\nif [ "$1" = init ]; then exec node %s/../cli/src/cli.ts "$@"; fi\nexec %s/bin/folkways "$@"\n' "$PWD" "$PWD" > "$RUNNER_TEMP/cli-wrap.sh"
           chmod +x "$RUNNER_TEMP/cli-wrap.sh"
           FOLKWAYS_CLI_CMD="$RUNNER_TEMP/cli-wrap.sh" go test -count=1 ./clicontract/ -run 'TestContract/(sync|cli)/' \

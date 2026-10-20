@@ -6,9 +6,9 @@
 package overlays
 
 import (
+	"maps"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 	"unicode"
 
@@ -161,17 +161,17 @@ func countID(text, id string) int {
 
 // checkNesting fails if one overridden section sits inside another: the outer replacement would remove the
 // inner one.
-func checkNesting(texts, ids []string) error {
+func checkNesting(files map[string]string, markdown []string, overrides []override) error {
 	type idSection struct {
 		h  heading
 		id string
 	}
-	for _, text := range texts {
-		lines := strings.Split(text, "\n")
+	for _, f := range markdown {
+		lines := strings.Split(files[f], "\n")
 		all := scan(lines)
 		var sections []idSection
 		for _, h := range all {
-			if id := headingID(h.title); id != "" && slices.Contains(ids, id) {
+			if id := headingID(h.title); id != "" && slices.ContainsFunc(overrides, func(o override) bool { return o.id == id }) {
 				sections = append(sections, idSection{h, id})
 			}
 		}
@@ -212,23 +212,8 @@ func CompileSkillFiles(files map[string]string, overlay string) (Compiled, error
 		}
 		return files[path]
 	}
-	var markdown []string
-	for f := range files {
-		if strings.HasSuffix(f, ".md") {
-			markdown = append(markdown, f)
-		}
-	}
-	sort.Strings(markdown)
-
-	texts := make([]string, len(markdown))
-	for i, f := range markdown {
-		texts[i] = files[f]
-	}
-	ids := make([]string, len(o.overrides))
-	for i, ov := range o.overrides {
-		ids[i] = ov.id
-	}
-	if err := checkNesting(texts, ids); err != nil {
+	markdown := slices.DeleteFunc(slices.Sorted(maps.Keys(files)), func(f string) bool { return !strings.HasSuffix(f, ".md") })
+	if err := checkNesting(files, markdown, o.overrides); err != nil {
 		return Compiled{}, err
 	}
 	for _, ov := range o.overrides {

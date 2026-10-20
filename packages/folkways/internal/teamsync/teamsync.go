@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -51,14 +52,13 @@ type Result struct {
 // fileCopy is one file sync copies from the bundle into the team repo.
 type fileCopy struct {
 	src, dest string // src in the bundle's FS, dest relative to the team repo
-	// content replaces src when compiled is set (a skill file with a team overlay applied).
-	content  string
-	compiled bool
+	// content, when not nil, replaces src (a skill file with a team overlay applied).
+	content []byte
 }
 
 func (c fileCopy) hash(fsys fs.FS) (string, error) {
-	if c.compiled {
-		return files.SHA256Text([]byte(c.content)), nil
+	if c.content != nil {
+		return files.SHA256Text(c.content), nil
 	}
 	b, err := fs.ReadFile(fsys, c.src)
 	if err != nil {
@@ -70,28 +70,29 @@ func (c fileCopy) hash(fsys fs.FS) (string, error) {
 // assetMap lists every file sync copies from the bundle into a team repo.
 func assetMap(fsys fs.FS) ([]fileCopy, error) {
 	out := []fileCopy{{src: "instructions.md", dest: ".folkways/instructions.md"}}
-	add := func(dir string, keep func(string) bool, dest func(string) string) error {
-		list, err := files.ListFS(fsys, dir)
-		for _, f := range list {
-			if keep(f) {
-				out = append(out, fileCopy{src: dir + "/" + f, dest: dest(f)})
-			}
+	prompts, err := files.ListFS(fsys, "prompts")
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range prompts {
+		out = append(out, fileCopy{src: "prompts/" + f, dest: ".folkways/prompts/" + f})
+	}
+	skills, err := files.ListFS(fsys, "skills")
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range skills {
+		if strings.Contains(f, "/") {
+			out = append(out, fileCopy{src: "skills/" + f, dest: ".claude/skills/" + f})
 		}
-		return err
 	}
-	all := func(string) bool { return true }
-	if err := add("prompts", all, func(f string) string { return ".folkways/prompts/" + f }); err != nil {
-		return nil, err
+	workflows, err := files.ListFS(fsys, "workflows")
+	for _, f := range workflows {
+		if !strings.Contains(f, "/") && strings.HasSuffix(f, ".yml") {
+			out = append(out, fileCopy{src: "workflows/" + f, dest: ".github/workflows/folkways-" + f})
+		}
 	}
-	inSkill := func(f string) bool { return strings.Contains(f, "/") }
-	if err := add("skills", inSkill, func(f string) string { return ".claude/skills/" + f }); err != nil {
-		return nil, err
-	}
-	workflow := func(f string) bool { return !strings.Contains(f, "/") && strings.HasSuffix(f, ".yml") }
-	if err := add("workflows", workflow, func(f string) string { return ".github/workflows/folkways-" + f }); err != nil {
-		return nil, err
-	}
-	return out, nil
+	return out, err
 }
 
 // skillNames are the framework skills in the bundle, sorted.
@@ -122,36 +123,27 @@ func lexists(p string) bool {
 	return err == nil
 }
 
-func sortedKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
+// addUnique appends v unless list has it: a JS Set's first insertion order.
+func addUnique(list *[]string, v string) {
+	if !slices.Contains(*list, v) {
+		*list = append(*list, v)
 	}
-	slices.Sort(keys)
-	return keys
 }
 
-// orderedSet is a JS Set of strings: first insertion order, no repeats.
-type orderedSet struct {
-	list []string
-	seen map[string]bool
-}
-
-func (s *orderedSet) add(v string) {
-	if s.seen == nil {
-		s.seen = map[string]bool{}
+// skillFiles lists the files in a team skill folder, as paths relative to the team repo.
+func skillFiles(team, skill string) ([]string, error) {
+	list, err := files.List(filepath.Join(team, ".claude/skills", skill))
+	for i, f := range list {
+		list[i] = ".claude/skills/" + skill + "/" + f
 	}
-	if !s.seen[v] {
-		s.seen[v] = true
-		s.list = append(s.list, v)
-	}
+	return list, err
 }
 
 // FindEdits lists framework-owned files changed since the last sync, e.g. "modified  .folkways/instructions.md".
 // Files are checked in sorted path order (TS: manifest order).
 func FindEdits(team string, m *manifest.Manifest) ([]string, error) {
 	edits := []string{}
-	for _, p := range sortedKeys(m.Files) {
+	for _, p := range slices.Sorted(maps.Keys(m.Files)) {
 		full := filepath.Join(team, p)
 		if !exists(full) {
 			edits = append(edits, "deleted   "+p)
@@ -166,12 +158,11 @@ func FindEdits(team string, m *manifest.Manifest) ([]string, error) {
 		}
 	}
 	for _, skill := range m.Skills {
-		list, err := files.List(filepath.Join(team, ".claude/skills", skill))
+		list, err := skillFiles(team, skill)
 		if err != nil {
 			return nil, err
 		}
-		for _, f := range list {
-			p := ".claude/skills/" + skill + "/" + f
+		for _, p := range list {
 			if _, ok := m.Files[p]; !ok {
 				edits = append(edits, "added     "+p)
 			}
@@ -219,14 +210,14 @@ func findOverwrites(team string, fsys fs.FS, m *manifest.Manifest, copies []file
 			ownedSkills = append(ownedSkills, ".claude/skills/"+s+"/")
 		}
 	}
-	var out orderedSet
+	var out []string
 	dests := make([]string, 0, len(copies)+2)
 	for _, c := range copies {
 		dests = append(dests, c.dest)
 	}
 	for _, dest := range append(dests, settingsPath, manifest.Path) {
 		if parent := blockingParent(team, dest); parent != "" {
-			out.add("replaced  " + parent)
+			addUnique(&out, "replaced  "+parent)
 		}
 	}
 	for _, c := range copies {
@@ -240,7 +231,7 @@ func findOverwrites(team string, fsys fs.FS, m *manifest.Manifest, copies []file
 			continue
 		}
 		if !info.Mode().IsRegular() {
-			out.add("replaced  " + c.dest)
+			addUnique(&out, "replaced  "+c.dest)
 			continue
 		}
 		have, err := files.SHA256(full)
@@ -252,7 +243,7 @@ func findOverwrites(team string, fsys fs.FS, m *manifest.Manifest, copies []file
 			return nil, err
 		}
 		if have != want {
-			out.add("replaced  " + c.dest)
+			addUnique(&out, "replaced  "+c.dest)
 		}
 	}
 	if m == nil {
@@ -269,50 +260,46 @@ func findOverwrites(team string, fsys fs.FS, m *manifest.Manifest, copies []file
 			if blockingParent(team, ".claude/skills/"+skill+"/x") != "" {
 				continue
 			}
-			list, err := files.List(filepath.Join(team, ".claude/skills", skill))
+			list, err := skillFiles(team, skill)
 			if err != nil {
 				return nil, err
 			}
-			for _, f := range list {
-				if p := ".claude/skills/" + skill + "/" + f; !shipped[p] {
-					out.add("replaced  " + p)
+			for _, p := range list {
+				if !shipped[p] {
+					addUnique(&out, "replaced  "+p)
 				}
 			}
 		}
 	}
-	return out.list, nil
+	return out, nil
 }
 
 // replacedPaths are the paths this sync replaces or removes: the last sync's files, edits in its skills,
 // forced overwrites, and every existing destination, so a failed swap can put all of them back.
 func replacedPaths(team string, m *manifest.Manifest, overwrites, incoming []string) ([]string, error) {
-	var paths orderedSet
-	var skills []string
+	var paths, skills []string
 	if m != nil {
-		for _, p := range sortedKeys(m.Files) {
-			paths.add(p)
-		}
-		skills = m.Skills
+		paths, skills = slices.Sorted(maps.Keys(m.Files)), m.Skills
 	}
 	for _, p := range incoming {
-		paths.add(p)
+		addUnique(&paths, p)
 	}
 	for _, skill := range skills {
-		list, err := files.List(filepath.Join(team, ".claude/skills", skill))
+		list, err := skillFiles(team, skill)
 		if err != nil {
 			return nil, err
 		}
-		for _, f := range list {
-			paths.add(".claude/skills/" + skill + "/" + f)
+		for _, p := range list {
+			addUnique(&paths, p)
 		}
 	}
 	for _, line := range overwrites {
-		paths.add(strings.TrimPrefix(line, "replaced  "))
+		addUnique(&paths, strings.TrimPrefix(line, "replaced  "))
 	}
-	paths.add(settingsPath)
-	paths.add(manifest.Path)
+	addUnique(&paths, settingsPath)
+	addUnique(&paths, manifest.Path)
 	var out []string
-	for _, p := range paths.list {
+	for _, p := range paths {
 		if blockingParent(team, p) == "" && lexists(filepath.Join(team, p)) {
 			out = append(out, p)
 		}
@@ -333,9 +320,8 @@ func mkdirAll(dir string) (string, error) {
 }
 
 // swap moves the outgoing team paths aside and the staged incoming paths (manifest last) into place. On any
-// failure it undoes every move, so the team repo keeps the old set of files. restoreFailed reports that
-// the undo failed too: the staging folder then holds the old files and must stay.
-func swap(team, stage string, outgoing, incoming []string) (restoreFailed bool, err error) {
+// failure it undoes every move, so the team repo keeps the old set of files.
+func swap(team, stage string, outgoing, incoming []string) error {
 	type move struct{ from, to string }
 	var done []move
 	var created []string
@@ -353,7 +339,7 @@ func swap(team, stage string, outgoing, incoming []string) (restoreFailed bool, 
 		done = append(done, move{from, to})
 		return nil
 	}
-	err = func() error {
+	err := func() error {
 		for _, p := range outgoing {
 			if err := moveOne(filepath.Join(team, p), filepath.Join(stage, "old", p)); err != nil {
 				return err
@@ -367,7 +353,7 @@ func swap(team, stage string, outgoing, incoming []string) (restoreFailed bool, 
 		return nil
 	}()
 	if err == nil {
-		return false, nil
+		return nil
 	}
 	undo := func() error {
 		for i := len(done) - 1; i >= 0; i-- {
@@ -386,10 +372,15 @@ func swap(team, stage string, outgoing, incoming []string) (restoreFailed bool, 
 		return nil
 	}()
 	if undo != nil {
-		return true, clierr.New("sync failed and could not restore the old files; they are in %s/old.\n%v\n%v", stage, err, undo)
+		return &restoreError{fmt.Sprintf("sync failed and could not restore the old files; they are in %s/old.\n%v\n%v", stage, err, undo)}
 	}
-	return false, err
+	return err
 }
+
+// restoreError is a failed sync whose undo failed too: the staging folder holds the old files, so it stays.
+type restoreError struct{ msg string }
+
+func (e *restoreError) Error() string { return e.msg }
 
 type teamOverlay struct{ path, skill string }
 
@@ -453,7 +444,7 @@ func compileOverlays(team string, fsys fs.FS, copies []fileCopy) (map[string]str
 		for i := range copies {
 			if rel, ok := strings.CutPrefix(copies[i].dest, prefix); ok {
 				if s, ok := compiled.Files[rel]; ok {
-					copies[i].content, copies[i].compiled = s, true
+					copies[i].content = []byte(s)
 				}
 			}
 		}
@@ -471,17 +462,15 @@ func StaleOverlays(team string, m *manifest.Manifest) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var paths orderedSet
-	for p := range m.Overlays {
-		paths.add(p)
-	}
+	paths := slices.Collect(maps.Keys(m.Overlays))
 	for _, o := range list {
 		if slices.Contains(m.Skills, o.skill) {
-			paths.add(o.path)
+			paths = append(paths, o.path)
 		}
 	}
+	slices.Sort(paths)
 	out := []string{}
-	for _, p := range paths.list {
+	for _, p := range slices.Compact(paths) {
 		full := filepath.Join(team, p)
 		if !exists(full) {
 			out = append(out, p)
@@ -495,7 +484,6 @@ func StaleOverlays(team string, m *manifest.Manifest) ([]string, error) {
 			out = append(out, p)
 		}
 	}
-	slices.Sort(out)
 	return out, nil
 }
 
@@ -517,15 +505,8 @@ func mergedSettings(team string, fsys fs.FS) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	parsed, err := settings.Parse(b)
-	if err != nil {
-		return "", fmt.Errorf("bundle settings.json: %w", err)
-	}
-	fragment, ok := parsed.(*settings.Object)
-	if !ok {
-		return "", errors.New("bundle settings.json is not a JSON object")
-	}
-	merged, err := settings.Merge(current, fragment)
+	fragment, _ := settings.Parse(b) // the embedded fragment is a JSON object; content tests check it
+	merged, err := settings.Merge(current, fragment.(*settings.Object))
 	if err != nil {
 		return "", err
 	}
@@ -533,7 +514,7 @@ func mergedSettings(team string, fsys fs.FS) (string, error) {
 }
 
 // Sync copies b's files into the team repo at team. It does not commit.
-func Sync(team string, b bundle.Bundle, opts Options) (Result, error) {
+func Sync(team string, b bundle.Bundle, opts Options) (_ Result, err error) {
 	entries, err := os.ReadDir(team)
 	if err != nil {
 		return Result{}, err
@@ -607,11 +588,55 @@ func Sync(team string, b bundle.Bundle, opts Options) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	restoreFailed, err := stageAndSwap(team, stage, b, m, skills, copies, overlaySums, merged, overwrites)
-	if err != nil {
-		if !restoreFailed {
+	defer func() {
+		if !errors.As(err, new(*restoreError)) {
 			os.RemoveAll(stage)
 		}
+	}()
+	sums := map[string]string{}
+	for _, c := range copies {
+		staged := filepath.Join(stage, "new", c.dest)
+		if err := os.MkdirAll(filepath.Dir(staged), 0o755); err != nil {
+			return Result{}, err
+		}
+		if c.content != nil {
+			err = os.WriteFile(staged, c.content, 0o644)
+		} else {
+			err = ops.Copy(b.FS, c.src, staged)
+		}
+		if err != nil {
+			return Result{}, err
+		}
+		if sums[c.dest], err = files.SHA256(staged); err != nil {
+			return Result{}, err
+		}
+	}
+	if err := os.MkdirAll(filepath.Join(stage, "new/.claude"), 0o755); err != nil {
+		return Result{}, err
+	}
+	if err := os.WriteFile(filepath.Join(stage, "new", settingsPath), []byte(merged), 0o644); err != nil {
+		return Result{}, err
+	}
+	if err := os.MkdirAll(filepath.Join(stage, "new/.folkways"), 0o755); err != nil {
+		return Result{}, err
+	}
+	next := &manifest.Manifest{Version: b.Version, Skills: skills, Files: sums}
+	if len(overlaySums) > 0 {
+		next.Overlays = overlaySums
+	}
+	if err := manifest.Write(filepath.Join(stage, "new"), next); err != nil {
+		return Result{}, err
+	}
+	incoming := make([]string, 0, len(copies)+2)
+	for _, c := range copies {
+		incoming = append(incoming, c.dest)
+	}
+	incoming = append(incoming, settingsPath, manifest.Path)
+	outgoing, err := replacedPaths(team, m, overwrites, incoming)
+	if err != nil {
+		return Result{}, err
+	}
+	if err := swap(team, stage, outgoing, incoming); err != nil {
 		return Result{}, err
 	}
 	if err := os.RemoveAll(stage); err != nil {
@@ -646,53 +671,4 @@ func Sync(team string, b bundle.Bundle, opts Options) (Result, error) {
 		previous = m.Version
 	}
 	return Result{Version: b.Version, Previous: previous, Discarded: append(discarded, overwrites...), Warnings: warnings}, nil
-}
-
-// stageAndSwap writes the new files under stage/new, then swaps them in.
-func stageAndSwap(team, stage string, b bundle.Bundle, m *manifest.Manifest, skills []string, copies []fileCopy,
-	overlaySums map[string]string, merged string, overwrites []string) (restoreFailed bool, err error) {
-	sums := map[string]string{}
-	for _, c := range copies {
-		staged := filepath.Join(stage, "new", c.dest)
-		if err := os.MkdirAll(filepath.Dir(staged), 0o755); err != nil {
-			return false, err
-		}
-		if c.compiled {
-			err = os.WriteFile(staged, []byte(c.content), 0o644)
-		} else {
-			err = ops.Copy(b.FS, c.src, staged)
-		}
-		if err != nil {
-			return false, err
-		}
-		if sums[c.dest], err = files.SHA256(staged); err != nil {
-			return false, err
-		}
-	}
-	if err := os.MkdirAll(filepath.Join(stage, "new/.claude"), 0o755); err != nil {
-		return false, err
-	}
-	if err := os.WriteFile(filepath.Join(stage, "new", settingsPath), []byte(merged), 0o644); err != nil {
-		return false, err
-	}
-	if err := os.MkdirAll(filepath.Join(stage, "new/.folkways"), 0o755); err != nil {
-		return false, err
-	}
-	next := &manifest.Manifest{Version: b.Version, Skills: skills, Files: sums}
-	if len(overlaySums) > 0 {
-		next.Overlays = overlaySums
-	}
-	if err := manifest.Write(filepath.Join(stage, "new"), next); err != nil {
-		return false, err
-	}
-	incoming := make([]string, 0, len(copies)+2)
-	for _, c := range copies {
-		incoming = append(incoming, c.dest)
-	}
-	incoming = append(incoming, settingsPath, manifest.Path)
-	outgoing, err := replacedPaths(team, m, overwrites, incoming)
-	if err != nil {
-		return false, err
-	}
-	return swap(team, stage, outgoing, incoming)
 }

@@ -188,32 +188,12 @@ func jsNumber(f float64) string {
 
 // quote writes s as JSON.stringify does: only ", \ and control characters are escaped.
 func quote(b *strings.Builder, s string) {
-	b.WriteByte('"')
-	for _, r := range s {
-		switch r {
-		case '"':
-			b.WriteString(`\"`)
-		case '\\':
-			b.WriteString(`\\`)
-		case '\b':
-			b.WriteString(`\b`)
-		case '\f':
-			b.WriteString(`\f`)
-		case '\n':
-			b.WriteString(`\n`)
-		case '\r':
-			b.WriteString(`\r`)
-		case '\t':
-			b.WriteString(`\t`)
-		default:
-			if r < 0x20 {
-				b.WriteString(`\u00`)
-				b.WriteString(strconv.FormatInt(int64(r>>4), 16))
-				b.WriteString(strconv.FormatInt(int64(r&0xf), 16))
-			} else {
-				b.WriteRune(r)
-			}
-		}
-	}
-	b.WriteByte('"')
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(s) // a string always encodes
+	// Undo the one escape json.Encoder adds that JSON.stringify doesn't. `\\` comes first so an escaped
+	// backslash followed by "u2028" stays as it is.
+	r := strings.NewReplacer(`\\`, `\\`, `\u2028`, "\u2028", `\u2029`, "\u2029")
+	r.WriteString(b, strings.TrimSuffix(buf.String(), "\n"))
 }

@@ -53,23 +53,6 @@ func TestSHA256(t *testing.T) {
 	}
 }
 
-func TestCopyFileKeepsMode(t *testing.T) {
-	dir := t.TempDir()
-	src, dest := filepath.Join(dir, "src"), filepath.Join(dir, "dest")
-	put(t, src, "#!/bin/sh\n")
-	if err := os.Chmod(src, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	put(t, dest, "old") // an existing file takes the source's mode too
-	if err := CopyFile(src, dest); err != nil {
-		t.Fatal(err)
-	}
-	info, err := os.Stat(dest)
-	if err != nil || info.Mode().Perm() != 0o755 {
-		t.Errorf("dest mode = %v, %v; want 0755", info.Mode(), err)
-	}
-}
-
 func TestPruneEmptyDirs(t *testing.T) {
 	dir := t.TempDir()
 	for _, d := range []string{"a/b/c", "keep/empty"} {
