@@ -1,0 +1,63 @@
+{
+  "description": "upgrade refuses a committed edit to a framework file, naming it, before installing. TS: it 'refuses edited framework files before installing'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/instructions.md": "mine\n"
+      },
+      "git": [
+        [
+          "commit",
+          "-qam",
+          "edit"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:modified  \\.folkways/instructions\\.md",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

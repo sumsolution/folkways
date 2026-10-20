@@ -1,0 +1,236 @@
+{
+  "description": "upgrade refuses anything but an exact version before touching git or the package manager. TS: it.each 'refuses the version %j'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "bad name"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: 'bad name' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        "latest"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: 'latest' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        "^1.0.0"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: '^1.0.0' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        "1.0"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: '1.0' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        "01.2.3"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: '01.2.3' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        "1.0.0-a..b"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: '1.0.0-a..b' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    },
+    {
+      "args": [
+        "upgrade",
+        ""
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: '' is not a version; use an exact one, e.g. 1.2.0\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

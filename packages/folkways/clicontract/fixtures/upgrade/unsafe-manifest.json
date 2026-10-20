@@ -1,0 +1,63 @@
+{
+  "description": "upgrade refuses a manifest naming a path outside the framework-owned locations, before installing. TS: it 'refuses an unsafe manifest'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": "{\"version\": \"0.0.1\", \"skills\": [], \"files\": {\"../outside\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}}"
+      },
+      "git": [
+        [
+          "commit",
+          "-qam",
+          "tamper"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:^folkways: .*unsafe path",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}
