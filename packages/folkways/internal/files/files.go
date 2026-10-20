@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"path"
@@ -13,39 +12,35 @@ import (
 	"sort"
 )
 
-// Ops are the file operations sync stages with. A seam, so tests can inject failures.
+// Ops are the file operations sync stages with. A seam, so tests can inject failures. Copy reads src from
+// fsys (the bundle's content) and writes dest on disk.
 type Ops struct {
-	Copy   func(src, dest string) error
+	Copy   func(fsys fs.FS, src, dest string) error
 	Rename func(from, to string) error
 }
 
 // OS is Ops on the real filesystem.
-var OS = Ops{Copy: CopyFile, Rename: os.Rename}
+var OS = Ops{Copy: CopyFS, Rename: os.Rename}
 
-// CopyFile copies src to dest, creating or truncating dest, with src's permission bits.
-func CopyFile(src, dest string) error {
-	in, err := os.Open(src)
+// CopyFS copies src in fsys to dest on disk, creating or truncating dest. dest is 0755 if src has an
+// executable bit, else 0644: embedded files carry no permission bits worth keeping.
+func CopyFS(fsys fs.FS, src, dest string) error {
+	b, err := fs.ReadFile(fsys, src)
 	if err != nil {
 		return err
 	}
-	defer in.Close()
-	info, err := in.Stat()
+	info, err := fs.Stat(fsys, src)
 	if err != nil {
 		return err
 	}
-	out, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
-	if err != nil {
+	perm := fs.FileMode(0o644)
+	if info.Mode()&0o111 != 0 {
+		perm = 0o755
+	}
+	if err := os.WriteFile(dest, b, perm); err != nil {
 		return err
 	}
-	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-		return err
-	}
-	if err := out.Chmod(info.Mode().Perm()); err != nil { // OpenFile keeps an existing file's mode
-		out.Close()
-		return err
-	}
-	return out.Close()
+	return os.Chmod(dest, perm) // WriteFile keeps an existing file's mode
 }
 
 // SHA256 is the hex sha256 of a file's content.
