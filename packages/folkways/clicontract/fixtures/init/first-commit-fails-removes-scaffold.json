@@ -1,0 +1,25 @@
+{
+  "description": "When the first commit fails init removes the scaffold and reports git's error. From init.test.ts: init when the first commit fails > removes the scaffold and reports the git error concisely",
+  "steps": [
+    {
+      "files": {
+        "${BIN}/git": "#!/bin/sh\nif [ \"$1\" = commit ]; then echo \"commit rejected\" >&2; exit 1; fi\nexec ${GIT} \"$@\"\n"
+      }
+    },
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: git commit failed; removed what init created:\ncommit rejected\n",
+        "files": {
+          "${TEAM}": null
+        }
+      }
+    }
+  ]
+}

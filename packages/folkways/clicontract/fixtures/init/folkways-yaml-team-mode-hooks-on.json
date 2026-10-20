@@ -1,0 +1,18 @@
+{
+  "description": "init writes folkways.yaml with team mode, the angular commit convention and every hook on. From init.test.ts: init > writes folkways.yaml with team mode and every hook on",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ],
+      "expect": {
+        "files": {
+          "folkways.yaml": "re:(?m)^mode: team\\b(?s).*(?m)^  commit_convention: angular\\s+# angular \\| pattern \\| none$(?s).*(?m)^  commit_pattern: \"\"(?s).*(?m)^hooks:.*\n  git-guard: true\n  context-band: true\n  precompact: true\n  session-start: true$"
+        },
+        "stdout": "Created ${TEAM} with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${TEAM} and run the setup skill.\n"
+      }
+    }
+  ]
+}

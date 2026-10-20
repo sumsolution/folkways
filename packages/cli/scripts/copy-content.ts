@@ -8,6 +8,6 @@ const CONTENT = join(PACKAGE, '..', 'content');
 const ASSETS = join(PACKAGE, 'assets');
 
 rmSync(ASSETS, { recursive: true, force: true });
-for (const name of ['instructions.md', 'settings.json', 'skills', 'prompts', 'workflows']) {
+for (const name of ['instructions.md', 'settings.json', 'skills', 'prompts', 'workflows', 'templates']) {
   cpSync(join(CONTENT, name), join(ASSETS, name), { recursive: true });
 }

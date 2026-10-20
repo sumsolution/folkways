@@ -1,0 +1,65 @@
+{
+  "description": "sync.test.ts 'sync without a manifest, with framework skills in place' > 'refuses differing or extra skill files, and --force replaces them'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/skills/start/SKILL.md": "ours\n",
+        ".claude/skills/start/extra.md": "extra\n"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:replaced  \\.claude/skills/start/SKILL\\.md\\n  replaced  \\.claude/skills/start/extra\\.md\\n",
+        "unchanged": true
+      }
+    },
+    {
+      "args": [
+        "sync",
+        "--force"
+      ],
+      "expect": {
+        "stdout": "Discarded edits:\n  replaced  .claude/skills/start/SKILL.md\n  replaced  .claude/skills/start/extra.md\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/skills/start/extra.md": null
+        }
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "description": "sync.test.ts 'sync stops on edits to framework files' > 'added'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/skills/start/extra.md": "x"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:^folkways: framework files were edited:\\n  added     \\.claude/skills/start/extra\\.md\\nMove team changes into overlays/, then rerun\\.\\nOr rerun with --force to discard the edits\\.\\n$",
+        "unchanged": true
+      }
+    }
+  ]
+}

@@ -14,8 +14,7 @@
   },
   "files": [
     "dist",
-    "assets",
-    "templates"
+    "assets"
   ],
   "folkways": {
     "hooks": "0.1.0"

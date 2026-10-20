@@ -1,0 +1,23 @@
+{
+  "description": "When the install fails init removes the folder it created and reports the tool's stderr. From init.test.ts: init when the install fails > removes the folder it created and says why",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ],
+      "env": {
+        "STUB_NPM_FAIL": "npm error network"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: npm install failed; removed what init created:\nnpm error network\n",
+        "files": {
+          "${TEAM}": null,
+          "${CALLS}": "${TEAM}: npm install\n"
+        }
+      }
+    }
+  ]
+}

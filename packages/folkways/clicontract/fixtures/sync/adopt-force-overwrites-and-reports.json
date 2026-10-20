@@ -1,0 +1,44 @@
+{
+  "description": "sync.test.ts 'sync without a manifest (adopting a repo)' > '--force overwrites them and reports them'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync",
+        "--force"
+      ],
+      "files": {
+        ".folkways/instructions.md": "ours\n"
+      },
+      "expect": {
+        "stdout": "Discarded edits:\n  replaced  .folkways/instructions.md\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".folkways/instructions.md": "re:^# Way of working\n"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "description": "TS cli.test.ts: it('init then sync'); sync runs from a subfolder of the new repo",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ],
+      "expect": {
+        "stderr": "",
+        "stdout": "re:^Created ${TEAM} with folkways"
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "cwd": "${TEAM}/knowledge",
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "unchanged": true
+      }
+    }
+  ]
+}

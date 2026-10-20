@@ -6,7 +6,7 @@
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { assert, CLI, HOOKS, packClaudePlugin, packCli, packHooks, readJson, run as runIn, skippedTests } from './pack.ts';
+import { assert, CLI, packClaudePlugin, packCli, packHooks, readJson, run as runIn, runContract } from './pack.ts';
 
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'folkways-smoke-')));
 const env = {
@@ -102,8 +102,7 @@ try {
     assert(manifestJson() === manifestBefore, '.folkways/manifest.json changed after second sync');
 
     step(`${pm}: hook contract suite against the installed binary`);
-    const suite = run('pnpm', ['exec', 'vitest', 'run', 'contract'], HOOKS, { FOLKWAYS_HOOK_CMD: hookBin });
-    assert(skippedTests(suite) === 0, `the contract suite skipped cases:\n${suite}`);
+    runContract(hookBin, env);
   }
 
   step('claude plugin: pack, unpack, run a hook');

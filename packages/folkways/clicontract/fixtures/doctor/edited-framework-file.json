@@ -1,0 +1,24 @@
+{
+  "description": "TS doctor.test.ts: it('reports edited framework files, which sync refuses')",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/instructions.md": "edited\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: .folkways/instructions.md was modified, so sync refuses; move the change into an overlay, or run 'folkways sync --force' to discard it\n1 error, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

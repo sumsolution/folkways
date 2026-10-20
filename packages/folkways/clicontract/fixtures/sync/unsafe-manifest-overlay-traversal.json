@@ -1,0 +1,45 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'rejects an unsafe manifest before forced deletion' (unsafe overlay path \"../x\"); --force still refuses and touches nothing outside the repo",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": "{\"version\": \"0.1.0\", \"skills\": [], \"files\": {}, \"overlays\": {\"../x\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}}\n",
+        "${ROOT}/outside": "keep\n"
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync",
+        "--force"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: .folkways/manifest.json: unsafe overlay path \"../x\". Restore it with 'git checkout -- .folkways/manifest.json'.\n",
+        "unchanged": true,
+        "files": {
+          "${ROOT}/outside": "keep\n",
+          "folkways.yaml": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'warns when AGENTS.md lost the import line'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "AGENTS.md": "# Team\n"
+      },
+      "expect": {
+        "stdout": "warning: AGENTS.md has no '@.folkways/instructions.md' line; agents won't see the framework instructions.\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

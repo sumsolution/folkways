@@ -1,0 +1,38 @@
+{
+  "description": "sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'adopts a repo whose skills are already compiled'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n- team rule\n\n## Override {#types}\n\nteam types\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "description": "init creates missing parent folders. From init.test.ts: init > creates missing parent folders",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${ROOT}/a/b/team",
+        "--no-install"
+      ],
+      "expect": {
+        "stdout": "re:^Created \\Q${ROOT}/a/b/team\\E with folkways",
+        "files": {
+          "${ROOT}/a/b/team/package.json": true,
+          "${ROOT}/a/b/team/folkways.yaml": true
+        }
+      }
+    }
+  ]
+}

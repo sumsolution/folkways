@@ -1,0 +1,26 @@
+{
+  "description": "sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'stops before writing anything on an unknown section ID' (also overlays.test.ts 'compileSkillFiles' > 'refuses an ID no file has, and an ID in two files', first half)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Override {#nope}\n\nx\n"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: overlays/commit/OVERLAY.md: team overlay overrides #nope, but the skill has no section with that ID\n",
+        "unchanged": true
+      }
+    }
+  ]
+}

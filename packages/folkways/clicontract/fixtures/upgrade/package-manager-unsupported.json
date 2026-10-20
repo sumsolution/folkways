@@ -1,0 +1,72 @@
+{
+  "description": "upgrade fails, goes back and names the problem when packageManager is not npm or pnpm. TS: package-manager.test.ts 'rejects an unsupported packageManager'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  },\n  \"packageManager\": \"yarn@4.0.0\"\n}\n"
+      },
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e 's/\"version\": \"${VERSION}\"/\"version\": \"0.0.1\"/' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ],
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "pin 0.0.1"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: upgrade to ${VERSION} failed; back on main:\nyarn is not supported; use npm or pnpm\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

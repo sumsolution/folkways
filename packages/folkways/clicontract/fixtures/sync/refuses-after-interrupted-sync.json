@@ -1,0 +1,40 @@
+{
+  "description": "sync.test.ts 'sync after an interrupted sync' > 'refuses and says how to recover' (with and without --force)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways-sync-abc123/old/.folkways/manifest.json": "{}"
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: a previous sync was interrupted and left .folkways-sync-abc123/ (the files it replaced are in .folkways-sync-abc123/old).\nRestore the committed files with 'git checkout -- .', delete .folkways-sync-abc123/, then rerun.\n",
+        "unchanged": true
+      }
+    },
+    {
+      "args": [
+        "sync",
+        "--force"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:interrupted[\\s\\S]*\\.folkways-sync-abc123",
+        "unchanged": true
+      }
+    }
+  ]
+}

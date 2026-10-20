@@ -1,0 +1,26 @@
+{
+  "description": "TS doctor.test.ts hookValueFindings: it('flags empty and null values and quoted YAML 1.1 words, which the binary reads as booleans'); plugin-style repo (git init + folkways.yaml only)",
+  "steps": [
+    {
+      "git": [
+        [
+          "init",
+          "-q"
+        ]
+      ]
+    },
+    {
+      "files": {
+        "folkways.yaml": "mode: team\nhooks:\n  git-guard:\n  context-band: ~ # unset\n  precompact: \"off\"\n  session-start: 'on'\nreview:\n  trigger: pre-push\n"
+      },
+      "args": [
+        "doctor"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "error: folkways.yaml hooks.git-guard: (empty) reads as false (hook off); write false\nerror: folkways.yaml hooks.context-band: ~ reads as false (hook off); write false\nerror: folkways.yaml hooks.precompact: \"off\" reads as false (hook off); write false\nerror: folkways.yaml hooks.session-start: 'on' reads as true (hook on); write true\n4 errors, 0 warnings.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

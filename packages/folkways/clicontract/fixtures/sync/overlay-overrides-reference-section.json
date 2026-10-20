@@ -1,0 +1,36 @@
+{
+  "description": "overlays.test.ts 'compileSkillFiles' > 'overrides a section in a reference file' and sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'overrides a section in a reference file'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/adr/OVERLAY.md": "## Override {#template}\n\nteam template\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/skills/adr/references/template.md": "re:(?s)<!-- team override -->\\nteam template\\n"
+        },
+        "git": [
+          {
+            "args": [
+              "diff",
+              "--name-only"
+            ],
+            "stdout": ".claude/skills/adr/references/template.md\n.folkways/manifest.json"
+          }
+        ]
+      }
+    }
+  ]
+}
