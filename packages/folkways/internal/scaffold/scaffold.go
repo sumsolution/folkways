@@ -4,6 +4,8 @@ package scaffold
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,6 +79,9 @@ func Init(path string, b bundle.Bundle, opts Options) (string, error) {
 	}
 	entries, err := os.ReadDir(dest)
 	existed := err == nil
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return "", err // e.g. unreadable or a file: never treat it as absent, or cleanup would delete it
+	}
 	if existed && len(entries) > 0 {
 		return "", clierr.New("%s exists and is not empty", dest)
 	}

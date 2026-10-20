@@ -1,8 +1,12 @@
 package scaffold
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/sumsolution/folkways/packages/folkways/internal/bundle"
 )
 
 // The unit cases the init fixtures can't express (fixtures/init/COVERAGE.md): templateTarget, and
@@ -44,5 +48,23 @@ func TestPackageName(t *testing.T) {
 		if got, err := packageName(in); err == nil {
 			t.Errorf("packageName(%q) = %q, want an error", in, got)
 		}
+	}
+}
+
+// A folder init can't list is an error, and init must not delete it (TS throws EACCES and keeps it).
+func TestInitKeepsUnreadableFolder(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root can list any folder")
+	}
+	dest := filepath.Join(t.TempDir(), "team")
+	if err := os.Mkdir(dest, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dest, 0o755) })
+	if _, err := Init(dest, bundle.Bundle{}, Options{}); err == nil {
+		t.Error("Init on an unreadable folder succeeded")
+	}
+	if _, err := os.Stat(dest); err != nil {
+		t.Errorf("folder is gone: %v", err)
 	}
 }
