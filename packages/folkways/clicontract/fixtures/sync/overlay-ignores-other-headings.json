@@ -1,0 +1,33 @@
+{
+  "description": "overlays.test.ts 'parseOverlay' > 'reports headings that are neither Add nor Override' and 'compileSkillFiles' > 'warns about sections it does not apply'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Notes\n\nx\n"
+      },
+      "expect": {
+        "stdout": "warning: overlays/commit/OVERLAY.md: ignored ## Notes; team overlays hold ## Add and ## Override {#id} only\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "git": [
+          {
+            "args": [
+              "diff",
+              "--name-only"
+            ],
+            "stdout": ".folkways/manifest.json"
+          }
+        ]
+      }
+    }
+  ]
+}

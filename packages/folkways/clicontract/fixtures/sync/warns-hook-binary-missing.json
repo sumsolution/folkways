@@ -1,0 +1,36 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'warns when dependencies are installed without the hook binary' (warns while node_modules exists without the binary, then stops warning once it is there)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "node_modules/.bin/other": ""
+      },
+      "expect": {
+        "stdout": "warning: node_modules/.bin/folkways-hook is missing, so hooks will fail. Reinstall without --omit=optional, and check that your registry serves @folkways/hooks-*.\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "node_modules/.bin/folkways-hook": ""
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

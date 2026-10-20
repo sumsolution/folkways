@@ -1,0 +1,25 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'pnpm team with %s', case \"another pattern\": warns about hoisting",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "package.json": "{\"name\": \"team\", \"private\": true, \"devDependencies\": {\"@folkways/cli\": \"0.1.0\"}, \"packageManager\": \"pnpm@10.0.0\"}",
+        "pnpm-workspace.yaml": "publicHoistPattern:\n  - \"*eslint*\"\n"
+      },
+      "expect": {
+        "stdout": "warning: pnpm-workspace.yaml needs publicHoistPattern: [\"@folkways/hooks-*\"], or pnpm won't link node_modules/.bin/folkways-hook. Add it and run pnpm install.\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'rejects a manifest that is not JSON'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".folkways/manifest.json": "{ nope"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: .folkways/manifest.json: not a JSON object. Restore it with 'git checkout -- .folkways/manifest.json'.\n",
+        "unchanged": true
+      }
+    }
+  ]
+}

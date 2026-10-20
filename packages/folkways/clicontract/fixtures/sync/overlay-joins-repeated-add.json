@@ -1,0 +1,27 @@
+{
+  "description": "overlays.test.ts 'parseOverlay' > 'joins repeated Add sections'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n- one\n\n## Add\n\n- two\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/skills/commit/SKILL.md": "re:## Team additions\\n\\n- one\\n\\n- two\\n$"
+        }
+      }
+    }
+  ]
+}

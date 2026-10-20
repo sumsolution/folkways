@@ -1,0 +1,26 @@
+{
+  "description": "overlays.test.ts 'parseOverlay' > 'refuses the same override ID twice'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Override {#types}\n\na\n\n## Override {#types}\n\nb\n"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: overlays/commit/OVERLAY.md: overlay overrides #types twice\n",
+        "unchanged": true
+      }
+    }
+  ]
+}

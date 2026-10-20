@@ -1,0 +1,28 @@
+{
+  "description": "overlays.test.ts 'parseOverlay' > 'splits Add and Override sections' and sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'writes the compiled skill and records both checksums'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n- team rule\n\n## Override {#types}\n\nteam types\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/skills/commit/SKILL.md": "re:(?s)## Types \\{#types\\}\\n\\n<!-- team override -->\\nteam types\\n\\n## Ticket reference.*## Team additions\\n\\n- team rule\\n$",
+          ".folkways/manifest.json": "re:(?s)\"overlays\": \\{\\n    \"overlays/commit/OVERLAY\\.md\": \"[a-f0-9]{64}\"\\n  \\}"
+        }
+      }
+    }
+  ]
+}

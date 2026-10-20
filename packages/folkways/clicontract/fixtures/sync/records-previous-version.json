@@ -1,0 +1,42 @@
+{
+  "description": "sync.test.ts 'sync to a new version' > 'adds new framework files and records them' (version part: sync from an older manifest prints previous -> current and rewrites the manifest)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e 's/\"version\": \"${VERSION}\"/\"version\": \"0.0.1\"/' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "stdout": "Synced folkways 0.0.1 -> ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".folkways/manifest.json": "re:^\\{\\n  \"version\": \"${VERSION}\","
+        },
+        "git": [
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

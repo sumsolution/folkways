@@ -1,0 +1,60 @@
+{
+  "description": "sync.test.ts 'sync without a manifest (adopting a repo)' > 'refuses a file where the .claude folder goes' (.claude), then --force replaces it",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "files": {
+        ".claude": null
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude": "x\n"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:replaced  \\.claude\n",
+        "unchanged": true
+      }
+    },
+    {
+      "args": [
+        "sync",
+        "--force"
+      ],
+      "expect": {
+        "stdout": "Discarded edits:\n  replaced  .claude\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".folkways/manifest.json": "re:^\\{\\n  \"version\": \"${VERSION}\","
+        }
+      }
+    }
+  ]
+}
