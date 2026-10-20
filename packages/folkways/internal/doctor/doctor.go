@@ -186,6 +186,9 @@ func dirs(path string) []string {
 
 // shadowFindings warns about personal skills with the name of a framework or team skill (ADR 0001 M10).
 func shadowFindings(team, home string) []Finding {
+	if home == "" { // $HOME unset: home-relative paths would read the repo's own skills
+		return nil
+	}
 	repoSkills := dirs(filepath.Join(team, ".claude/skills"))
 	var findings []Finding
 	for _, d := range personalSkillDirs {
@@ -285,7 +288,8 @@ func stripComment(v string) string {
 		if v[i] != '#' {
 			continue
 		}
-		if r, _ := utf8.DecodeLastRuneInString(v[:i]); i == 0 || isJSSpace(r) {
+		// JS `#.*$` can't cross a line terminator, so such a `#` stays.
+		if r, _ := utf8.DecodeLastRuneInString(v[:i]); (i == 0 || isJSSpace(r)) && !hasLineTerminator(v[i:]) {
 			return trim(v[:i])
 		}
 	}

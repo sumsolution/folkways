@@ -1,6 +1,8 @@
 package doctor
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 )
@@ -44,9 +46,21 @@ func TestStripComment(t *testing.T) {
 		`a#b`:         "a#b",
 		`# only`:      "",
 		`'x' y`:       `'x'`,
+		"a #b\rc":     "a #b\rc",
 	} {
 		if got := stripComment(in); got != want {
 			t.Errorf("stripComment(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestShadowFindingsWithoutHome(t *testing.T) {
+	team := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(team, ".claude/skills/start"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(team) // an empty home must not read ./.claude/skills
+	if got := shadowFindings(team, ""); got != nil {
+		t.Errorf("shadowFindings with no home = %v, want none", got)
 	}
 }
