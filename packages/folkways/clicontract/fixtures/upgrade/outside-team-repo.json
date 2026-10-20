@@ -1,0 +1,20 @@
+{
+  "description": "upgrade outside a git repo says to run it inside the team repo. TS: it 'refuses outside a team repo'",
+  "steps": [
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "cwd": "${ROOT}",
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: run this inside the team repo\n",
+        "files": {
+          "${CALLS}": null
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "description": "init --no-install scaffolds, pins this version, syncs and commits, without running a package manager",
+  "steps": [
+    {
+      "args": ["init", "${TEAM}", "--no-install"],
+      "expect": {
+        "stdout": "Created ${TEAM} with folkways ${VERSION}.\nNext: open Claude Code or Copilot CLI in ${TEAM} and run the setup skill.\n",
+        "stderr": "",
+        "files": {
+          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"${VERSION}\"\n  }\n}\n",
+          ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",\n  \"skills\": \\[\n",
+          "CLAUDE.md": "re:(?m)^@AGENTS\\.md$",
+          "AGENTS.md": "re:(?m)^@\\.folkways/instructions\\.md$",
+          "folkways.yaml": "re:(?m)^mode: team\\b",
+          ".gitignore": "re:(?m)^node_modules/$",
+          "pnpm-workspace.yaml": null,
+          "${CALLS}": null
+        },
+        "tree": [
+          ".claude/settings.json",
+          ".claude/skills/**",
+          ".folkways/instructions.md",
+          ".folkways/manifest.json",
+          ".folkways/prompts/*.md",
+          ".gitignore",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "README.md",
+          "*/README.md",
+          "folkways.yaml",
+          "package.json"
+        ],
+        "git": [
+          { "args": ["log", "--format=%s"], "stdout": "chore(folkways): init at ${VERSION}" },
+          { "args": ["branch", "--show-current"], "stdout": "main" },
+          { "args": ["status", "--porcelain"], "stdout": "" }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+/folkways-hook
+/folkways
+*.exe
+/bin/
+/npm/

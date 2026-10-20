@@ -1,0 +1,16 @@
+{
+  "description": "TS cli.test.ts: it('rejects unknown options'); only the folkways: prefix and option name are pinned, not Node's trailing hint",
+  "steps": [
+    {
+      "args": [
+        "sync",
+        "--nope"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:^folkways: Unknown option '--nope'"
+      }
+    }
+  ]
+}

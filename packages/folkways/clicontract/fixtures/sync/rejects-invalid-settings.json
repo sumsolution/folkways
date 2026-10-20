@@ -1,0 +1,26 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'rejects invalid settings before writing anything'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/settings.json": "{ not json"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:^folkways: .*/team/\\.claude/settings\\.json is not valid JSON\n$",
+        "unchanged": true
+      }
+    }
+  ]
+}

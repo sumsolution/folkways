@@ -1,0 +1,21 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'does not look for the hook binary before dependencies are installed' (also pinned by fresh-scaffold)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

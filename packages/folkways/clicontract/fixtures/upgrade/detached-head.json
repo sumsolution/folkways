@@ -1,0 +1,46 @@
+{
+  "description": "upgrade refuses a detached HEAD. TS: it 'refuses a detached HEAD'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "git": [
+        [
+          "checkout",
+          "-q",
+          "--detach"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "${VERSION}"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: detached HEAD; check out a branch first\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": null
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

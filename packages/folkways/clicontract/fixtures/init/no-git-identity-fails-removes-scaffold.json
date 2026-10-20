@@ -1,0 +1,30 @@
+{
+  "description": "Without a git identity the commit fails with git's message and init removes the scaffold. From init.test.ts: init without a git identity > fails with git's message and removes the scaffold",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ],
+      "env": {
+        "GIT_AUTHOR_NAME": null,
+        "GIT_AUTHOR_EMAIL": null,
+        "GIT_COMMITTER_NAME": null,
+        "GIT_COMMITTER_EMAIL": null,
+        "EMAIL": null,
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "user.useConfigOnly",
+        "GIT_CONFIG_VALUE_0": "true"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:(?s)^folkways: git commit failed; removed what init created:\n.*(?i:identity|user\\.email|name)",
+        "files": {
+          "${TEAM}": null
+        }
+      }
+    }
+  ]
+}

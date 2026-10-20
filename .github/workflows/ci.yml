@@ -48,7 +48,8 @@ jobs:
             content:
               - 'packages/content/**'
             hooks:
-              - 'packages/hooks/**'
+              - 'packages/folkways/**'
+              - 'packages/content/**' # the binary embeds it
             evals:
               - 'packages/evals/**'
               - 'packages/cli/**'     # the runner builds team repos with the CLI's init
@@ -56,7 +57,7 @@ jobs:
             claude-plugin:
               - 'packages/claude-plugin/**'
               - 'packages/content/**'     # the plugin's skills, instructions and hooks come from here
-              - 'packages/hooks/**'       # and its binaries
+              - 'packages/folkways/**'    # and its binaries
               - '.claude-plugin/**'
             shared:
               - 'package.json'
@@ -65,7 +66,8 @@ jobs:
               - '.pnpmfile.mjs'
               - 'tsconfig.base.json'
               - 'tsconfig.json'
-              - 'go.work'
+              - 'go.mod'
+              - 'go.sum'
               - '.github/workflows/**'
               - 'scripts/**'
 
@@ -152,15 +154,58 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/hooks run check
-      - name: Build the hook binary
-        working-directory: packages/hooks
-        run: go build -o bin/folkways-hook .
-      - name: Go tests and contract suite
-        run: FOLKWAYS_HOOK_CMD="$PWD/packages/hooks/bin/folkways-hook" pnpm --filter @folkways/hooks test
+      - name: Build the binaries
+        working-directory: packages/folkways
+        run: |
+          go build -o bin/folkways-hook ./cmd/folkways-hook
+          go build -ldflags "-X main.version=$(node -p "require('../cli/package.json').version")" -o bin/folkways ./cmd/folkways
+      - name: Go vet and tests, whole module (builds ./cmd/folkways for the contract suite)
+        run: go vet ./... && go test ./...
+      - name: CLI contract suite against the Go CLI
+        working-directory: packages/folkways
+        env:
+          FOLKWAYS_CLI_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways
+        run: go test -count=1 ./clicontract/
+      - name: Contract suite against folkways-hook
+        working-directory: packages/folkways
+        env:
+          FOLKWAYS_HOOK_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways-hook
+        run: go test -count=1 ./contract
+      - name: Contract suite through folkways hook, with the hook latency budget
+        working-directory: packages/folkways
+        env:
+          FOLKWAYS_HOOK_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways hook
+          FOLKWAYS_HOOK_BUDGET_MS: '10'
+        run: go test -count=1 ./contract
+      - name: Build script tests
+        run: pnpm --filter @folkways/hooks exec vitest run
+
+  # The CLI contract suite (packages/folkways/clicontract) against the TypeScript CLI from source.
+  # The Go port runs the same fixtures with FOLKWAYS_CLI_CMD (ADR 0011).
+  cli-contract:
+    name: cli contract
+    needs: changes
+    if: needs.changes.outputs.cli == 'true' || needs.changes.outputs.hooks == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Contract suite against the TS CLI
+        working-directory: packages/folkways
+        run: go test -count=1 ./clicontract/
 
   evals:
     name: evals
@@ -199,8 +244,8 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @folkways/claude-plugin run check
       - run: pnpm --filter @folkways/claude-plugin test
@@ -230,8 +275,8 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm run smoke
 
@@ -261,7 +306,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [changes, content, cli-check, cli-test, hooks, evals, claude-plugin, smoke, secrets]
+    needs: [changes, content, cli-check, cli-test, cli-contract, hooks, evals, claude-plugin, smoke, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

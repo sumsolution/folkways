@@ -1,0 +1,27 @@
+{
+  "description": "settings.test.ts 'isFrameworkHook' > 'owns commands that start with the framework prefix, or the old one'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/settings.json": "{\"hooks\": {\"Stop\": [{\"hooks\": [{\"type\": \"command\", \"command\": \"\\\"${CLAUDE_PROJECT_DIR:-.}\\\"/node_modules/.bin/folkways-hook git-guard\"}, {\"type\": \"command\", \"command\": \"node_modules/.bin/folkways hook session-start\"}]}]}}"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".claude/settings.json": "{\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PROJECT_DIR:-.}\\\"/node_modules/.bin/folkways-hook session-start\"\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PROJECT_DIR:-.}\\\"/node_modules/.bin/folkways-hook context-band\"\n          }\n        ]\n      }\n    ],\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PROJECT_DIR:-.}\\\"/node_modules/.bin/folkways-hook git-guard\"\n          }\n        ]\n      }\n    ],\n    \"PostToolBatch\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PROJECT_DIR:-.}\\\"/node_modules/.bin/folkways-hook context-band\"\n          }\n        ]\n      }\n    ],\n    \"PreCompact\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PROJECT_DIR:-.}\\\"/node_modules/.bin/folkways-hook precompact\"\n          }\n        ]\n      }\n    ]\n  },\n  \"disableAllHooks\": false,\n  \"permissions\": {\n    \"ask\": [\n      \"Bash(git push:*)\"\n    ]\n  }\n}\n"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "description": "sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'warns about an overlay for a skill the framework does not ship'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/nope/OVERLAY.md": "## Add\n\n- x\n"
+      },
+      "expect": {
+        "stdout": "warning: overlays/nope/OVERLAY.md: no framework skill named nope; the overlay is not applied\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

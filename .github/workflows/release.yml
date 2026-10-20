@@ -38,8 +38,8 @@ jobs:
           cache: pnpm
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: packages/hooks/go.mod
-          cache-dependency-path: packages/hooks/go.sum
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check
       - run: pnpm test # the contract suite skips here; release.ts runs it against the release binary

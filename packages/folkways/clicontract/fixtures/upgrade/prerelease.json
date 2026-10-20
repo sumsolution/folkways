@@ -1,0 +1,54 @@
+{
+  "description": "upgrade accepts a prerelease version as valid: it reaches the install (here failed by the stub, as no such version exists). TS: it 'accepts a prerelease'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "upgrade",
+        "1.0.0-beta.1"
+      ],
+      "env": {
+        "STUB_NPM_FAIL": "No matching version 1.0.0-beta.1"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: upgrade to 1.0.0-beta.1 failed; back on main:\nNo matching version 1.0.0-beta.1\n",
+        "unchanged": true,
+        "files": {
+          "${CALLS}": "${TEAM}: npm install --save-dev --save-exact @folkways/cli@1.0.0-beta.1\n"
+        },
+        "git": [
+          {
+            "args": [
+              "branch",
+              "--show-current"
+            ],
+            "stdout": "main"
+          },
+          {
+            "args": [
+              "branch",
+              "--list",
+              "chore/*"
+            ],
+            "stdout": ""
+          },
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

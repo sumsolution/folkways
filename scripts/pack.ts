@@ -3,10 +3,10 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { packageName, TARGETS } from '../packages/hooks/scripts/build.ts';
+import { packageName, TARGETS } from '../packages/folkways/scripts/build.ts';
 
 export const CLI = resolve(import.meta.dirname, '..', 'packages', 'cli');
-export const HOOKS = resolve(import.meta.dirname, '..', 'packages', 'hooks');
+export const HOOKS = resolve(import.meta.dirname, '..', 'packages', 'folkways');
 export const CLAUDE_PLUGIN = resolve(import.meta.dirname, '..', 'packages', 'claude-plugin');
 /** Every `@folkways/hooks-<os>-<cpu>` package, sorted. */
 export const PLATFORMS: readonly string[] = TARGETS.map(packageName).sort();
@@ -25,14 +25,24 @@ export function assert(ok: boolean, message: string): asserts ok {
 }
 
 /**
- * Skipped tests in vitest output, from its `Tests` summary line. Test names can say "skipped" (vitest
- * lists slow tests by name), so only the summary counts.
+ * Skipped tests in `go test -v` output (`--- SKIP` lines). Fails when the output holds no test result at all,
+ * so a run that never started the suite doesn't count as zero skips.
  */
-export function skippedTests(output: string): number {
-  const plain = output.replace(/\x1b\[[0-9;]*m/g, '');
-  const summary = /^\s*Tests\s+(.*)$/m.exec(plain);
-  assert(summary !== null, `no vitest Tests summary in:\n${output}`);
-  return Number(/(\d+) skipped/.exec(summary[1]!)?.[1] ?? 0);
+export function skippedGoTests(output: string): number {
+  assert(/^(ok|FAIL)\s/m.test(output) && /^\s*--- PASS/m.test(output), `no go test -v results in:\n${output}`);
+  return (output.match(/^\s*--- SKIP/gm) ?? []).length;
+}
+
+/**
+ * Run the hook contract suite (`go test` in packages/folkways) against `hookCmd`, the command the tools would run
+ * (the hook name is appended). Fails on an empty command, which would silently test a fresh build instead, and
+ * on skipped or zero cases.
+ */
+export function runContract(hookCmd: string, env: NodeJS.ProcessEnv = process.env): string {
+  assert(hookCmd.trim() !== '', 'the hook command for the contract suite is empty');
+  const suite = run('go', ['test', '-count=1', '-v', '-run', 'TestContract', './contract'], HOOKS, { ...env, FOLKWAYS_HOOK_CMD: hookCmd, FOLKWAYS_HOOKS: '' });
+  assert(skippedGoTests(suite) === 0, `the contract suite skipped cases:\n${suite}`);
+  return suite;
 }
 
 export const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'));

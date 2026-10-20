@@ -1,0 +1,39 @@
+{
+  "description": "sync.test.ts 'sync refusals and warnings' > 'refuses a team skill with a new framework skill name' (the manifest does not own the skill, so a same-named team skill clashes)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e '/\"start\",/d;/skills\\/start\\//d' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ]
+      ]
+    },
+    {
+      "files": {
+        ".claude/skills/start/SKILL.md": "mine\n"
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: team skills clash with new framework skills: .claude/skills/start\nRename the team skills, then rerun.\n",
+        "files": {
+          ".claude/skills/start/SKILL.md": "mine\n"
+        }
+      }
+    }
+  ]
+}
