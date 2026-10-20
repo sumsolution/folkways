@@ -1,0 +1,22 @@
+{
+  "description": "version prints the CLI version",
+  "steps": [
+    {
+      "args": [
+        "version"
+      ],
+      "expect": {
+        "stdout": "${VERSION}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "expect": {
+        "stdout": "${VERSION}\n"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "description": "sync in a fresh scaffold, from a subfolder, changes nothing",
+  "steps": [
+    { "args": ["init", "${TEAM}", "--no-install"] },
+    {
+      "args": ["sync"],
+      "cwd": "knowledge",
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "unchanged": true,
+        "git": [{ "args": ["status", "--porcelain"], "stdout": "" }]
+      }
+    }
+  ]
+}
