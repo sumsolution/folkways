@@ -1,0 +1,47 @@
+{
+  "description": "sync.test.ts 'sync without a manifest (adopting a repo)' > 'refuses a folder where a file goes, without crashing'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": null
+      },
+      "git": [
+        [
+          "add",
+          "-A"
+        ],
+        [
+          "commit",
+          "-qm",
+          "team change"
+        ]
+      ]
+    },
+    {
+      "files": {
+        ".folkways/prompts/review.md": null
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".folkways/prompts/review.md/x": "x"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:replaced  \\.folkways/prompts/review\\.md\\n",
+        "unchanged": true
+      }
+    }
+  ]
+}

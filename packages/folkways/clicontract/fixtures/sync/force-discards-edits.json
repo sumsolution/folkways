@@ -1,0 +1,37 @@
+{
+  "description": "sync.test.ts 'sync stops on edits to framework files' > '--force discards the edits and reports them'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync",
+        "--force"
+      ],
+      "files": {
+        ".folkways/instructions.md": "mine\n"
+      },
+      "expect": {
+        "stdout": "Discarded edits:\n  modified  .folkways/instructions.md\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "files": {
+          ".folkways/instructions.md": "re:^# Way of working\n"
+        },
+        "git": [
+          {
+            "args": [
+              "status",
+              "--porcelain"
+            ],
+            "stdout": ""
+          }
+        ]
+      }
+    }
+  ]
+}

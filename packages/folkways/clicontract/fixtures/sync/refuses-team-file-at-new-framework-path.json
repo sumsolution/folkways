@@ -1,0 +1,38 @@
+{
+  "description": "sync.test.ts 'sync with a manifest' > 'refuses to overwrite a team file at a new framework path' (a path the manifest does not track)",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "files": {
+        ".folkways/prompts/review.md": "team prompt\n"
+      },
+      "git": [
+        [
+          "-c",
+          "alias.edit=!sed -e '/prompts\\/review.md/d' .folkways/manifest.json > .folkways/m.tmp && mv .folkways/m.tmp .folkways/manifest.json",
+          "edit"
+        ]
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:replaced  \\.folkways/prompts/review\\.md\\n",
+        "files": {
+          ".folkways/prompts/review.md": "team prompt\n"
+        },
+        "unchanged": true
+      }
+    }
+  ]
+}

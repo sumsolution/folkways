@@ -1,0 +1,33 @@
+{
+  "description": "overlays.test.ts 'parseOverlay' > 'treats an empty file as an empty overlay' and 'compileSkillFiles' > 'returns nothing changed with an empty overlay'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": ""
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": "",
+        "git": [
+          {
+            "args": [
+              "diff",
+              "--name-only"
+            ],
+            "stdout": ".folkways/manifest.json"
+          }
+        ]
+      }
+    }
+  ]
+}

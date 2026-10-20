@@ -1,0 +1,38 @@
+{
+  "description": "sync.test.ts 'sync compiles team overlays (ADR 0001)' > 'reports a compiled skill edited by hand like any framework edit'",
+  "steps": [
+    {
+      "args": [
+        "init",
+        "${TEAM}",
+        "--no-install"
+      ]
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        "overlays/commit/OVERLAY.md": "## Add\n\n- team rule\n\n## Override {#types}\n\nteam types\n"
+      },
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "args": [
+        "sync"
+      ],
+      "files": {
+        ".claude/skills/commit/SKILL.md": "hand edit\n"
+      },
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "re:modified  \\.claude/skills/commit/SKILL\\.md\\n",
+        "unchanged": true
+      }
+    }
+  ]
+}
