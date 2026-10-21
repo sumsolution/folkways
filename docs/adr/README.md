@@ -19,3 +19,4 @@ Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folk
 | [0007](0007-hook-delivery.md) | How do hooks reach agents in an app repo? | proposed |
 | [0010](0010-skill-architecture.md) | Partition folkways by session mode and effort ownership, not by SDLC agents | accepted |
 | [0011](0011-cli-in-go.md) | The CLI is one Go binary, installed without Node first | accepted |
+| [0012](0012-cli-only.md) | Does folkways need a plugin, or only a CLI? | proposed |
