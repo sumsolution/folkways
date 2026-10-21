@@ -56,7 +56,7 @@ func TestFailedSyncLeavesNothingBehind(t *testing.T) {
 	}
 }
 
-// Upgrading to the version the manifest already records returns before any git or install work.
+// Upgrading to the version the manifest already records installs and commits nothing, but runs the safety checks first.
 func TestSameVersionIsNoop(t *testing.T) {
 	for k, v := range map[string]string{
 		"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1",
@@ -82,5 +82,11 @@ func TestSameVersionIsNoop(t *testing.T) {
 	}
 	if out, _ := git.Run(team, "branch", "--list", "chore/*"); strings.TrimSpace(out) != "" {
 		t.Errorf("branch created: %s", out)
+	}
+	if err := os.WriteFile(filepath.Join(team, "stray.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Upgrade(team, "0.0.1", install); err == nil || err.Error() != "working tree is dirty; commit or stash first" {
+		t.Fatalf("dirty tree: err = %v", err)
 	}
 }
