@@ -1,0 +1,95 @@
+# Installed by `folkways sync` as .github/workflows/folkways-knowledge-audit.yml; sync replaces local edits.
+# Runs the knowledge-audit skill once a month and opens a draft PR with its proposals.
+# Needs one repo secret: CLAUDE_CODE_OAUTH_TOKEN (`claude setup-token`, uses one person's Claude
+# subscription) or ANTHROPIC_API_KEY (Claude Console, billed per token; use this for a shared team repo).
+# With neither secret set, the run skips with a notice.
+# Also needs Settings > Actions > General > "Allow GitHub Actions to create and approve pull requests".
+# The schedule is fixed: `knowledge_audit.cadence` and `knowledge_audit.tool` aren't read yet (Claude only).
+# GitHub attributes scheduled runs to whoever last edited the cron; if that's a bot, the action refuses to run.
+# CI has no project clones and no subagents, so the audit checks only what this repo shows.
+# The folkways binary isn't installed, so its hooks are off for this run; the agent has no push access anyway.
+name: folkways knowledge audit
+
+on:
+  schedule:
+    - cron: "17 6 1 * *" # 06:17 UTC on the 1st of each month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: folkways-knowledge-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check secret
+        id: auth
+        env:
+          OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$OAUTH" ] && [ -z "$API_KEY" ]; then
+            echo "::notice::Skipped: set CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY to run the knowledge audit."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.auth.outputs.ok == 'true'
+        with:
+          fetch-depth: 0 # the skill reads `git log` to find each entry's owner
+
+      - name: Set month
+        if: steps.auth.outputs.ok == 'true'
+        run: echo "MONTH=$(date -u +%Y-%m)" >> "$GITHUB_ENV"
+
+      # The agent edits files and writes the PR body; the steps after it commit, push and open the PR.
+      - uses: anthropics/claude-code-action@a26b07d8c778b0c43f64618e5fd29fd0f8af72e8 # v1.0.250
+        if: steps.auth.outputs.ok == 'true'
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            /knowledge-audit
+            Mode: headless (github-actions). Month: ${{ env.MONTH }}.
+            This run can't push. Apply the proposals as edits in the working tree and write the PR body to
+            `.local/knowledge-audit-${{ env.MONTH }}.md`. Don't commit, push or open a PR: the workflow does that.
+            CI has no `.local/me.yaml` and no `projects_dir`; ignore any prompt to run onboard. It has no project
+            clones and no subagents: verify only what this repo shows, one entry at a time, and mark entries that
+            need another repo `needs-investigation`.
+          claude_args: >-
+            --max-turns 60
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(git log:*),Bash(git show:*),Bash(git grep:*),Bash(git diff:*),Bash(git status:*),Bash(git fetch:*),Bash(ls:*),Bash(date:*)"
+
+      - name: Open draft PR
+        if: steps.auth.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          body=".local/knowledge-audit-$MONTH.md"
+          if [ ! -s "$body" ]; then
+            echo "::error::The audit wrote no PR body at $body."
+            exit 1
+          fi
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "::notice::No changes to propose."
+            cat "$body" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # Unique per run and attempt, so a re-run or a second dispatch in the same month can push.
+          branch="chore/knowledge-audit-$MONTH-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A
+          git commit -m "chore: knowledge audit $MONTH"
+          git push origin "$branch"
+          gh pr create --draft --title "chore: knowledge audit $MONTH" --body-file "$body"
