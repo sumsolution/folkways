@@ -80,6 +80,10 @@ func Upgrade(cwd, versionArg string, install Installer) (Result, error) {
 	if start == "HEAD" {
 		return Result{}, clierr.New("detached HEAD; check out a branch first")
 	}
+	// Same version: nothing to install or commit. After the safety checks, so errors keep their order.
+	if version == m.Version {
+		return Result{To: version, From: m.Version}, nil
+	}
 	// The tree was clean before we started, so every untracked file is ours. Ignored files (node_modules) stay.
 	abandon := func() error {
 		for _, args := range [][]string{{"checkout", "-q", "-f", start}, {"clean", "-q", "-f", "-d"}, {"branch", "-q", "-D", branch}} {

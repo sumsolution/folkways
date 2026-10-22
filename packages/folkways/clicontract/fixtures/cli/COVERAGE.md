@@ -20,3 +20,4 @@ Extras with no TS test, pinning dispatch code in `cli.ts`:
 |---|---|
 | `not-built-commands` | `review` and `run`: `folkways: '<cmd>' is not built yet`, exit 1 |
 | `outside-team-repo` | `sync` and `doctor` outside a git repo: `folkways: run this inside the team repo`, exit 1. `hook <name>` outside a repo is not pinned: TS-only, the Go CLI runs hooks in-process (ADR 0011) |
+| `extra-arguments` | `version extra` and `help extra`: `folkways: Unexpected argument 'extra'. This command does not take positional arguments`, exit 1. TS ignored extra arguments here; Go rejects them (go-cli quirk 2) |

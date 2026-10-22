@@ -37,4 +37,4 @@ Every `it` in `packages/cli/test/upgrade.test.ts` and the fixture that pins it.
 
 - The old state sets the `package.json` pin and the manifest `version` to `0.0.1` (a `git -c alias.edit='!sed ...' edit` step, as in the sync fixtures), so messages read `0.0.1 -> ${VERSION}` and the commit body `From 0.0.1.`
 - `prerelease` and `install-fails` make the install fail with `STUB_NPM_FAIL`; the stub would accept any version.
-- `same-version-is-noop` starts from `init` with install, so the lockfile is already committed (the stub writes `package-lock.json`, which would otherwise make the upgrade a change).
+- `same-version-is-noop` starts from `init` with install, so the only npm call is init's own `npm install`: the upgrade makes none. Go returns before any check, so the TS lockfile caveat (the stub's `package-lock.json` making the upgrade a change) no longer applies.

@@ -68,12 +68,16 @@ func mustAbs(p string) string {
 	return a
 }
 
-// cliCommand is the command under test: FOLKWAYS_CLI_CMD, else the TypeScript CLI from source. The CLI runs
-// in a temp dir, so a relative path in the first word is refused: go test runs in the package dir, not yours.
+// builtCLI is the Go CLI TestMain built when FOLKWAYS_CLI_CMD is unset.
+var builtCLI string
+
+// cliCommand is the command under test: FOLKWAYS_CLI_CMD, else the Go CLI TestMain built from this checkout.
+// The CLI runs in a temp dir, so a relative path in the first word is refused: go test runs in the package
+// dir, not yours.
 func cliCommand() (string, error) {
 	c := os.Getenv("FOLKWAYS_CLI_CMD")
 	if c == "" {
-		return "node " + shellQuote(filepath.Join(repoRoot, "packages/cli/src/cli.ts")), nil
+		return shellQuote(builtCLI), nil
 	}
 	f := strings.Fields(c)
 	if len(f) == 0 {
@@ -89,7 +93,40 @@ func TestMain(m *testing.M) {
 	if name := os.Getenv("FOLKWAYS_CLI_STUB"); name != "" {
 		os.Exit(runStub(name, os.Args[1:]))
 	}
-	os.Exit(m.Run())
+	os.Exit(run(m))
+}
+
+// run builds ./cmd/folkways into a temp dir, unless FOLKWAYS_CLI_CMD names the binary, then runs the tests.
+// The build carries the version in packages/cli/package.json, which the fixtures expect from `version`.
+func run(m *testing.M) int {
+	if os.Getenv("FOLKWAYS_CLI_CMD") == "" {
+		dir, err := os.MkdirTemp("", "folkways-clicontract-bin-")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		defer os.RemoveAll(dir)
+		raw, err := os.ReadFile(cliPkg)
+		var pkg struct {
+			Version string `json:"version"`
+		}
+		if err == nil {
+			err = json.Unmarshal(raw, &pkg)
+		}
+		if err != nil {
+			fmt.Fprintln(os.Stderr, cliPkg+":", err)
+			return 1
+		}
+		builtCLI = filepath.Join(dir, "folkways")
+		build := exec.Command("go", "build", "-ldflags", "-X main.version="+pkg.Version, "-o", builtCLI, "./cmd/folkways")
+		build.Dir = filepath.Join(repoRoot, "packages/folkways")
+		build.Stdout, build.Stderr = os.Stdout, os.Stderr
+		if err := build.Run(); err != nil {
+			fmt.Fprintln(os.Stderr, "building ./cmd/folkways:", err)
+			return 1
+		}
+	}
+	return m.Run()
 }
 
 func TestContract(t *testing.T) {

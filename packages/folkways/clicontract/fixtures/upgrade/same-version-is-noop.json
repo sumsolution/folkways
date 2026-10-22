@@ -1,5 +1,5 @@
 {
-  "description": "upgrade to the version already pinned installs, finds nothing to commit, goes back and leaves no branch. TS: it 'is a no-op at the same version'",
+  "description": "upgrade to the version already pinned stops before touching anything: no install, no branch. TS: it 'is a no-op at the same version'",
   "steps": [
     {
       "args": [
@@ -17,7 +17,7 @@
         "stderr": "",
         "unchanged": true,
         "files": {
-          "${CALLS}": "${TEAM}: npm install\n${TEAM}: npm install --save-dev --save-exact @folkways/cli@${VERSION}\n"
+          "${CALLS}": "${TEAM}: npm install\n"
         },
         "git": [
           {

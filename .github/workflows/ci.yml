@@ -163,13 +163,8 @@ jobs:
         run: |
           go build -o bin/folkways-hook ./cmd/folkways-hook
           go build -ldflags "-X main.version=$(node -p "require('../cli/package.json').version")" -o bin/folkways ./cmd/folkways
-      - name: Go vet and tests, whole module (builds ./cmd/folkways for the contract suite)
+      - name: Go vet and tests, whole module (includes the CLI contract suite against a fresh build)
         run: go vet ./... && go test ./...
-      - name: CLI contract suite against the Go CLI
-        working-directory: packages/folkways
-        env:
-          FOLKWAYS_CLI_CMD: ${{ github.workspace }}/packages/folkways/bin/folkways
-        run: go test -count=1 ./clicontract/
       - name: Contract suite against folkways-hook
         working-directory: packages/folkways
         env:
@@ -183,29 +178,6 @@ jobs:
         run: go test -count=1 ./contract
       - name: Build script tests
         run: pnpm --filter @folkways/hooks exec vitest run
-
-  # The CLI contract suite (packages/folkways/clicontract) against the TypeScript CLI from source.
-  # The Go port runs the same fixtures with FOLKWAYS_CLI_CMD (ADR 0011).
-  cli-contract:
-    name: cli contract
-    needs: changes
-    if: needs.changes.outputs.cli == 'true' || needs.changes.outputs.hooks == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
-      - name: Contract suite against the TS CLI
-        working-directory: packages/folkways
-        run: go test -count=1 ./clicontract/
 
   evals:
     name: evals
@@ -306,7 +278,7 @@ jobs:
   ci:
     name: ci
     if: always()
-    needs: [changes, content, cli-check, cli-test, cli-contract, hooks, evals, claude-plugin, smoke, secrets]
+    needs: [changes, content, cli-check, cli-test, hooks, evals, claude-plugin, smoke, secrets]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -1,0 +1,27 @@
+{
+  "description": "version and help reject positional arguments. TS ignored them; Go exits 1 (go-cli quirk 2)",
+  "steps": [
+    {
+      "args": [
+        "version",
+        "extra"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: Unexpected argument 'extra'. This command does not take positional arguments\n"
+      }
+    },
+    {
+      "args": [
+        "help",
+        "extra"
+      ],
+      "expect": {
+        "exit": 1,
+        "stdout": "",
+        "stderr": "folkways: Unexpected argument 'extra'. This command does not take positional arguments\n"
+      }
+    }
+  ]
+}

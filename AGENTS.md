@@ -17,7 +17,7 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 | `packages/cli/test/` | vitest suites for the CLI |
 | `go.mod`, `packages/folkways/` | The Go module (repo root, `github.com/sumsolution/folkways`). `packages/folkways` is `@folkways/hooks` (private). `cmd/folkways` is the CLI being ported (ADR 0011), with `folkways hook <name>`; `cmd/folkways-hook` is the hook binary shipped as `@folkways/hooks-<os>-<cpu>` (ADR 0002) until the port's cutover |
 | `packages/folkways/contract/` | Black-box hook contract suite: fixtures, rules, and the Go runner (`*_test.go`, run by `go test`) |
-| `packages/folkways/clicontract/` | Black-box CLI contract suite (Go, `go test`): fixtures pinning the TS CLI for the Go port (ADR 0011) |
+| `packages/folkways/clicontract/` | Black-box CLI contract suite (Go, `go test`): fixtures pinning the Go CLI (ADR 0011) |
 | `packages/claude-plugin/` | `@folkways/claude-plugin`: builds the Claude Code plugin into `dist/` from `packages/content/` and the hook binaries. The root `.claude-plugin/marketplace.json` installs it from npm |
 | `packages/evals/` | `@folkways/evals` (private, never published): behavior-eval runner. Builds a team repo per arm, runs `claude -p`, grades blind |
 | `scripts/` | Cross-package scripts: `smoke.ts` (packed-tarball smoke test), `release.ts` (builds and checks a tag's tarballs), `pack.ts` (shared by both) |
@@ -41,7 +41,7 @@ From the repo root:
 | `go vet ./... && go test ./...` | Go tests (from the root, includes the `packages/content` embed) and the hook contract suite; the suite builds `./cmd/folkways` and runs `folkways hook` |
 | `cd packages/folkways && FOLKWAYS_HOOK_CMD="$PWD/bin/folkways-hook" FOLKWAYS_HOOKS=git-guard go test ./contract` | the contract suite against any build (`FOLKWAYS_HOOK_CMD="$PWD/bin/folkways hook"` works too); `FOLKWAYS_HOOK_BUDGET_MS=10` adds the hook latency check |
 | `pnpm --filter @folkways/hooks test` | `go vet`, `go test`, then the vitest suite for the build script |
-| `cd packages/folkways && go test -count=1 ./clicontract/` | the CLI contract suite against the TS CLI; set `FOLKWAYS_CLI_CMD` to run it against another build |
+| `cd packages/folkways && go test -count=1 ./clicontract/` | the CLI contract suite against a fresh Go build; set `FOLKWAYS_CLI_CMD` to run it against another build |
 | `node packages/cli/src/cli.ts <command>` | run the CLI from source (Node 24 strips types) |
 | `node packages/evals/src/cli.ts run packages/evals/suites/<suite> --dry-run` | plan a behavior eval; drop `--dry-run` to run it (model calls on your account; see `packages/evals/README.md`) |
 | `pnpm changeset` | record a change for the next release of the packages it touches |

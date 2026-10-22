@@ -1,8 +1,8 @@
 # CLI contract suite
 
 Black-box tests for the `folkways` CLI (`init`, `sync`, `upgrade`, `doctor`, `version`, `help`). They run
-**any** implementation as a subprocess, so the same fixtures pin the TypeScript CLI today and check the Go
-port ([ADR 0011](../../../docs/adr/0011-cli-in-go.md)) at parity. Separate from the hook contract in
+**any** implementation as a subprocess. By default they pin the Go CLI
+([ADR 0011](../../../docs/adr/0011-cli-in-go.md)); `FOLKWAYS_CLI_CMD` points them at another build. Separate from the hook contract in
 [`../contract/`](../contract/README.md); `hook` itself is covered there.
 
 ## Run
@@ -17,8 +17,9 @@ FOLKWAYS_CLI_CMD="$PWD/bin/folkways" go test -count=1 ./clicontract/ -run 'TestC
   a cached pass can be stale.
 - Command under test: `FOLKWAYS_CLI_CMD`, with an absolute path in its first word (the CLI runs in a temp dir;
   a relative path is refused), run as `/bin/sh -c "$FOLKWAYS_CLI_CMD <args>"` (each arg
-  shell-quoted). Unset: `node packages/cli/src/cli.ts` from this checkout, so `go test ./...` and
-  `pnpm test` pin the TypeScript CLI.
+  shell-quoted). Unset: `TestMain` builds `./cmd/folkways` from this checkout into a temp dir, with the version
+  from `packages/cli/package.json`, so `go test ./...` pins the Go CLI. The TypeScript CLI can still be run by
+  hand: `FOLKWAYS_CLI_CMD="node $PWD/../cli/src/cli.ts"`.
 - Each fixture runs in its own temp root, in parallel. The CLI gets a fresh environment: nothing leaks in from
   the caller (no `npm_config_user_agent`, no git config). It has `PATH` (stubs first), `HOME` and
   `XDG_CONFIG_HOME` under the root, the caller's `TMPDIR`, `TZ=UTC`, `LC_ALL=C`, git isolated (`GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`)
