@@ -1,0 +1,18 @@
+{
+  "description": "doctor warns, without failing, when folkways isn't on PATH: the committed hooks' guard turns them off (ADR 0012)",
+  "steps": [
+    {
+      "args": ["init", "${TEAM}"]
+    },
+    {
+      "files": { "${BIN}/folkways": null },
+      "env": { "PATH": "${BIN}:/usr/bin:/bin" },
+      "args": ["doctor"],
+      "expect": {
+        "exit": 0,
+        "stdout": "warning: folkways isn't on PATH, so its hooks are off; install it: https://github.com/sumsolution/folkways#install\n0 errors, 1 warning.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

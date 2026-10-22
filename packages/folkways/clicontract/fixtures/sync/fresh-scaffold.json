@@ -1,7 +1,7 @@
 {
   "description": "sync in a fresh scaffold, from a subfolder, changes nothing",
   "steps": [
-    { "args": ["init", "${TEAM}", "--no-install"] },
+    { "args": ["init", "${TEAM}"] },
     {
       "args": ["sync"],
       "cwd": "knowledge",

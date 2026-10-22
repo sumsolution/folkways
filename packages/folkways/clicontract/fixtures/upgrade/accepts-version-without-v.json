@@ -4,14 +4,10 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
-      "files": {
-        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
-      },
       "git": [
         [
           "-c",
@@ -38,8 +34,6 @@
         "stdout": "Committed 0.0.1 -> ${VERSION} on chore/folkways-${VERSION}. Review, push, open a PR.\n",
         "stderr": "",
         "files": {
-          "${CALLS}": "${TEAM}: npm install --save-dev --save-exact @folkways/cli@${VERSION}\n",
-          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"${VERSION}\"\n  }\n}\n",
           ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",\n  \"skills\": \\[\n",
           ".claude/skills/start/SKILL.md": true
         },

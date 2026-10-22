@@ -1,12 +1,10 @@
 {
-  "description": "TS doctor.test.ts hookValueFindings: it('unquotes and trims keys, and accepts an empty or null hooks map'); plugin-style repo (git init + folkways.yaml only)",
+  "description": "TS doctor.test.ts hookValueFindings: it('unquotes and trims keys, and accepts an empty or null hooks map'); an initialised repo with this folkways.yaml",
   "steps": [
     {
-      "git": [
-        [
-          "init",
-          "-q"
-        ]
+      "args": [
+        "init",
+        "${TEAM}"
       ]
     },
     {

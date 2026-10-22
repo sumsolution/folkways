@@ -4,13 +4,12 @@
     {
       "args": [
         "init",
-        "${ROOT}/a/b/team",
-        "--no-install"
+        "${ROOT}/a/b/team"
       ],
       "expect": {
         "stdout": "re:^Created \\Q${ROOT}/a/b/team\\E with folkways",
         "files": {
-          "${ROOT}/a/b/team/package.json": true,
+          "${ROOT}/a/b/team/.folkways/manifest.json": true,
           "${ROOT}/a/b/team/folkways.yaml": true
         }
       }

@@ -42,6 +42,7 @@ type Config struct {
 	Configured bool   // folkways.yaml exists at the project root
 	Team       TeamYAML
 	Me         MeYAML
+	Version    string // the running binary's version; hookrun sets it
 }
 
 // Load reads folkways.yaml and .local/me.yaml from the team repo (CLAUDE_PROJECT_DIR, else the cwd).

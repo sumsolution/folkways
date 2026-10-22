@@ -4,8 +4,7 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
@@ -18,9 +17,6 @@
         "stdout": "",
         "stderr": "folkways: 'bad name' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
@@ -50,9 +46,6 @@
         "stdout": "",
         "stderr": "folkways: 'latest' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
@@ -82,9 +75,6 @@
         "stdout": "",
         "stderr": "folkways: '^1.0.0' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
@@ -114,9 +104,6 @@
         "stdout": "",
         "stderr": "folkways: '1.0' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
@@ -146,9 +133,6 @@
         "stdout": "",
         "stderr": "folkways: '01.2.3' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
@@ -178,9 +162,6 @@
         "stdout": "",
         "stderr": "folkways: '1.0.0-a..b' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
@@ -210,9 +191,6 @@
         "stdout": "",
         "stderr": "folkways: '' is not a version; use an exact one, e.g. 1.2.0\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [

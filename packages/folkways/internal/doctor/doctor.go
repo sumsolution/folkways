@@ -1,4 +1,4 @@
-// Package doctor checks a team repo (`folkways doctor`). Ported from packages/cli/src/doctor.ts.
+// Package doctor checks a team repo (`folkways doctor`).
 package doctor
 
 import (
@@ -16,7 +16,6 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/bundle"
 	"github.com/sumsolution/folkways/packages/folkways/internal/hooks"
 	"github.com/sumsolution/folkways/packages/folkways/internal/manifest"
-	"github.com/sumsolution/folkways/packages/folkways/internal/pkgmgr"
 	"github.com/sumsolution/folkways/packages/folkways/internal/teamsync"
 )
 
@@ -46,20 +45,15 @@ func Doctor(team string, b bundle.Bundle, opts Options) ([]Finding, error) {
 		return nil, err
 	}
 	findings := hookValueFindings(string(yaml), hooks.Names)
-	// No package.json: the plugin set this repo up and there is no CLI install, sync or settings to check.
-	if !exists(filepath.Join(team, "package.json")) {
-		return append(findings, shadowFindings(team, opts.Home)...), nil
-	}
 	m, err := manifest.Read(team)
 	if err != nil {
 		findings = append(findings, errorf("%s", err.Error()))
 		m = nil
 	}
-	synced := ""
-	if m != nil {
-		synced = m.Version
+	if m != nil && m.Version != b.Version {
+		// The manifest is the pin (ADR 0012).
+		findings = append(findings, warningf("this is folkways %s, but the repo is synced from %s; run 'folkways upgrade %s', or install folkways %s", b.Version, m.Version, b.Version, m.Version))
 	}
-	findings = append(findings, versionFindings(team, b.Version, synced)...)
 	if m != nil {
 		edits, err := teamsync.FindEdits(team, m)
 		if err != nil {
@@ -80,8 +74,8 @@ func Doctor(team string, b bundle.Bundle, opts Options) ([]Finding, error) {
 	}
 	findings = append(findings, shadowFindings(team, opts.Home)...)
 	findings = append(findings, settingsFindings(team)...)
-	for _, w := range hooks.Warnings(team) {
-		findings = append(findings, errorf("%s", w))
+	for _, w := range hooks.Warnings() {
+		findings = append(findings, warningf("%s", w)) // CI and cloud agents run without it
 	}
 	return findings, nil
 }
@@ -123,51 +117,6 @@ func readJSON(path string) (obj map[string]any, ok bool) {
 		return x, true
 	}
 	return map[string]any{}, true
-}
-
-// stringAt reads obj[a][b] as a string, or "".
-func stringAt(obj map[string]any, a, b string) (string, bool) {
-	inner, _ := obj[a].(map[string]any)
-	s, ok := inner[b].(string)
-	return s, ok
-}
-
-var exact = regexp.MustCompile(`^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$`)
-
-// versionFindings checks the pinned, installed and running CLI versions, and the version the repo was last synced from.
-func versionFindings(team, running, synced string) []Finding {
-	install := "npm install"
-	if pm, err := pkgmgr.Detect(team); err == nil {
-		install = strings.Join(pkgmgr.InstallCommand(pm), " ")
-	}
-	pkg, _ := readJSON(filepath.Join(team, "package.json"))
-	pinned, ok := stringAt(pkg, "devDependencies", bundle.PackageName)
-	if !ok {
-		pinned, ok = stringAt(pkg, "dependencies", bundle.PackageName)
-	}
-	if !ok || pinned == "" {
-		return []Finding{errorf("package.json doesn't pin %s; add it as an exact devDependency ('folkways upgrade <version>' does this)", bundle.PackageName)}
-	}
-	if !exact.MatchString(pinned) {
-		return []Finding{errorf("package.json pins %s %s, not an exact version; pin one with 'folkways upgrade <version>'", bundle.PackageName, pinned)}
-	}
-
-	var findings []Finding
-	installedPkg, _ := readJSON(filepath.Join(team, "node_modules", bundle.PackageName, "package.json"))
-	installed, _ := installedPkg["version"].(string)
-	if installed == "" {
-		findings = append(findings, errorf("%s is not installed; run '%s'", bundle.PackageName, install))
-	} else if installed != pinned {
-		findings = append(findings, errorf("node_modules has %s %s but package.json pins %s (a failed upgrade leaves this); run '%s'", bundle.PackageName, installed, pinned, install))
-	}
-	// A running CLI that is the installed one is covered by the node_modules error above.
-	if running != pinned && running != installed {
-		findings = append(findings, warningf("this is folkways %s, but the repo pins %s; run the pinned one with 'npx folkways doctor' from the team repo", running, pinned))
-	}
-	if synced != "" && synced != pinned {
-		findings = append(findings, errorf("the repo was synced from %s, but package.json pins %s; run 'folkways sync'", synced, pinned))
-	}
-	return findings
 }
 
 var personalSkillDirs = []string{".claude/skills", ".agents/skills", ".copilot/skills"}

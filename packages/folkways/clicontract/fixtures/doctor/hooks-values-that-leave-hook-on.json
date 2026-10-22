@@ -1,12 +1,10 @@
 {
-  "description": "TS doctor.test.ts hookValueFindings: it('flags values that leave the hook on'); plugin-style repo (git init + folkways.yaml only)",
+  "description": "TS doctor.test.ts hookValueFindings: it('flags values that leave the hook on'); an initialised repo with this folkways.yaml",
   "steps": [
     {
-      "git": [
-        [
-          "init",
-          "-q"
-        ]
+      "args": [
+        "init",
+        "${TEAM}"
       ]
     },
     {

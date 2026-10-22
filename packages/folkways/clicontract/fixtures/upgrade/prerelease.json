@@ -1,11 +1,10 @@
 {
-  "description": "upgrade accepts a prerelease version as valid: it reaches the install (here failed by the stub, as no such version exists). TS: it 'accepts a prerelease'",
+  "description": "upgrade accepts a prerelease version as valid, then refuses because the running binary isn't that version: upgrade syncs the binary's own content (ADR 0012). Nothing changes",
   "steps": [
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
@@ -13,17 +12,11 @@
         "upgrade",
         "1.0.0-beta.1"
       ],
-      "env": {
-        "STUB_NPM_FAIL": "No matching version 1.0.0-beta.1"
-      },
       "expect": {
         "exit": 1,
         "stdout": "",
-        "stderr": "folkways: upgrade to 1.0.0-beta.1 failed; back on main:\nNo matching version 1.0.0-beta.1\n",
+        "stderr": "folkways: this is folkways ${VERSION}; install folkways 1.0.0-beta.1, then rerun 'folkways upgrade 1.0.0-beta.1'\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": "${TEAM}: npm install --save-dev --save-exact @folkways/cli@1.0.0-beta.1\n"
-        },
         "git": [
           {
             "args": [

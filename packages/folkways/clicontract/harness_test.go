@@ -91,9 +91,6 @@ func cliCommand() (string, error) {
 }
 
 func TestMain(m *testing.M) {
-	if name := os.Getenv("FOLKWAYS_CLI_STUB"); name != "" {
-		os.Exit(runStub(name, os.Args[1:]))
-	}
 	os.Exit(run(m))
 }
 
@@ -200,7 +197,7 @@ func newEnv(t *testing.T, versions map[string]string) *env {
 	}
 	vars := map[string]string{
 		"ROOT": root, "TEAM": filepath.Join(root, "team"), "HOME": filepath.Join(root, "home"),
-		"BIN": filepath.Join(root, "bin"), "CALLS": filepath.Join(root, "calls.log"),
+		"BIN": filepath.Join(root, "bin"),
 	}
 	for k, v := range versions {
 		vars[k] = v

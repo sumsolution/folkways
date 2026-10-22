@@ -1,12 +1,10 @@
 {
-  "description": "TS doctor.test.ts hookValueFindings: it('accepts true and false, with comments'); plugin-style repo (git init + folkways.yaml only)",
+  "description": "TS doctor.test.ts hookValueFindings: it('accepts true and false, with comments'); an initialised repo with this folkways.yaml",
   "steps": [
     {
-      "git": [
-        [
-          "init",
-          "-q"
-        ]
+      "args": [
+        "init",
+        "${TEAM}"
       ]
     },
     {

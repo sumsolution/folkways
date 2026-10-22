@@ -1,14 +1,10 @@
 {
-  "description": "doctor in a repo init installed finds no problems",
+  "description": "doctor in a fresh repo, with folkways on PATH, finds no problems",
   "steps": [
     {
       "args": ["init", "${TEAM}"],
       "expect": {
-        "files": {
-          "${CALLS}": "${TEAM}: npm install\n",
-          "node_modules/@folkways/cli/package.json": "re:\"version\":\"${VERSION}\""
-        },
-        "git": [{ "args": ["ls-files", "node_modules", "package-lock.json"], "stdout": "package-lock.json" }]
+        "files": { "package.json": null, "node_modules": null, "pnpm-workspace.yaml": null }
       }
     },
     {

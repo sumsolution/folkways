@@ -4,8 +4,7 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {

@@ -1,0 +1,26 @@
+{
+  "description": "sync warns while folkways isn't on PATH, then stops once it is",
+  "steps": [
+    {
+      "args": ["init", "${TEAM}"]
+    },
+    {
+      "files": { "${BIN}/folkways": null },
+      "env": { "PATH": "${BIN}:/usr/bin:/bin" },
+      "args": ["sync"],
+      "expect": {
+        "stdout": "warning: folkways isn't on PATH, so its hooks are off; install it: https://github.com/sumsolution/folkways#install\nSynced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    },
+    {
+      "files": { "${BIN}/folkways": "#!/bin/sh\nexit 0\n" },
+      "env": { "PATH": "${BIN}:/usr/bin:/bin" },
+      "args": ["sync"],
+      "expect": {
+        "stdout": "Synced folkways ${VERSION}. Review with git status, then commit.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

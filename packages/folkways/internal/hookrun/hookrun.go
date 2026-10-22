@@ -23,10 +23,10 @@ var hooks = map[string]func(p payload.Payload, cfg team.Config){
 	"session-start": sessionstart.Run,
 }
 
-// Run runs the named hook on the payload in r. It never panics and never exits: the caller exits 0,
+// Run runs the named hook on the payload in r; version is the running binary's. It never panics and never exits: the caller exits 0,
 // because Copilot CLI denies the tool call when a preToolUse hook exits nonzero or crashes.
 // An unknown name does nothing.
-func Run(name string, r io.Reader) {
+func Run(name, version string, r io.Reader) {
 	defer func() {
 		if v := recover(); v != nil {
 			fmt.Fprintln(os.Stderr, "folkways: internal error:", v)
@@ -42,6 +42,7 @@ func Run(name string, r io.Reader) {
 		return
 	}
 	cfg := team.Load()
+	cfg.Version = version
 	// No folkways.yaml: nothing runs, except session-start, which makes the one-time offer.
 	if !cfg.Configured && name != "session-start" {
 		return

@@ -1,12 +1,10 @@
 {
-  "description": "TS doctor.test.ts hookValueFindings: it('reports a nested map under a hook, which leaves it on'); plugin-style repo (git init + folkways.yaml only)",
+  "description": "TS doctor.test.ts hookValueFindings: it('reports a nested map under a hook, which leaves it on'); an initialised repo with this folkways.yaml",
   "steps": [
     {
-      "git": [
-        [
-          "init",
-          "-q"
-        ]
+      "args": [
+        "init",
+        "${TEAM}"
       ]
     },
     {

@@ -19,10 +19,10 @@ FOLKWAYS_CLI_CMD="$PWD/bin/folkways" go test -count=1 ./clicontract/ -run 'TestC
   shell-quoted). Unset: `TestMain` builds `./cmd/folkways` from this checkout into a temp dir, with the version
   from `packages/folkways/package.json`, so `go test ./...` pins the Go CLI.
 - Each fixture runs in its own temp root, in parallel. The CLI gets a fresh environment: nothing leaks in from
-  the caller (no `npm_config_user_agent`, no git config). It has `PATH` (stubs first), `HOME` and
+  the caller (no `npm_config_user_agent`, no git config). It has `PATH` (`${BIN}` first), `HOME` and
   `XDG_CONFIG_HOME` under the root, the caller's `TMPDIR`, `TZ=UTC`, `LC_ALL=C`, git isolated (`GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`)
-  with identity `test <test@example.com>` and author/committer date `2026-01-01T00:00:00Z`. The npm and pnpm
-  stubs keep installs off the network; nothing blocks other tools on the caller's `PATH`.
+  with identity `test <test@example.com>` and author/committer date `2026-01-01T00:00:00Z`. Nothing blocks
+  other tools on the caller's `PATH`.
 
 ## Fixtures
 
@@ -50,7 +50,7 @@ same root; each step sets up, optionally runs the CLI, then checks.
 | `expect.git[]` | `{ "args": [...], "stdout": "..." }`: git run in `${TEAM}`, trimmed stdout exact or `re:`. Clean tree: `["status", "--porcelain"]` → `""` |
 
 Paths in `files` and `expect.files` are relative to `${TEAM}` unless absolute after substitution
-(`${HOME}/.claude/skills/x/SKILL.md`, `${CALLS}`).
+(`${HOME}/.claude/skills/x/SKILL.md`, `${BIN}/folkways`).
 
 Placeholders, filled in every string (args, env, stdin, file paths and contents, expectations; in `re:`
 expectations the value is regex-quoted):
@@ -60,34 +60,25 @@ expectations the value is regex-quoted):
 | `${ROOT}` | the case's temp root (symlinks resolved) |
 | `${TEAM}` | `${ROOT}/team`; not created for you: `init` it, or write files or run git there |
 | `${HOME}` | the CLI's `HOME`, `${ROOT}/home` (personal skills for doctor's shadow check) |
-| `${BIN}` | the stub folder, first on `PATH`. Write a script here to wrap or replace a tool |
-| `${CALLS}` | the stub call log (below) |
+| `${BIN}` | first on `PATH`; holds `folkways`, a script that runs `${CLI}` (below). Write a script here to wrap or replace a tool |
 | `${VERSION}` | `version` of `packages/folkways/package.json`. Build a Go binary with `-ldflags "-X main.version=<version>"` to match |
 | `${CLI}` | the command under test, for a script that should call it |
 | `${GIT}` | the real git, for a wrapper in `${BIN}` |
 
 Don't use these names for anything else in file contents: `${HOME}` in a shell script is replaced too.
 
-### Stubs
+### `folkways` on `PATH`
 
-`npm` and `pnpm` on `PATH` are stubs (no network). Each appends `<cwd>: <tool> <args>` to `${CALLS}`, so a
-fixture asserts the calls with `"files": { "${CALLS}": "${TEAM}: npm install\n" }` (`null`: never called). Then:
-
-| Call | Does |
-|---|---|
-| `STUB_NPM_FAIL` / `STUB_PNPM_FAIL` set (step `env`) | prints the value to stderr, exits 1 |
-| `--version` | prints `10.0.0` (npm) or `9.0.0` (pnpm), so `init --package-manager pnpm` pins `pnpm@9.0.0` |
-| `install` | reads the `@folkways/cli` pin in `package.json`; writes the lockfile (`package-lock.json` or `pnpm-lock.yaml`, content `stub lockfile`), `node_modules/@folkways/cli/package.json` at the pinned version, `node_modules/.bin/folkways` (runs `${CLI}`, so `upgrade` syncs with the CLI under test) and `node_modules/.bin/folkways-hook` (exits 0) |
-| `install`/`add` `--save-dev --save-exact <pkg>@<v>` | rewrites `<pkg>`'s version in `package.json` in place (it must be there already), then as `install` |
-| anything else | exits 0 |
-
-The stubs are this test binary re-run with `FOLKWAYS_CLI_STUB=<tool>` (`stubs_test.go`).
+`${BIN}/folkways` runs the CLI under test, so the committed hooks' guard and doctor's `PATH` check find it
+(ADR 0012). To test a missing binary, delete it (`"files": { "${BIN}/folkways": null }`) and set `PATH` to
+`${BIN}:/usr/bin:/bin` in the step's `env`, so a `folkways` on the caller's `PATH` doesn't count.
+(`stubs_test.go`)
 
 ### Writing one
 
 1. Run the CLI by hand to see the exact output.
-2. Build the starting state with steps: `init` (`["init", "${TEAM}", "--no-install"]`, or without
-   `--no-install` for `node_modules`), then `files` and `git` to edit and commit.
+2. Build the starting state with steps: `init` (`["init", "${TEAM}"]`), then `files` and `git` to edit and
+   commit.
 3. Pin exact stdout/stderr where the text is the contract; `re:` where it embeds content that changes with
    `packages/content` (skill lists, settings fragments).
 4. `go test -count=1 ./clicontract/ -run 'TestContract/<command>/<case>'`, then break the expectation once to see it fail.
@@ -96,7 +87,7 @@ The stubs are this test binary re-run with `FOLKWAYS_CLI_STUB=<tool>` (`stubs_te
 {
   "description": "sync refuses an edited framework file and names it",
   "steps": [
-    { "args": ["init", "${TEAM}", "--no-install"] },
+    { "args": ["init", "${TEAM}"] },
     {
       "files": { ".folkways/instructions.md": "mine\n" },
       "args": ["sync"],

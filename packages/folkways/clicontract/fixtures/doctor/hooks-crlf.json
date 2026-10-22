@@ -1,12 +1,10 @@
 {
-  "description": "TS doctor.test.ts hookValueFindings: it('reads CRLF files'); plugin-style repo (git init + folkways.yaml only)",
+  "description": "TS doctor.test.ts hookValueFindings: it('reads CRLF files'); an initialised repo with this folkways.yaml",
   "steps": [
     {
-      "git": [
-        [
-          "init",
-          "-q"
-        ]
+      "args": [
+        "init",
+        "${TEAM}"
       ]
     },
     {

@@ -71,15 +71,19 @@ export function armCli(repoRoot: string, ref: string, scratch: string): string {
   return bin;
 }
 
-/** A team repo at `dest`: the arm's own `folkways init --no-install`, then the case's files, committed. */
+/** A team repo at `dest`: the arm's own `folkways init`, then the case's files, committed. */
 export function buildTeamRepo(cli: string, dest: string, caseRepo?: string): void {
-  // Without the caller's package manager (pnpm, when run by `pnpm test`), init writes the same repo everywhere.
+  // Refs before Go init dropped npm need `--no-install`; later ones reject it before touching `dest`. Without
+  // the caller's package manager (pnpm under `pnpm test`), the older init writes the same repo everywhere.
   const env: NodeJS.ProcessEnv = { ...GIT_ENV };
   delete env.npm_config_user_agent;
-  execFileSync(cli, ['init', dest, '--no-install'], {
-    env,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const init = (...flags: string[]) => execFileSync(cli, ['init', dest, ...flags], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  try {
+    init('--no-install');
+  } catch (e) {
+    if (!String((e as { stderr?: unknown }).stderr).includes("Unknown option '--no-install'")) throw e;
+    init();
+  }
   if (caseRepo) {
     cpSync(caseRepo, dest, { recursive: true });
     git(dest, 'add', '-A');

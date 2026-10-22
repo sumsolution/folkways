@@ -4,8 +4,7 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
@@ -21,9 +20,6 @@
         "stdout": "",
         "stderr": "folkways: working tree is dirty; commit or stash first\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [

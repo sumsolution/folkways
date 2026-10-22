@@ -9,8 +9,7 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ],
       "expect": {
         "exit": 1,

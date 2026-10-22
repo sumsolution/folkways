@@ -1,6 +1,7 @@
 # Coverage: sync fixtures
 
-Every `it` in `packages/cli/test/{sync,settings,overlays}.test.ts`, mapped to the fixture(s) in this folder or
+Every `it` in `packages/cli/test/{sync,settings,overlays}.test.ts` (at `165ec4c`, see
+[../../README.md](../../README.md#history)), mapped to the fixture(s) in this folder or
 to the reason it is skipped. `it.each` tables are one row with all their cases. Fixtures run the real
 framework content (`packages/content`), not the synthetic `makePackage` content the TS tests use.
 The seed `fresh-scaffold` also pins a plain sync.
@@ -20,10 +21,10 @@ because the harness has no edit-in-place and fixtures can't compute sha256 for a
 | sync stops on edits > --force discards the edits and reports them | `force-discards-edits` |
 | refusals > refuses a team skill with a new framework skill name | `refuses-team-skill-with-framework-name` |
 | refusals > rejects invalid settings before writing anything | `rejects-invalid-settings` |
-| refusals > warns when dependencies are installed without the hook binary | `warns-hook-binary-missing` |
-| refusals > does not look for the hook binary before dependencies are installed | `no-hook-binary-warning-before-install` (and seed `fresh-scaffold`) |
-| refusals > pnpm team with %s (10 rows) | `pnpm-hoist-no-workspace-file`, `-other-pattern`, `-pattern-elsewhere`, `-pattern-in-list`, `-pattern-inline`, `-hoist-everything`, `-shamefully-hoist`, `-comments-around-pattern`, `-unquoted-pattern-with-comment`, `-pattern-only-in-comment` |
-| refusals > skips the pnpm check for a package manager it does not support | `yarn-skips-pnpm-check` |
+| refusals > warns when dependencies are installed without the hook binary | `warns-folkways-not-on-path`: now a warning that `folkways` isn't on `PATH` (ADR 0012) |
+| refusals > does not look for the hook binary before dependencies are installed | removed with npm |
+| refusals > pnpm team with %s (10 rows) | removed with npm |
+| refusals > skips the pnpm check for a package manager it does not support | removed with npm |
 | refusals > warns when folkways.yaml is missing | `warns-folkways-yaml-missing` |
 | refusals > warns when AGENTS.md lost the import line | `warns-agents-import-missing` |
 | refusals > rejects an unsafe manifest before forced deletion (8 rows) | `unsafe-manifest-skill-name`, `-path-traversal`, `-path-in-other-skill`, `-path-folkways-yaml`, `-overlay-traversal`, `-overlay-nested`, `-overlay-bad-checksum`, `-overlays-not-object` |
@@ -60,7 +61,7 @@ because the harness has no edit-in-place and fixtures can't compute sha256 for a
 | mergeSettings > sets disableAllHooks from the fragment, over the team value | `settings-disable-all-hooks-follows-framework` (first half only; "keeps the team value when the fragment has none" needs an empty fragment) |
 | mergeSettings > does not mutate its input | skipped: unit (in-process object identity) |
 | isFrameworkHook > owns commands that start with the framework prefix, or the old one | `settings-drops-framework-prefix-hooks` (the `FRAMEWORK_HOOK_PREFIX` constant check is a unit assertion) |
-| isFrameworkHook > does not own %j (8 rows) | `settings-keeps-lookalike-commands` (all 8 in one fixture) |
+| isFrameworkHook > does not own %j (8 rows) | `settings-keeps-lookalike-commands` (all 8 in one fixture, plus the unguarded `folkways hook x` and a guard joined with `&&`) |
 | isFrameworkHook > keeps team hooks that mention folkways hook | `settings-keeps-team-hook-mentioning-folkways-hook` |
 | unexpected shapes > keeps a hook group without a hooks array untouched | `settings-keeps-group-without-hooks-array` |
 | unexpected shapes > keeps non-array events, non-object groups and non-string commands untouched | `settings-keeps-odd-shapes` |

@@ -7,9 +7,6 @@ import (
 	"github.com/sumsolution/folkways/packages/content"
 )
 
-// PackageName is the npm package a team repo pins (ADR 0003).
-const PackageName = "@folkways/cli"
-
 // Bundle is the content a command copies from and the version it records. Tests pass a synthetic FS
 // (fstest.MapFS) laid out like packages/content: instructions.md, settings.json, skills/, prompts/,
 // workflows/, templates/.

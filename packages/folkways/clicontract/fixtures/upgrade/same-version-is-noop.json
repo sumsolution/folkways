@@ -1,5 +1,5 @@
 {
-  "description": "upgrade to the version already pinned stops before touching anything: no install, no branch. TS: it 'is a no-op at the same version'",
+  "description": "upgrade to the version already pinned stops before touching anything: no branch, no commit. TS: it 'is a no-op at the same version'",
   "steps": [
     {
       "args": [
@@ -16,9 +16,6 @@
         "stdout": "Already at ${VERSION}; nothing to change.\n",
         "stderr": "",
         "unchanged": true,
-        "files": {
-          "${CALLS}": "${TEAM}: npm install\n"
-        },
         "git": [
           {
             "args": [

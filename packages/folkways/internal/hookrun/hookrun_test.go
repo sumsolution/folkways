@@ -23,7 +23,7 @@ func TestRunRecoversFromPanic(t *testing.T) {
 				t.Fatalf("Run let a panic escape: %v", r)
 			}
 		}()
-		Run("session-start", strings.NewReader(`{"hook_event_name":"SessionStart"}`))
+		Run("session-start", "dev", strings.NewReader(`{"hook_event_name":"SessionStart"}`))
 		called = true
 	}()
 	if !called {
