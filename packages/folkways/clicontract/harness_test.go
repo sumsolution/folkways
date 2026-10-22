@@ -57,7 +57,8 @@ type GitCheck struct {
 
 var (
 	repoRoot = mustAbs("../../..")
-	cliPkg   = filepath.Join(repoRoot, "packages/cli/package.json")
+	// versionPkg holds the CLI's version; changesets bump it.
+	versionPkg = filepath.Join(repoRoot, "packages/folkways/package.json")
 )
 
 func mustAbs(p string) string {
@@ -97,7 +98,7 @@ func TestMain(m *testing.M) {
 }
 
 // run builds ./cmd/folkways into a temp dir, unless FOLKWAYS_CLI_CMD names the binary, then runs the tests.
-// The build carries the version in packages/cli/package.json, which the fixtures expect from `version`.
+// The build carries the version in packages/folkways/package.json, which the fixtures expect from `version`.
 func run(m *testing.M) int {
 	if os.Getenv("FOLKWAYS_CLI_CMD") == "" {
 		dir, err := os.MkdirTemp("", "folkways-clicontract-bin-")
@@ -106,7 +107,7 @@ func run(m *testing.M) int {
 			return 1
 		}
 		defer os.RemoveAll(dir)
-		raw, err := os.ReadFile(cliPkg)
+		raw, err := os.ReadFile(versionPkg)
 		var pkg struct {
 			Version string `json:"version"`
 		}
@@ -114,7 +115,7 @@ func run(m *testing.M) int {
 			err = json.Unmarshal(raw, &pkg)
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, cliPkg+":", err)
+			fmt.Fprintln(os.Stderr, versionPkg+":", err)
 			return 1
 		}
 		builtCLI = filepath.Join(dir, "folkways")
@@ -150,20 +151,17 @@ func TestContract(t *testing.T) {
 }
 
 func readVersions(t *testing.T) map[string]string {
-	raw, err := os.ReadFile(cliPkg)
+	raw, err := os.ReadFile(versionPkg)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var pkg struct {
-		Version  string `json:"version"`
-		Folkways struct {
-			Hooks string `json:"hooks"`
-		} `json:"folkways"`
+		Version string `json:"version"`
 	}
 	if err := json.Unmarshal(raw, &pkg); err != nil {
 		t.Fatal(err)
 	}
-	return map[string]string{"VERSION": pkg.Version, "HOOKS_VERSION": pkg.Folkways.Hooks}
+	return map[string]string{"VERSION": pkg.Version}
 }
 
 func loadFixture(t *testing.T, file string) Fixture {

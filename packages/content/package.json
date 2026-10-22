@@ -2,7 +2,7 @@
   "name": "@folkways/content",
   "version": "0.1.0",
   "private": true,
-  "description": "The framework's content: skills, instructions, prompts, settings fragment, workflows. Distributed by @folkways/cli and @folkways/claude-plugin",
+  "description": "The framework's content: skills, instructions, prompts, settings fragment, workflows. Embedded in the folkways binary and distributed by @folkways/claude-plugin",
   "license": "Apache-2.0",
   "type": "module",
   "engines": {

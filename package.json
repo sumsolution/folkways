@@ -8,9 +8,8 @@
   },
   "scripts": {
     "build": "pnpm -r run build",
-    "check": "pnpm -r run check && tsc -p tsconfig.json",
+    "check": "pnpm -r run check",
     "test": "pnpm -r run test",
-    "smoke": "node scripts/smoke.ts",
     "changeset": "changeset"
   },
   "devDependencies": {
