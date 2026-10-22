@@ -162,8 +162,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-pnpmfileChecksum: sha256-LqSM2DceGgqmo9Tq8jWwS8kbnVM3vFZ7opUQzdJjtko=
-
 importers:
 
   .:
@@ -183,18 +181,6 @@ importers:
       '@folkways/hooks':
         specifier: workspace:*
         version: link:../folkways
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-      typescript:
-        specifier: ^7.0.0
-        version: 7.0.2
-      vitest:
-        specifier: ^5.0.4
-        version: 5.0.4(@types/node@26.6.5)(vite@8.3.0(@types/node@26.6.5))
-
-  packages/cli:
-    devDependencies:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5

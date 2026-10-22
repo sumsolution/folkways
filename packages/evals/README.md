@@ -5,8 +5,8 @@ a tool: [14-research-eval-harness.md](https://github.com/sumsolution/folkways-co
 
 For each **arm** (a version of the framework) × **case** × **run**, it:
 
-1. builds a team repo in the OS temp dir with that arm's own `folkways init --no-install`, then lays the
-   case's `repo/` files over it and commits;
+1. builds that arm's Go CLI, then a team repo in the OS temp dir with its `folkways init --no-install`, and lays
+   the case's `repo/` files over it and commits;
 2. runs one headless `claude -p` there, isolated (below), and saves the answer and what the session loaded;
 3. grades every run. `llm` votes go to a judge one answer at a time, shuffled across arms, with nothing
    that names the arm.
@@ -16,7 +16,7 @@ suite can also sit elsewhere, e.g. in a team repo.
 
 ## Run
 
-Needs Node 24+, git, and an authenticated `claude` CLI. Every subject run and judge vote is a model call on
+Needs Node 24+, Go, git, and an authenticated `claude` CLI. Every subject run and judge vote is a model call on
 your account; `--dry-run` prints the counts first.
 
 ```sh
@@ -51,7 +51,7 @@ Results go to `<suite>/results/<model>/`: `summary.md`, `summary.json`, and per 
 }
 ```
 
-An arm's `ref` is any commit of this repo that has `packages/cli`, or `WORKTREE` for the working tree
+An arm's `ref` is any commit of this repo from `141a6f4` on (the Go CLI's `init`), or `WORKTREE` for the working tree
 (uncommitted changes included). Pin a SHA, not a branch, so the result can be reproduced.
 
 The case format follows [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals), so cases read

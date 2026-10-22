@@ -6,7 +6,7 @@ import { type GraderResult, gradeRegex, gradeToolUsed, judgePrompt, majority, pa
 import { summarize, type Summary, writeSummary } from './report.ts';
 import type { Arm, Case, LlmGrader, Suite } from './suite.ts';
 import { parseTrace, type Trace } from './trace.ts';
-import { armPackage, buildTeamRepo, workspaceSkills } from './workspace.ts';
+import { armCli, buildTeamRepo, workspaceSkills } from './workspace.ts';
 
 export interface Common {
   suite: Suite;
@@ -48,7 +48,7 @@ export async function runSuite(o: RunOptions): Promise<Summary> {
   const arms = pick(o.suite.arms, o.arms);
   const cases = pick(o.suite.cases, o.cases);
   const scratch = mkdtempSync(join(tmpdir(), 'folkways-eval-'));
-  const pkgs = new Map(arms.map((a) => [a.name, armPackage(o.repoRoot, a.ref, join(scratch, 'refs'))]));
+  const clis = new Map(arms.map((a) => [a.name, armCli(o.repoRoot, a.ref, join(scratch, 'refs'))]));
   o.log(`workspaces in ${scratch}`);
 
   const work = arms.flatMap((arm) =>
@@ -56,7 +56,7 @@ export async function runSuite(o: RunOptions): Promise<Summary> {
   );
   await pool(work, o.jobs, async ({ arm, c, run }) => {
     const ws = join(scratch, arm.name, c.name, `run-${run}`, 'team');
-    buildTeamRepo(pkgs.get(arm.name)!, ws, c.repo);
+    buildTeamRepo(clis.get(arm.name)!, ws, c.repo);
     const res = await o.runner(subjectArgs(c, o.model), { cwd: ws, timeoutMs: c.timeoutSeconds * 1000 });
     const trace = parseTrace(res.stdout);
     const saved: SavedRun = {

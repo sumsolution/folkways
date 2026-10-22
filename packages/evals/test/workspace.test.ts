@@ -3,36 +3,37 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { armPackage, buildTeamRepo, WORKTREE, workspaceSkills } from '../src/workspace.ts';
+import { armCli, buildTeamRepo, WORKTREE, workspaceSkills } from '../src/workspace.ts';
 
 const repoRoot = resolve(import.meta.dirname, '../../..');
 const scratch = () => mkdtempSync(join(tmpdir(), 'evals-ws-'));
 
-describe('armPackage', () => {
-  it('uses the working tree CLI for WORKTREE', () => {
-    expect(armPackage(repoRoot, WORKTREE, scratch())).toBe(join(repoRoot, 'packages/cli'));
+describe('armCli', () => {
+  it('builds the working tree CLI for WORKTREE', () => {
+    const cli = armCli(repoRoot, WORKTREE, scratch());
+    const { version } = JSON.parse(readFileSync(join(repoRoot, 'packages/folkways/package.json'), 'utf8'));
+    expect(execFileSync(cli, ['version'], { encoding: 'utf8' })).toBe(`${version}\n`);
   });
 
-  it('extracts the CLI package at a git ref', () => {
-    const pkg = armPackage(repoRoot, 'HEAD', scratch());
-    expect(existsSync(join(pkg, 'src/cli.ts'))).toBe(true);
-    expect(existsSync(join(pkg, '../content/instructions.md'))).toBe(true);
+  it('builds the CLI at a git ref, once', () => {
+    const dir = scratch();
+    const cli = armCli(repoRoot, 'HEAD', dir);
+    expect(execFileSync(cli, ['version'], { encoding: 'utf8' })).toMatch(/^\d+\.\d+\.\d+/);
+    expect(armCli(repoRoot, 'HEAD', dir)).toBe(cli);
   });
 
-  it('extracts a ref from before packages/content existed', () => {
+  it('refuses a ref from before the Go CLI had init', () => {
     const repo = scratch();
     mkdirSync(join(repo, 'packages/cli/src'), { recursive: true });
     writeFileSync(join(repo, 'packages/cli/src/cli.ts'), '');
     const env = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.com', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.com' };
     for (const args of [['init', '-q'], ['add', '-A'], ['commit', '-q', '-m', 'old']]) execFileSync('git', args, { cwd: repo, env });
-    const pkg = armPackage(repo, 'HEAD', scratch());
-    expect(existsSync(join(pkg, 'src/cli.ts'))).toBe(true);
-    expect(existsSync(join(pkg, '../content'))).toBe(false);
+    expect(() => armCli(repo, 'HEAD', scratch())).toThrow(/no Go CLI init; arms need 141a6f4 or later/);
   });
 
   it('rejects a ref that is not a commit', () => {
-    expect(() => armPackage(repoRoot, 'no-such-ref-xyz', scratch())).toThrow(/no-such-ref-xyz/);
-    expect(() => armPackage(repoRoot, '--output=/tmp/x', scratch())).toThrow(/ref/);
+    expect(() => armCli(repoRoot, 'no-such-ref-xyz', scratch())).toThrow(/no-such-ref-xyz/);
+    expect(() => armCli(repoRoot, '--output=/tmp/x', scratch())).toThrow(/ref/);
   });
 });
 
@@ -44,7 +45,7 @@ describe('buildTeamRepo', () => {
     writeFileSync(join(caseRepo, 'team.yaml'), 'name: Example Team\n');
 
     const dest = join(scratch(), 'team');
-    buildTeamRepo(join(repoRoot, 'packages/cli'), dest, caseRepo);
+    buildTeamRepo(armCli(repoRoot, WORKTREE, scratch()), dest, caseRepo);
 
     expect(readFileSync(join(dest, 'team.yaml'), 'utf8')).toBe('name: Example Team\n');
     expect(existsSync(join(dest, '.folkways/instructions.md'))).toBe(true);

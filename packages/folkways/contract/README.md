@@ -52,10 +52,9 @@ of it on `feat/EX-1-orders`), `${HEAD}` / `${HEAD7}` (the worktree's HEAD), `${O
 
 ## Versioning
 
-The contract is the interface between `@folkways/hooks` and `@folkways/cli`, which writes hook names and
-events into team repos' `settings.json` and pins one hooks version (`folkways.hooks` in its `package.json`,
-[ADR 0003](../../../docs/adr/0003-repo-layout.md)). Renaming or removing a hook, or changing its event, is a
-major hooks bump and needs a matching CLI change. New rules or fixtures that tighten behaviour are minor.
+The contract is the interface between the hooks and `sync`, which writes hook names and events into team
+repos' `settings.json` from `packages/content/settings.json`. Both ship in the one `folkways` binary. Renaming or
+removing a hook, or changing its event, is a major bump and needs a matching `settings.json` change. New rules or fixtures that tighten behaviour are minor.
 
 ## The contract
 

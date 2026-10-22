@@ -13,13 +13,11 @@ FOLKWAYS_CLI_CMD="$PWD/bin/folkways" go test -count=1 ./clicontract/
 FOLKWAYS_CLI_CMD="$PWD/bin/folkways" go test -count=1 ./clicontract/ -run 'TestContract/sync/'
 ```
 
-- Always `-count=1`: Go's test cache can't see the TS sources, the content or a binary outside the module, so
-  a cached pass can be stale.
+- Always `-count=1`: Go's test cache can't see a binary outside the module, so a cached pass can be stale.
 - Command under test: `FOLKWAYS_CLI_CMD`, with an absolute path in its first word (the CLI runs in a temp dir;
   a relative path is refused), run as `/bin/sh -c "$FOLKWAYS_CLI_CMD <args>"` (each arg
   shell-quoted). Unset: `TestMain` builds `./cmd/folkways` from this checkout into a temp dir, with the version
-  from `packages/cli/package.json`, so `go test ./...` pins the Go CLI. The TypeScript CLI can still be run by
-  hand: `FOLKWAYS_CLI_CMD="node $PWD/../cli/src/cli.ts"`.
+  from `packages/folkways/package.json`, so `go test ./...` pins the Go CLI.
 - Each fixture runs in its own temp root, in parallel. The CLI gets a fresh environment: nothing leaks in from
   the caller (no `npm_config_user_agent`, no git config). It has `PATH` (stubs first), `HOME` and
   `XDG_CONFIG_HOME` under the root, the caller's `TMPDIR`, `TZ=UTC`, `LC_ALL=C`, git isolated (`GIT_CONFIG_GLOBAL=/dev/null`, `GIT_CONFIG_NOSYSTEM=1`)
@@ -64,7 +62,7 @@ expectations the value is regex-quoted):
 | `${HOME}` | the CLI's `HOME`, `${ROOT}/home` (personal skills for doctor's shadow check) |
 | `${BIN}` | the stub folder, first on `PATH`. Write a script here to wrap or replace a tool |
 | `${CALLS}` | the stub call log (below) |
-| `${VERSION}` / `${HOOKS_VERSION}` | `version` and `folkways.hooks` of `packages/cli/package.json`. Build a Go binary with `-ldflags "-X main.version=<version>"` to match. Once `packages/cli` is gone, the source moves to the Go binary's `-X main.version` and its pinned hooks version |
+| `${VERSION}` | `version` of `packages/folkways/package.json`. Build a Go binary with `-ldflags "-X main.version=<version>"` to match |
 | `${CLI}` | the command under test, for a script that should call it |
 | `${GIT}` | the real git, for a wrapper in `${BIN}` |
 
@@ -87,7 +85,7 @@ The stubs are this test binary re-run with `FOLKWAYS_CLI_STUB=<tool>` (`stubs_te
 
 ### Writing one
 
-1. Find the behavior in `packages/cli/test` (map below). Run the TS CLI by hand to see the exact output.
+1. Run the CLI by hand to see the exact output.
 2. Build the starting state with steps: `init` (`["init", "${TEAM}", "--no-install"]`, or without
    `--no-install` for `node_modules`), then `files` and `git` to edit and commit.
 3. Pin exact stdout/stderr where the text is the contract; `re:` where it embeds content that changes with
@@ -108,24 +106,8 @@ The stubs are this test binary re-run with `FOLKWAYS_CLI_STUB=<tool>` (`stubs_te
 }
 ```
 
-## What the TS tests need
+## History
 
-Per file in `packages/cli/test`. "Unit" means the test calls an internal function with inputs the CLI can't be
-given; those stay unit tests, rewritten in Go beside the port.
-
-| Test file | Harness features | Can't express yet |
-|---|---|---|
-| `cli.test.ts` | args, `cwd` (subfolder), stderr exact/`re:`, `files` with `#!` scripts, `stdin`, exit passthrough, `${HOME}` | `hook` tests belong in `../contract/`: the Go CLI runs hooks in-process, not `node_modules/.bin/folkways-hook` (ADR 0011), so the passthrough tests are TS-only |
-| `init.test.ts` | `tree`, `files`, `expect.git`, `${CALLS}`, `STUB_NPM_FAIL`, env `null` (no git identity), `${BIN}/git` wrapper with `${GIT}`, folder names via `init "${ROOT}/My Team"` | `templateTarget` cases (unit); `packageName` with a 300-char folder (over `NAME_MAX`) and `''` (unit). An existing **empty** folder needs a setup step that writes then deletes a file |
-| `sync.test.ts` | `files`, `git`, `unchanged`, `re:` on refusals, manifest edits, pnpm workspace variants, `--force` | Everything that uses `makePackage`/`addFrameworkContent` gets the real content at `${VERSION}` instead. "Previous version" works by editing the manifest's `version`. **Gap:** a manifest listing files this version dropped needs their sha256, which fixtures can't compute (candidate: a `${SHA256:path}` placeholder). Atomicity tests inject `fsOps` failures (unit). Executable bit: no real content file is executable |
-| `upgrade.test.ts` | stubs (`add`/`install` pin and link `${CLI}`), `STUB_NPM_FAIL`, `expect.git` (branch, log, `status`), env `null`. Start "older" by setting the pin and manifest `version` to e.g. `0.0.1` and committing, then `upgrade ${VERSION}` | **Gap:** "a failed sync leaves files behind" needs `node_modules/.bin/folkways` replaced *after* the stub's install writes it (candidate: an env var naming a script the stub installs instead). Tests that the new version brings new skills can't differ in content: there is one CLI |
-| `doctor.test.ts` | `init` with stub install, `files` (node_modules versions, settings), `${HOME}` skills, a plugin-style repo (`git init` + `folkways.yaml` only) for the `hookValueFindings` cases | `HOOK_NAMES` vs `assets/settings.json` is a content check, not CLI behavior |
-| `overlays.test.ts` | through `sync` with `overlays/<skill>/OVERLAY.md` against real skill section IDs | Mostly unit (`parseOverlay`, `compileSkillFiles` on synthetic skills). Fixtures depend on which `{#id}`s the real skills have |
-| `settings.test.ts` | through `sync`: a team `.claude/settings.json` in, merged file out (`re:` or exact) | Exact output embeds the real settings fragment; content changes break it. The `assets/settings.json` wiring tests are content checks |
-| `package-manager.test.ts` | `${CALLS}` shows which tool `init`/`upgrade` ran; env `npm_config_user_agent` | none |
-| `package.test.ts` | — | Packaging internals (`assetsDir`, `hooksVersion` file layout); not CLI behavior |
-| `content-sync.test.ts` | — | **Gap:** "synced file equals `packages/content/...`" needs an expectation that compares with a repo file (candidate: `${REPO}` plus a `same-as:` value) |
-
-Error texts from Node's `parseArgs` (`Unknown option '--x'. To specify a positional argument ...`,
-`Unexpected argument 'extra'. This command does not take positional arguments`) are TS-runtime wording. Pin
-only the `folkways: Unknown option '--x'` prefix unless the port should copy Node's text.
+The fixtures were ported from the TypeScript CLI's vitest suites, removed with the TS CLI after
+[`165ec4c`](https://github.com/sumsolution/folkways/tree/165ec4c/packages/cli/test). Each folder's `COVERAGE.md`
+maps those tests to fixtures; the test names there refer to that commit.
