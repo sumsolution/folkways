@@ -54,7 +54,7 @@ export function armCli(repoRoot: string, ref: string, scratch: string): string {
   const bin = join(dest, 'folkways');
   if (!existsSync(bin)) {
     try {
-      git(repoRoot, 'cat-file', '-e', `${sha}:packages/folkways/internal/scaffold`);
+      git(repoRoot, 'merge-base', '--is-ancestor', FIRST_GO_INIT, sha);
     } catch {
       throw new EvalError(`${ref} (${sha.slice(0, 7)}) has no Go CLI init; arms need ${FIRST_GO_INIT} or later`);
     }
