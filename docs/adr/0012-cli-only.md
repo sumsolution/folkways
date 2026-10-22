@@ -54,7 +54,7 @@ the entries call `folkways hook <name>` on `PATH` behind a guard; each person in
   turns hooks off instead of blocking Copilot CLI. The `SessionStart` entry prints how to install instead of exiting
   silently.
 - The binary comes from Homebrew or the install script (npm stays possible for Node repos, not required). Cloud agents
-  install it in their setup step.
+  install it in their setup step, for skills that call it; hooks still exit there (ADR 0007).
 - The manifest's `version` is the pin; `session-start` warns once when the running binary differs
   ([go-cli 21 §2][s-21]).
 - The plugin, its build, the skill namespace and the marketplace are removed.
@@ -86,10 +86,13 @@ and for reversing ADR 0002.
 - **One install per person.** `onboard` and `doctor` check that `folkways` is on `PATH`. Without it, `git-guard` and
   the other hooks are off for that person, the same class of risk ADR 0007 accepted for people who decline the trust
   prompt. CI stays the backstop at PR time.
-- **Cloud agents need a setup step.** The Copilot cloud agent gets the binary from a committed
-  `.github/workflows/copilot-setup-steps.yml` that sync writes (draft ADR 0009 already allows for the Workflows
-  permission). Hooks still exit at once when `COPILOT_AGENT_SESSION_ID` is set, as ADR 0007 decided. Claude Code cloud
-  sessions need their environment's setup script (inferred, not tested).
+- **No hooks in GitHub's agents, as before.** Hooks still exit at once when `COPILOT_AGENT_SESSION_ID` is set, as
+  ADR 0007 decided; CI checks commits at PR time, and committed instructions carry what `session-start` adds. Copilot
+  code review runs no hooks (not tested, as in ADR 0007).
+- **Cloud agents need a setup step for skills, not hooks.** Skills that call `folkways` need the binary there. The
+  Copilot cloud agent gets it from a committed `.github/workflows/copilot-setup-steps.yml` that sync writes (draft
+  ADR 0009 already allows for the Workflows permission). Claude Code cloud sessions need their environment's setup
+  script, and would then run the committed hooks too (inferred, not tested).
 - **Removed:** `packages/claude-plugin`, `run.sh` and its synced-repo exit, skill namespacing, the marketplace, the
   `node_modules/.bin/folkways-hook` path, PR 2's planned shim, and ADR 0011's copy-precedence question.
 - **Lost:** use in a repo you can't commit to (inferred to be rare), and one-click discovery through the marketplace.
