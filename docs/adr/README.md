@@ -16,6 +16,7 @@ Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folk
 | [0004](0004-license.md) | folkways is licensed under Apache-2.0 | accepted |
 | [0005](0005-closing-efforts.md) | A closed effort is lifted, indexed and removed | accepted |
 | [0006](0006-app-repo-files.md) | What files does an app repo carry? | proposed |
-| [0007](0007-hook-delivery.md) | How do hooks reach agents in an app repo? | proposed |
+| [0007](0007-hook-delivery.md) | How do hooks reach agents in an app repo? | superseded by 0012 |
 | [0010](0010-skill-architecture.md) | Partition folkways by session mode and effort ownership, not by SDLC agents | accepted |
-| [0011](0011-cli-in-go.md) | The CLI is one Go binary, installed without Node first | accepted |
+| [0011](0011-cli-in-go.md) | The CLI is one Go binary, installed without Node first | accepted; partly superseded by 0012 |
+| [0012](0012-cli-only.md) | folkways is only a CLI; every repo commits its skills and hooks | accepted |

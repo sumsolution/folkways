@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | superseded by [0012](0012-cli-only.md): no plugin; repos commit their hooks. The cloud-agent exit carries over |
 | Date | 2026-10-17 |
 | Owner | Summer Jordan |
 
