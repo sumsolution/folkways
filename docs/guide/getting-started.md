@@ -59,7 +59,7 @@ cd example-team
 ```
 
 [Install](../../README.md#install) `folkways` once, the version in `.folkways/manifest.json`
-(`FOLKWAYS_VERSION=<version>` for the install script, or `go install …@v<version>`; Homebrew has only the latest). The hooks in
+(`… | FOLKWAYS_VERSION=<version> sh` for the install script, or `go install …@v<version>`; Homebrew has only the latest). The hooks in
 `.claude/settings.json` call it on `PATH`; without it they do nothing, and each session starts with a line saying
 how to install it.
 

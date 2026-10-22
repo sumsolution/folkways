@@ -53,10 +53,16 @@ brew install sumsolution/tap/folkways
 ```
 
 The install script ([read it first](install.sh)) puts the binary in `~/.local/bin`, after checking it against the
-release's `checksums.txt`. `FOLKWAYS_VERSION=0.2.0` picks a version, `FOLKWAYS_INSTALL_DIR` another directory:
+release's `checksums.txt`:
 
 ```bash
 curl -fsSL https://github.com/sumsolution/folkways/releases/latest/download/install.sh | sh
+```
+
+To pick a version or a directory, set the variables after the pipe, where `sh` sees them:
+
+```bash
+curl -fsSL https://github.com/sumsolution/folkways/releases/latest/download/install.sh | FOLKWAYS_VERSION=0.2.0 FOLKWAYS_INSTALL_DIR=/usr/local/bin sh
 ```
 
 With Go 1.26+:

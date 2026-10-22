@@ -1,6 +1,7 @@
 #!/bin/sh
 # Installs the folkways binary from a GitHub release: macOS and Linux, amd64 and arm64.
 #   curl -fsSL https://github.com/sumsolution/folkways/releases/latest/download/install.sh | sh
+#   … | FOLKWAYS_VERSION=0.2.0 sh    (variables go after the pipe)
 # Environment:
 #   FOLKWAYS_VERSION      the version to install, e.g. 0.2.0 (default: the latest release)
 #   FOLKWAYS_INSTALL_DIR  where to put the binary (default: ~/.local/bin)

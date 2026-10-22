@@ -55,7 +55,7 @@ func main() {
 }
 
 // buildVersion returns the -ldflags version, or else the build's module version when it is a tag (v1.2.3 or
-// v1.2.3-rc.1) without its v. Pseudo-versions (`go install …@main`) and checkouts stay dev. A release build
+// v1.2.3-rc.1) without its v. Pseudo-versions (`go install …@main`) and untagged checkouts stay dev. A release build
 // sets ldflags, so the hook path skips the lookup.
 func buildVersion(ldflags string, read func() (*debug.BuildInfo, bool)) string {
 	if ldflags != "dev" {
