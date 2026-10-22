@@ -58,6 +58,9 @@ jobs:
       - name: shellcheck (preinstalled on the runner)
         run: shellcheck install.sh scripts/smoke-release.sh
       - uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        env:
+          # Without it, GoReleaser picks v<version>-rc.<n> when that tags the same commit as v<version>.
+          GORELEASER_CURRENT_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
         with:
           distribution: goreleaser
           version: v2.18.3
@@ -144,6 +147,7 @@ jobs:
       # A draft first, so `releases/latest` never points at a release without its files. Reruns reuse it.
       - name: GitHub release
         run: |
+          grep -q "\"tag\":\"$TAG\"" dist/metadata.json || { echo "::error::dist/ wasn't built from $TAG"; exit 1; }
           pre=
           case "$TAG" in *-*) pre=--prerelease ;; esac
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -169,7 +173,8 @@ jobs:
         run: |
           api=repos/sumsolution/homebrew-tap/contents/Formula/folkways.rb
           new=$(base64 -w0 < dist/homebrew/Formula/folkways.rb)
-          sha=$(gh api "$api" --jq .sha 2>/dev/null || true)
+          # On a 404 (first push) gh prints the error JSON to stdout, so clear it.
+          sha=$(gh api "$api" --jq .sha 2>/dev/null) || sha=
           if [ -n "$sha" ] && [ "$(gh api "$api" --jq .content | tr -d '\n')" = "$new" ]; then
             echo "the tap already has this formula"
             exit 0

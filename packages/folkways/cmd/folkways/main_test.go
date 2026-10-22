@@ -233,7 +233,7 @@ func TestBuildVersion(t *testing.T) {
 		{"1.2.3", "v9.9.9", "1.2.3"}, // -ldflags wins
 		{"dev", "v0.2.0", "0.2.0"},   // go install …@v0.2.0
 		{"dev", "v0.2.0-rc.1", "0.2.0-rc.1"},
-		{"dev", "(devel)", "dev"},                              // go build from a checkout
+		{"dev", "(devel)", "dev"},                              // no VCS info (-buildvcs=false)
 		{"dev", "v0.2.1-0.20261022120000-399696d2a1b3", "dev"}, // go install …@main: a pseudo-version
 		{"dev", "v0.0.0-20261022120000-399696d2a1b3", "dev"},
 		{"dev", "", "dev"},

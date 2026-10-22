@@ -80,7 +80,7 @@ main() {
 	case ":$PATH:" in
 	*":$dir:"*) ;;
 	*)
-		say "$dir isn't on your PATH. Add it in your shell profile (~/.zshrc, ~/.bashrc), e.g.:"
+		say "$dir isn't on your PATH. Add it in your login shell's profile (~/.zprofile, ~/.bash_profile or ~/.profile):"
 		say "  export PATH=\"$dir:\$PATH\""
 		say "Hooks run in tools started from the Dock or a launcher too, which read the login shell's PATH."
 		;;
