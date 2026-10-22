@@ -1,0 +1,177 @@
+name: release
+
+# A v<version> tag (or v<version>-rc.<n>) on a commit whose packages/folkways/package.json has that version:
+#   build    GoReleaser builds the four archives, checksums.txt and the Homebrew formula (--skip=publish)
+#   smoke    each archive, installed with install.sh and tested on its own platform
+#   publish  after approval in the `release` environment: provenance attestations, the GitHub release (the same
+#            files plus install.sh), then the formula to sumsolution/homebrew-tap (not for -rc tags)
+# Pull requests that touch the release files and manual runs build a snapshot and smoke it; they never publish.
+# Releasing: `pnpm changeset version` in a PR, merge, then tag that commit `v<version>` and push the tag.
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - '.goreleaser.yaml'
+      - 'install.sh'
+      - 'scripts/smoke-release.sh'
+      - '.github/workflows/release.yml'
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # GoReleaser reads the tags
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: The tag matches packages/folkways/package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          want=$(node -p "require('./packages/folkways/package.json').version")
+          base=${TAG#v}
+          base=${base%%-*}
+          if [ "$base" != "$want" ]; then
+            echo "::error::tag $TAG doesn't match packages/folkways/package.json ($want); tag the commit that 'pnpm changeset version' made"
+            exit 1
+          fi
+      - name: Go vet and tests
+        run: go vet ./... && go test ./...
+      - name: shellcheck (preinstalled on the runner)
+        run: shellcheck install.sh scripts/smoke-release.sh
+      - uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          distribution: goreleaser
+          version: v2.18.3
+          args: release --clean --skip=publish ${{ !startsWith(github.ref, 'refs/tags/v') && '--snapshot' || '' }}
+      - name: Release notes from packages/folkways/CHANGELOG.md
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          base=${TAG#v}
+          base=${base%%-*}
+          awk -v v="$base" '/^## / { p = ($2 == v); next } p' packages/folkways/CHANGELOG.md > dist/notes.md
+          if ! grep -q '[^[:space:]]' dist/notes.md; then
+            echo "::error::packages/folkways/CHANGELOG.md has no section for $base"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: |
+            dist/*.tar.gz
+            dist/checksums.txt
+            dist/metadata.json
+            dist/homebrew/
+            dist/notes.md
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke:
+    name: smoke (${{ matrix.os }})
+    needs: build
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, budget: '10' }     # linux/amd64
+          - { os: ubuntu-24.04-arm, budget: '10' }  # linux/arm64
+          - { os: macos-latest, budget: '' }        # darwin/arm64
+          - { os: macos-15-intel, budget: '' }      # darwin/amd64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      # The latency budget on Linux only: macOS runners are noisier.
+      - run: sh scripts/smoke-release.sh dist
+        env:
+          FOLKWAYS_HOOK_BUDGET_MS: ${{ matrix.budget }}
+
+  publish:
+    name: publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: write     # the GitHub release
+      id-token: write     # provenance attestations; this job only
+      attestations: write
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*.tar.gz
+      # A draft first, so `releases/latest` never points at a release without its files. Reruns reuse it.
+      - name: GitHub release
+        run: |
+          pre=
+          case "$TAG" in *-*) pre=--prerelease ;; esac
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft $pre \
+              --title "$TAG" --notes-file dist/notes.md
+          fi
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber dist/*.tar.gz dist/checksums.txt install.sh
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        if: ${{ !contains(github.ref_name, '-') }}
+        id: tap
+        with:
+          client-id: ${{ vars.TAP_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TAP_APP_PRIVATE_KEY }}
+          owner: sumsolution
+          repositories: homebrew-tap
+          permission-contents: write
+      # Through the contents API, so nothing is cloned; skipped when the tap already has this formula.
+      - name: Formula to sumsolution/homebrew-tap
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ steps.tap.outputs.token }}
+        run: |
+          api=repos/sumsolution/homebrew-tap/contents/Formula/folkways.rb
+          new=$(base64 -w0 < dist/homebrew/Formula/folkways.rb)
+          sha=$(gh api "$api" --jq .sha 2>/dev/null || true)
+          if [ -n "$sha" ] && [ "$(gh api "$api" --jq .content | tr -d '\n')" = "$new" ]; then
+            echo "the tap already has this formula"
+            exit 0
+          fi
+          gh api -X PUT "$api" -f message="folkways ${TAG#v}" -f content="$new" ${sha:+-f sha="$sha"}

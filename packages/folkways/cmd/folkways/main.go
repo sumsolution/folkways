@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
+	"runtime/debug"
 	"slices"
 	"strings"
 
@@ -19,7 +21,8 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/upgrade"
 )
 
-// version is set at build time: -ldflags "-X main.version=1.2.3".
+// version is set at build time: -ldflags "-X main.version=1.2.3". Without it, main takes the module version
+// from the build info, which `go install …@v1.2.3` stamps.
 var version = "dev"
 
 const usage = `usage: folkways <command> [options]
@@ -37,6 +40,7 @@ const usage = `usage: folkways <command> [options]
   review | run                 not built yet`
 
 func main() {
+	version = buildVersion(version, debug.ReadBuildInfo)
 	// The hook path comes first and always exits 0: Copilot CLI denies the tool call when a preToolUse
 	// hook exits nonzero or crashes.
 	if len(os.Args) >= 2 && os.Args[1] == "hook" {
@@ -48,6 +52,20 @@ func main() {
 		return
 	}
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+// buildVersion returns the -ldflags version, or else the build's module version when it is a tag (v1.2.3 or
+// v1.2.3-rc.1) without its v. Pseudo-versions (`go install …@main`) and checkouts stay dev. A release build
+// sets ldflags, so the hook path skips the lookup.
+func buildVersion(ldflags string, read func() (*debug.BuildInfo, bool)) string {
+	if ldflags != "dev" {
+		return ldflags
+	}
+	info, ok := read()
+	if !ok || !regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$`).MatchString(info.Main.Version) {
+		return ldflags
+	}
+	return strings.TrimPrefix(info.Main.Version, "v")
 }
 
 // run runs every command except hook and returns the exit code. Errors print as `folkways: <message>`.

@@ -6,7 +6,7 @@ five minutes.
 | Page | Read it for |
 |---|---|
 | [Concepts](concepts.md) | The vocabulary: team repo, knowledge, state, efforts, people, skills, overlays, hooks, folkways vs mores, headless runs |
-| [How it works](how-it-works.md) | The mechanics: how files get from npm into your team repo, who owns what, upgrades, the review gate |
+| [How it works](how-it-works.md) | The mechanics: how files get from the `folkways` binary into your team repo, who owns what, upgrades, the review gate |
 | [Getting started](getting-started.md) | Doing it: set up a team repo as a lead, join one as a member |
 | [The name](the-name.md) | Sumner, folkways and mores, and the names we didn't pick |
 

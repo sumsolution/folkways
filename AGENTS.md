@@ -17,6 +17,7 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 | `packages/claude-plugin/` | `@folkways/claude-plugin`: builds the Claude Code plugin into `dist/` from `packages/content/` and the hook binaries. The root `.claude-plugin/marketplace.json` installs it from npm |
 | `packages/evals/` | `@folkways/evals` (private, never published): behavior-eval runner. Builds a team repo per arm, runs `claude -p`, grades blind |
 | `docs/adr/` | Framework decisions |
+| `.goreleaser.yaml`, `install.sh`, `scripts/smoke-release.sh`, `.github/workflows/release.yml` | The release: GoReleaser builds `folkways` for darwin/linux × amd64/arm64; the smoke script tests the archives; the workflow publishes them and the Homebrew formula |
 
 ## Commands
 
@@ -39,6 +40,8 @@ From the repo root:
 | `go run ./packages/folkways/cmd/folkways <command>` | run the CLI from source |
 | `node packages/evals/src/cli.ts run packages/evals/suites/<suite> --dry-run` | plan a behavior eval; drop `--dry-run` to run it (model calls on your account; needs Go; see `packages/evals/README.md`) |
 | `pnpm changeset` | record a change for the next release of the packages it touches |
+| `goreleaser release --snapshot --clean --skip=publish` | build the release archives, `checksums.txt` and the formula into `dist/` (GoReleaser v2, the version `release.yml` pins) |
+| `sh scripts/smoke-release.sh dist` | install the archive for this platform from `dist/` with `install.sh` and smoke-test it, with the hook contract suite when Go is on `PATH` |
 
 ## Rules
 
@@ -60,8 +63,10 @@ From the repo root:
 - **Tests live with their package:** TypeScript in `packages/<pkg>/test/`, Go as `*_test.go`
   beside the code. A package never imports another's source.
 - **Versions are per package** (changesets, ADR 0003). A PR that changes a package adds a changeset
-  (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one. No release pipeline
-  until the Go release lands (go-cli Phase 2); don't run `changeset tag`.
+  (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one.
+- **Releasing `folkways`:** `pnpm changeset version` in a PR; merge it; tag that commit `v<version>` (the
+  `packages/folkways/package.json` version; `v<version>-rc.<n>` for a prerelease) and push the tag. `release.yml`
+  builds, smoke-tests, and publishes after approval in the `release` environment. Never run `changeset tag`.
 - **The Claude Code plugin is generated.** Its skills, instructions and `hooks.json` come from `packages/content/`
   at build time; edit them there. A content change that should reach team repos needs a `@folkways/hooks`
   changeset (the binary embeds the content), and one that should reach plugin users a `@folkways/claude-plugin`

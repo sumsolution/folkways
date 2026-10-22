@@ -1,0 +1,58 @@
+# GoReleaser builds the folkways binary for each platform (ADR 0011). release.yml runs it with --skip=publish,
+# smoke-tests the archives, then publishes the same files with gh and pushes the formula to the tap.
+version: 2
+
+project_name: folkways
+
+builds:
+  - id: folkways
+    main: ./packages/folkways/cmd/folkways
+    binary: folkways
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    goos: [darwin, linux]
+    goarch: [amd64, arm64]
+
+archives:
+  - formats: [tar.gz]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: '{{ incpatch .Version }}-snapshot'
+
+changelog:
+  disable: true # release notes come from packages/folkways/CHANGELOG.md
+
+release:
+  github:
+    owner: sumsolution
+    name: folkways
+
+# A formula, not a cask: casks for unsigned binaries hit Gatekeeper, and brew on Linux installs formulas.
+# skip_upload: GoReleaser writes it to dist/; release.yml pushes it to the tap after approval.
+brews:
+  - name: folkways
+    repository:
+      owner: sumsolution
+      name: homebrew-tap
+    directory: Formula
+    skip_upload: true
+    url_template: 'https://github.com/sumsolution/folkways/releases/download/{{ .Tag }}/{{ .ArtifactName }}'
+    homepage: https://github.com/sumsolution/folkways
+    description: A way of working for teams that build with coding agents
+    license: Apache-2.0
+    install: |
+      bin.install "folkways"
+    test: |
+      assert_equal version.to_s, shell_output("#{bin}/folkways version").strip

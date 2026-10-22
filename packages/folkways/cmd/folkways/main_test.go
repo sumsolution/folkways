@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"testing"
@@ -223,4 +224,28 @@ func checkPatterns(t *testing.T, fset *token.FileSet, e ast.Expr) {
 		}
 		return true
 	})
+}
+
+func TestBuildVersion(t *testing.T) {
+	cases := []struct {
+		ldflags, module, want string
+	}{
+		{"1.2.3", "v9.9.9", "1.2.3"}, // -ldflags wins
+		{"dev", "v0.2.0", "0.2.0"},   // go install …@v0.2.0
+		{"dev", "v0.2.0-rc.1", "0.2.0-rc.1"},
+		{"dev", "(devel)", "dev"},                              // go build from a checkout
+		{"dev", "v0.2.1-0.20261022120000-399696d2a1b3", "dev"}, // go install …@main: a pseudo-version
+		{"dev", "v0.0.0-20261022120000-399696d2a1b3", "dev"},
+		{"dev", "", "dev"},
+	}
+	for _, c := range cases {
+		read := func() (*debug.BuildInfo, bool) { return &debug.BuildInfo{Main: debug.Module{Version: c.module}}, true }
+		if got := buildVersion(c.ldflags, read); got != c.want {
+			t.Errorf("buildVersion(%q, %q) = %q, want %q", c.ldflags, c.module, got, c.want)
+		}
+	}
+	none := func() (*debug.BuildInfo, bool) { return nil, false }
+	if got := buildVersion("dev", none); got != "dev" {
+		t.Errorf("buildVersion without build info = %q, want dev", got)
+	}
 }
