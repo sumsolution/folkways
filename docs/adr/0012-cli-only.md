@@ -105,7 +105,10 @@ and for reversing ADR 0002.
 - **Lost:** use in a repo you can't commit to (inferred to be rare), and one-click discovery through the marketplace.
 - **ADR 0011:** npm becomes optional; the first release needs GoReleaser, the GitHub binaries, the tap and the install
   script. 0011 gets a note on acceptance, as 0002 did.
-- **ADR 0007** is superseded on acceptance. Its cloud-agent exit and `CLAUDE_PROJECT_DIR` rules carry over.
+- **ADR 0007** is superseded. Its cloud-agent exit carries over. Its "`CLAUDE_PROJECT_DIR`, never the cwd" rule does
+  not: it was for plugin hooks, whose cwd is the plugin root. Committed hooks find the repo from `CLAUDE_PROJECT_DIR`,
+  else the cwd, as `team.Load` does today ([`team.go:47-54`][c-team]), because Copilot CLI leaves the variable unset
+  for repo hooks and runs them from the project root ([contract README][c-contract]).
 - **Sync migrates** existing entries: today's prefix joins `oldHookPrefixes` ([`settings.go:18`][c-prefix]).
 - **Gap: Copilot in JetBrains gets no hooks.** It reads only `.github/hooks/`, and ADR 0006 has app repos carry
   Claude-format files only, so `git-guard` doesn't run there and CI at PR time is the only check. The plugin route
@@ -133,3 +136,5 @@ and for reversing ADR 0002.
 [c-prefix]: https://github.com/sumsolution/folkways/blob/9bda25a/packages/folkways/internal/settings/settings.go#L13-L18
 [c-run]: https://github.com/sumsolution/folkways/blob/9bda25a/packages/claude-plugin/src/run.sh
 [c-readme]: https://github.com/sumsolution/folkways/blob/9bda25a/packages/claude-plugin/README.md
+[c-team]: https://github.com/sumsolution/folkways/blob/9bda25a/packages/folkways/internal/team/team.go#L47-L54
+[c-contract]: https://github.com/sumsolution/folkways/blob/9bda25a/packages/folkways/contract/README.md#L68-L70
