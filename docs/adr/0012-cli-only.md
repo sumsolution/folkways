@@ -1,13 +1,13 @@
-# 0012. Does folkways need a plugin, or only a CLI?
+# 0012. folkways is only a CLI; every repo commits its skills and hooks
 
 | | |
 |---|---|
-| Status | proposed |
-| Date | 2026-10-21 |
+| Status | accepted (Summer Jordan, 2026-10-22) |
+| Date | 2026-10-22 |
 | Owner | Summer Jordan |
 | Reviewers | Summer Jordan |
-| Review window | Until Summer accepts; the IDE `PATH` check is done (2026-10-22) |
-| Supersedes | [0007](0007-hook-delivery.md) (proposed), on acceptance |
+| Review window | until the IDE `PATH` check, done 2026-10-22 |
+| Supersedes | [0007](0007-hook-delivery.md); in part, [0011](0011-cli-in-go.md): npm as a release channel, and copy precedence |
 
 ## Issue
 
@@ -119,7 +119,7 @@ and for reversing ADR 0002.
 
 ## Related decisions
 
-- [0007](0007-hook-delivery.md): superseded on acceptance.
+- [0007](0007-hook-delivery.md): superseded.
 - [0011](0011-cli-in-go.md): npm channel made optional; copy precedence removed.
 - [0002](0002-hook-runtime.md): the hook stays the Go binary; its npm delivery is no longer required.
 - [0006](0006-app-repo-files.md): app repos still carry Claude-format files only.

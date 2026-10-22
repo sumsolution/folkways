@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | accepted (Summer Jordan, 2026-10-18) |
+| Status | accepted (Summer Jordan, 2026-10-18); partly superseded by [0012](0012-cli-only.md): no plugin, npm optional, no copy precedence |
 | Date | 2026-10-18 |
 | Owner | Summer Jordan |
 | Reviewers | none required (`adr.reviewers.min: 0`) |
