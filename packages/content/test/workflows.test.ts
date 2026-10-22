@@ -51,5 +51,15 @@ describe('workflows', () => {
       expect(text).toContain('gh pr create --draft');
       expect(text).not.toMatch(/git push[^\n]*\b(main|master)\b/);
     });
+
+    it('uses a branch per run, so a re-run can push', () => {
+      expect(text).toMatch(/branch="chore\/knowledge-audit-\$MONTH-\$GITHUB_RUN_NUMBER-\$GITHUB_RUN_ATTEMPT"/);
+    });
+
+    it('skips, not fails, when no secret is set', () => {
+      expect(text).toContain('echo "ok=false" >> "$GITHUB_OUTPUT"');
+      const steps = text.split(/\n      - /).slice(2);
+      for (const step of steps) expect(step).toContain("if: steps.auth.outputs.ok == 'true'");
+    });
   });
 });

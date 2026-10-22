@@ -78,15 +78,16 @@ run log. Start from [references/tracker-template.md](references/tracker-template
 The monthly GitHub Action runs this with no one to ask.
 
 1. Run steps 1 to 4 against a fresh checkout of the default branch. Project repos are read via
-   `git fetch` and `origin/<default>` only.
+   `git fetch` and `origin/<default>` only. The folkways workflow has no `.local/me.yaml`, no project
+   clones and no subagents: verify only what the team repo shows, one entry at a time, and mark entries
+   that need another repo `needs-investigation`.
 2. Apply the proposals as edits, including the tracker update, on a branch
    `chore/knowledge-audit-<YYYY-MM>`, and open a **draft PR**. The PR body is the proposal table. Prune
-   candidates are listed in the body, never deleted in the diff. In the folkways workflow, leave the
-   edits uncommitted and write the body to `.local/knowledge-audit-<YYYY-MM>.md`; the workflow commits,
-   pushes and opens the PR.
+   candidates are listed in the body, never deleted in the diff. If you can't push (always, in the folkways
+   workflow), leave the edits uncommitted, write the body to `.local/knowledge-audit-<YYYY-MM>.md` and say
+   so; the workflow commits, pushes and opens the PR.
 3. **@mention the knowledge owners.** The owner of an entry is the `owner` field in the entry if it has
    one, else the author of the most recent `git log` commit that touched it. Say which rule you used
    per entry, and flag entries where the author is a bot or is no longer in the repo.
 4. Flag every judgment call (a verdict you weren't sure of, an interval you assigned) in the PR body.
-5. Never merge, never delete, never touch the default branch or external systems. If no branch can be
-   pushed, write the proposal to `.local/knowledge-audit-<YYYY-MM>.md` and say so.
+5. Never merge, never delete, never touch the default branch or external systems.

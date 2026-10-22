@@ -73,8 +73,11 @@ It needs:
 - **Settings > Actions > General > Allow GitHub Actions to create and approve pull requests**.
 
 PRs opened with the workflow's `GITHUB_TOKEN` don't trigger other workflows; push an empty commit or
-close and reopen the PR to run CI on it. Only Claude Code is supported so far (`knowledge_audit.tool:
-claude`).
+close and reopen the PR to run CI on it. With neither secret set, the run skips with a notice.
+
+Limits for now: the schedule is fixed (`knowledge_audit.cadence` and `.tool` aren't read; Claude Code
+only), and CI has no project clones, so entries that need another repo come back `needs-investigation`
+for someone to check by hand.
 
 ## For a member
 
