@@ -79,9 +79,11 @@ The monthly GitHub Action runs this with no one to ask.
 
 1. Run steps 1 to 4 against a fresh checkout of the default branch. Project repos are read via
    `git fetch` and `origin/<default>` only.
-2. Apply the proposals as edits on a branch `chore/knowledge-audit-<YYYY-MM>`, including the tracker
-   update, and open a **draft PR**. The PR body is the proposal table. Prune candidates are listed in the
-   body, never deleted in the diff.
+2. Apply the proposals as edits, including the tracker update, on a branch
+   `chore/knowledge-audit-<YYYY-MM>`, and open a **draft PR**. The PR body is the proposal table. Prune
+   candidates are listed in the body, never deleted in the diff. In the folkways workflow, leave the
+   edits uncommitted and write the body to `.local/knowledge-audit-<YYYY-MM>.md`; the workflow commits,
+   pushes and opens the PR.
 3. **@mention the knowledge owners.** The owner of an entry is the `owner` field in the entry if it has
    one, else the author of the most recent `git log` commit that touched it. Say which rule you used
    per entry, and flag entries where the author is a bot or is no longer in the repo.

@@ -12,11 +12,11 @@ folkways delivers two kinds of thing, two ways:
   repo's `package.json` and lockfile set the version, so everyone runs the same one.
 - **Text** (instructions, skills, prompts, workflows) has to be real files in the repo, because the
   tools read skills from `.claude/skills/`. `folkways sync` copies them in from the installed package.
-  Today that's `instructions.md`, the skills and the prompts; workflows are coming soon.
+  Today that's `instructions.md`, the skills, the prompts and the knowledge-audit workflow.
 
 A nice side effect: every framework change shows up in an upgrade PR's diff, readable like any change.
 
-The design, end to end (today the package isn't on npm, and no workflows or hooks ship yet):
+The design, end to end (today the package isn't on npm, and no hooks ship yet):
 
 ```mermaid
 flowchart LR

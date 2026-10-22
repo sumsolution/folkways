@@ -61,8 +61,20 @@ git remote add origin git@github.com:example/example-team.git
 git push -u origin main
 ```
 
-Protect `main` and require linear history. When the knowledge-audit workflow ships (**coming soon**),
-it needs one repo secret for the agent CLI it runs.
+Protect `main` and require linear history.
+
+`folkways sync` installs `.github/workflows/folkways-knowledge-audit.yml`, which runs the `knowledge-audit`
+skill on the 1st of each month (or by hand from the Actions tab) and opens a draft PR with its proposals.
+It needs:
+
+- one repo secret: `ANTHROPIC_API_KEY` from the Claude Console, or `CLAUDE_CODE_OAUTH_TOKEN` from
+  `claude setup-token`. The token bills one person's Claude subscription, so a shared team repo should
+  use an API key;
+- **Settings > Actions > General > Allow GitHub Actions to create and approve pull requests**.
+
+PRs opened with the workflow's `GITHUB_TOKEN` don't trigger other workflows; push an empty commit or
+close and reopen the PR to run CI on it. Only Claude Code is supported so far (`knowledge_audit.tool:
+claude`).
 
 ## For a member
 
