@@ -4,6 +4,10 @@ Do the skills make an agent step back when a second review round asks for more o
 behavior eval from the git-guard retro ([13](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/review-rounds/13-retro-git-guard-review-rounds.md)).
 Runner: [packages/evals](../../README.md).
 
+**Finished; can't rerun as is.** The `before` arm pins `28fbd63`, from before the Go CLI's `init` (`141a6f4`), so
+the runner now refuses it. The saved results stand. To rerun, pin `before` to a Go-era ref, which changes what the
+comparison measures.
+
 ## Case: `copilot-round-2`
 
 The subject is in a team repo built by `folkways init` of its arm, with:
