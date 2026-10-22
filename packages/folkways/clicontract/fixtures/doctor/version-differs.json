@@ -1,0 +1,19 @@
+{
+  "description": "doctor warns when the running folkways isn't the version the manifest pins (ADR 0012)",
+  "steps": [
+    {
+      "args": ["init", "${TEAM}"]
+    },
+    {
+      "files": {
+        ".folkways/manifest.json": "{\"version\": \"0.0.1\", \"skills\": [], \"files\": {}}\n"
+      },
+      "args": ["doctor"],
+      "expect": {
+        "exit": 0,
+        "stdout": "warning: this is folkways ${VERSION}, but the repo is synced from 0.0.1; run 'folkways upgrade ${VERSION}', or install folkways 0.0.1\n0 errors, 1 warning.\n",
+        "stderr": ""
+      }
+    }
+  ]
+}

@@ -32,9 +32,8 @@ func TestRun(t *testing.T) {
 		{[]string{"help", "--x"}, 1, "", "folkways: Unknown option '--x'\n"},
 		{[]string{"review"}, 1, "", "folkways: 'review' is not built yet\n"},
 		{[]string{"sync", "--nope"}, 1, "", "folkways: Unknown option '--nope'\n"},
-		{[]string{"init"}, 1, "", "folkways: usage: folkways init <path> [--no-install] [--package-manager npm|pnpm]\n"},
-		{[]string{"init", "x", "--package-manager", "yarn"}, 1, "", "folkways: --package-manager must be npm or pnpm\n"},
-		{[]string{"init", "x", "--package-manager="}, 1, "", "folkways: --package-manager must be npm or pnpm\n"},
+		{[]string{"init"}, 1, "", "folkways: usage: folkways init <path>\n"},
+		{[]string{"init", "x", "--no-install"}, 1, "", "folkways: Unknown option '--no-install'\n"},
 	}
 	for _, c := range cases {
 		var out, errOut bytes.Buffer

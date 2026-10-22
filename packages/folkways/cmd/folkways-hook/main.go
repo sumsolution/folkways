@@ -21,5 +21,5 @@ func main() {
 		fmt.Println(version)
 		return
 	}
-	hookrun.Run(os.Args[1], os.Stdin)
+	hookrun.Run(os.Args[1], version, os.Stdin)
 }

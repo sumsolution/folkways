@@ -23,7 +23,7 @@ The session-start hook puts these values in the session context; read `folkways.
 2. **Check the review gate.** A fresh-process review must cover the exact HEAD SHA: a file
    `NN-review-<sha7>.md` in the effort (or `<YYYY-MM-DD>-review-<sha7>.md` in `<personal root>/inbox/`) whose frontmatter `sha` equals
    `git rev-parse HEAD`. If there is none, or it covers an older SHA, run
-   `node_modules/.bin/folkways review --repo <worktree> --effort <effort>` from the team repo root and
+   `folkways review --repo <worktree> --effort <effort>` from the team repo root and
    wait for it. This holds for every trigger setting; the trigger only decides when the review runs
    on its own. In a solo repo there's no CLI: run the `review` skill in a fresh subagent given only the
    repo, branch, base and HEAD SHA.

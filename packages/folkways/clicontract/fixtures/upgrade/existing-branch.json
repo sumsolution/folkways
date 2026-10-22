@@ -4,14 +4,10 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
-      "files": {
-        "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"0.0.1\"\n  }\n}\n"
-      },
       "git": [
         [
           "-c",
@@ -47,9 +43,6 @@
         "stdout": "",
         "stderr": "folkways: branch chore/folkways-${VERSION} already exists\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [

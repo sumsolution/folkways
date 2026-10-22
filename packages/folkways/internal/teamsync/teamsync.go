@@ -656,7 +656,7 @@ func Sync(team string, b bundle.Bundle, opts Options) (_ Result, err error) {
 		}
 	}
 
-	warnings := append(overlayWarnings, hooks.Warnings(team)...)
+	warnings := append(overlayWarnings, hooks.Warnings()...)
 	if !exists(filepath.Join(team, "folkways.yaml")) {
 		warnings = append(warnings, "no folkways.yaml; the hooks stay silent until the repo has one.")
 	}

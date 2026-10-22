@@ -1,11 +1,10 @@
 {
-  "description": "init writes the scaffold, pins the version, syncs and makes one commit. From init.test.ts: init > scaffolds, pins, syncs and commits",
+  "description": "init writes the scaffold, syncs (the manifest pins the version) and makes one commit, with no Node files. From init.test.ts: init > scaffolds, pins, syncs and commits",
   "steps": [
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ],
       "expect": {
         "stderr": "",
@@ -16,7 +15,8 @@
           "knowledge/README.md": true,
           ".folkways/instructions.md": true,
           "AGENTS.md": "re:(?m)^@\\.folkways/instructions\\.md$",
-          "package.json": "{\n  \"name\": \"team\",\n  \"private\": true,\n  \"devDependencies\": {\n    \"@folkways/cli\": \"${VERSION}\"\n  }\n}\n",
+          "package.json": null,
+          "pnpm-workspace.yaml": null,
           ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",",
           ".claude/settings.json": "re:\"Bash\\(git push:\\*\\)\""
         },

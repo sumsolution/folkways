@@ -22,8 +22,8 @@ The session-start hook puts these values in the session context; read `folkways.
 **Solo repo (`mode: solo`):** there's no handle, no `people/` and no install to check. Do only step 3
 (`.local/me.yaml`: `projects_dir` is required, `tool` optional) and step 5, then stop.
 
-1. **Check the install.** `node_modules/.bin/folkways` must exist. If not, run the team's install
-   (`npm ci`, or `pnpm install --frozen-lockfile` when `pnpm-lock.yaml` exists) on approval.
+1. **Check the install.** `command -v folkways` must find the binary; without it the hooks are off. If it's
+   missing, point to https://github.com/sumsolution/folkways#install; install only on approval.
 2. **Identify the person.** Ask for their handle; it must match a `members` entry in `folkways.yaml`. Not
    listed → they need a PR adding them (offer to draft it); continue with the handle meanwhile.
 3. **Write `.local/me.yaml`** per [me.yaml](#me-yaml). Ask for `projects_dir` as an absolute path; `~`
@@ -35,7 +35,7 @@ The session-start hook puts these values in the session context; read `folkways.
 7. **Check tools** from `research.sources`: each `kind: mcp` server is connected, `gh` is installed and
    logged in (`gh auth status`), each `kind: url` source is reachable. List what's missing and how to
    fix it; don't install anything without approval.
-8. **Run `node_modules/.bin/folkways doctor`** from the team repo root if this version has it, and report its findings.
+8. **Run `folkways doctor`** from the team repo root and report its findings.
 9. **Commit `people/<handle>/`** and push on approval (`people/` goes straight to the default branch,
    rebased).
 10. **Report** what's set up, what's missing, and the next step: run `start`.

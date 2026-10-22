@@ -3,11 +3,13 @@
 package sessionstart
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/sumsolution/folkways/packages/folkways/internal/manifest"
 	"github.com/sumsolution/folkways/packages/folkways/internal/output"
 	"github.com/sumsolution/folkways/packages/folkways/internal/payload"
 	"github.com/sumsolution/folkways/packages/folkways/internal/skill"
@@ -27,7 +29,21 @@ func Run(p payload.Payload, cfg team.Config) {
 	if p.Source == "compact" {
 		text += " The context was just compacted: update the effort's `00-STATUS.md` now, before anything else."
 	}
-	output.Context("SessionStart", text+configBlock(cfg))
+	output.Context("SessionStart", text+versionWarning(cfg)+configBlock(cfg))
+}
+
+// versionWarning is one line when the running binary isn't the version the repo was synced from (the
+// manifest is the pin, ADR 0012). Dev builds and a missing or broken manifest say nothing; doctor reports those.
+func versionWarning(cfg team.Config) string {
+	if cfg.Version == "" || cfg.Version == "dev" {
+		return ""
+	}
+	m, err := manifest.Read(cfg.Dir)
+	if err != nil || m == nil || m.Version == cfg.Version {
+		return ""
+	}
+	return fmt.Sprintf("\nfolkways %s is running, but this repo is synced from %s; run 'folkways upgrade %s' or install folkways %s.",
+		cfg.Version, m.Version, cfg.Version, m.Version)
 }
 
 const maxFile = 4096

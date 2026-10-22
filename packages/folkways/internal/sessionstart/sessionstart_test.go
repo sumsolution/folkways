@@ -161,3 +161,35 @@ func TestConfigBlock(t *testing.T) {
 		t.Errorf("unreadable: missing %q in %q", want, got)
 	}
 }
+
+func TestVersionWarning(t *testing.T) {
+	const warning = "folkways 1.1.0 is running, but this repo is synced from 1.0.0; run 'folkways upgrade 1.1.0' or install folkways 1.0.0."
+	synced := func(version string) string {
+		dir := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(dir, ".folkways"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		m := `{"version":"` + version + `","skills":[],"files":{}}`
+		if err := os.WriteFile(filepath.Join(dir, ".folkways", "manifest.json"), []byte(m), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return dir
+	}
+	for name, c := range map[string]struct {
+		cfg  team.Config
+		warn bool
+	}{
+		"differs":     {team.Config{Dir: synced("1.0.0"), Configured: true, Version: "1.1.0"}, true},
+		"equal":       {team.Config{Dir: synced("1.1.0"), Configured: true, Version: "1.1.0"}, false},
+		"dev build":   {team.Config{Dir: synced("1.0.0"), Configured: true, Version: "dev"}, false},
+		"no version":  {team.Config{Dir: synced("1.0.0"), Configured: true}, false},
+		"no manifest": {team.Config{Dir: t.TempDir(), Configured: true, Version: "1.1.0"}, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got := run(t, c.cfg)
+			if strings.Contains(got, warning) != c.warn {
+				t.Errorf("warning shown = %v, want %v; output %q", !c.warn, c.warn, got)
+			}
+		})
+	}
+}

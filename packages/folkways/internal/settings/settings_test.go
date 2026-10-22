@@ -23,7 +23,32 @@ func merge(t *testing.T, current, fragment string) string {
 	return Stringify(out)
 }
 
-const ours = `{"type":"command","command":"\"${CLAUDE_PROJECT_DIR:-.}\"/node_modules/.bin/folkways-hook x"}`
+const ours = `{"type":"command","command":"command -v folkways >/dev/null 2>&1 || exit 0; folkways hook x"}`
+
+func TestIsFrameworkHook(t *testing.T) {
+	for cmd, want := range map[string]bool{
+		"command -v folkways >/dev/null 2>&1 || exit 0; folkways hook git-guard":                    true,
+		"command -v folkways >/dev/null 2>&1 || { echo 'not installed'; exit 0; }; folkways hook x": true,
+		`"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook session-start`:                  true,
+		"node_modules/.bin/folkways hook git-guard":                                                 true,
+		"folkways hook git-guard": false,
+		"./scripts/team-hook.sh":  false,
+	} {
+		if got := IsFrameworkHook(cmd); got != want {
+			t.Errorf("IsFrameworkHook(%q) = %v, want %v", cmd, got, want)
+		}
+	}
+}
+
+func TestMergeReplacesTheNpmCommandForm(t *testing.T) {
+	const old = `{"type":"command","command":"\"${CLAUDE_PROJECT_DIR:-.}\"/node_modules/.bin/folkways-hook x"}`
+	const team = `{"type":"command","command":"team"}`
+	got := merge(t, `{"hooks":{"Stop":[{"hooks":[`+old+`,`+team+`]}]}}`, `{"hooks":{"Stop":[{"hooks":[`+ours+`]}]}}`)
+	want := Stringify(parse(t, `{"hooks":{"Stop":[{"hooks":[`+team+`]},{"hooks":[`+ours+`]}]}}`))
+	if got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+}
 
 func TestMergeDropsHooksKeyWhenNothingIsLeft(t *testing.T) {
 	// Also the hooks half of "removes files and hooks the new version dropped".

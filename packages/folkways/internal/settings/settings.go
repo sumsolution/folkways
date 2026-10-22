@@ -10,12 +10,15 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/clierr"
 )
 
-// FrameworkHookPrefix starts the command of every framework-owned hook entry: the Go binary from
-// @folkways/hooks-<os>-<cpu> (ADR 0002). Change the command form here only.
-const FrameworkHookPrefix = `"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook `
+// FrameworkHookPrefix starts the command of every framework-owned hook entry: the guard that turns the
+// hook off when `folkways` isn't on PATH (ADR 0012). packages/content/settings.json uses it.
+const FrameworkHookPrefix = "command -v folkways >/dev/null 2>&1 || "
 
 // oldHookPrefixes are earlier command forms, still owned so sync removes them.
-var oldHookPrefixes = []string{"node_modules/.bin/folkways hook "}
+var oldHookPrefixes = []string{
+	`"${CLAUDE_PROJECT_DIR:-.}"/node_modules/.bin/folkways-hook `,
+	"node_modules/.bin/folkways hook ",
+}
 
 // IsFrameworkHook reports whether a hook command is framework-owned.
 func IsFrameworkHook(command string) bool {

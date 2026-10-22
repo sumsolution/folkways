@@ -1,5 +1,5 @@
 # folkways config. The setup skill fills this in; edit by PR.
-# The framework version is pinned in package.json, not here.
+# The framework version is pinned in .folkways/manifest.json, not here; `folkways upgrade` moves it.
 
 mode: team                     # team | solo; solo has no team or members
 team: { name: Example Team, slug: example }

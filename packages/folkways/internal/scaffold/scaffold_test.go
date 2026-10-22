@@ -9,8 +9,8 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/bundle"
 )
 
-// The unit cases the init fixtures can't express (fixtures/init/COVERAGE.md): templateTarget, and
-// packageName with a folder name longer than NAME_MAX or empty.
+// The unit cases the init fixtures can't express (fixtures/init/COVERAGE.md): templateTarget, and the
+// cases below.
 
 func TestTemplateTarget(t *testing.T) {
 	for in, want := range map[string]string{
@@ -30,24 +30,24 @@ func TestTemplateTarget(t *testing.T) {
 	}
 }
 
-func TestPackageName(t *testing.T) {
-	for in, want := range map[string]string{
-		"My Team":                "my-team",
-		".hidden":                "hidden",
-		"équipe":                 "equipe",
-		strings.Repeat("x", 300): strings.Repeat("x", 214),
-		"a\U0001F600b":           "a--b", // JS replaces each UTF-16 unit of an astral character
-		"Team_A.B~c":             "team_a.b-c",
-	} {
-		got, err := packageName(in)
-		if err != nil || got != want {
-			t.Errorf("packageName(%.20q) = %.20q, %v; want %.20q", in, got, err, want)
+func TestInitWritesNoNodeFiles(t *testing.T) {
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
+	for k, v := range map[string]string{"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"} {
+		t.Setenv(k, v)
+	}
+	dest, err := Init(filepath.Join(t.TempDir(), "Équipe (A)"), bundle.Embedded("1.2.3"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range []string{"package.json", "pnpm-workspace.yaml", "node_modules"} {
+		if _, err := os.Stat(filepath.Join(dest, f)); err == nil {
+			t.Errorf("init wrote %s", f)
 		}
 	}
-	for _, in := range []string{"", "...", "node_modules", "favicon.ico", "中文"} {
-		if got, err := packageName(in); err == nil {
-			t.Errorf("packageName(%q) = %q, want an error", in, got)
-		}
+	raw, err := os.ReadFile(filepath.Join(dest, ".folkways", "manifest.json"))
+	if err != nil || !strings.Contains(string(raw), `"version": "1.2.3"`) {
+		t.Errorf("manifest: %s, %v", raw, err)
 	}
 }
 
@@ -61,7 +61,7 @@ func TestInitKeepsUnreadableFolder(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { os.Chmod(dest, 0o755) })
-	if _, err := Init(dest, bundle.Bundle{}, Options{}); err == nil {
+	if _, err := Init(dest, bundle.Bundle{}); err == nil {
 		t.Error("Init on an unreadable folder succeeded")
 	}
 	if _, err := os.Stat(dest); err != nil {

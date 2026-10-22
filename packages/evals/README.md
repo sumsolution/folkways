@@ -5,7 +5,7 @@ a tool: [14-research-eval-harness.md](https://github.com/sumsolution/folkways-co
 
 For each **arm** (a version of the framework) × **case** × **run**, it:
 
-1. builds that arm's Go CLI, then a team repo in the OS temp dir with its `folkways init --no-install`, and lays
+1. builds that arm's Go CLI, then a team repo in the OS temp dir with its `folkways init`, and lays
    the case's `repo/` files over it and commits;
 2. runs one headless `claude -p` there, isolated (below), and saves the answer and what the session loaded;
 3. grades every run. `llm` votes go to a judge one answer at a time, shuffled across arms, with nothing

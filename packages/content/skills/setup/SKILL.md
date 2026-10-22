@@ -22,7 +22,7 @@ The session-start hook puts these values in the session context; read `folkways.
 
 0. **Solo or team?** Ask first; it decides the rest. Solo: one person's brain repo, no handle and no
    `people/`. Team: the repo `folkways init` scaffolded; if this isn't one, say to run
-   `npx @folkways/cli init <dir>` and start `setup` there. An existing `folkways.yaml` already has a
+   `folkways init <dir>` and start `setup` there. An existing `folkways.yaml` already has a
    `mode`; confirm it instead of asking. Then follow [Solo](#solo) or the steps below.
 1. **Interview in small clusters,** one topic per turn, per [Interview](#interview). Offer the
    scaffold's value as the default. Prefer links and exact names over descriptions.

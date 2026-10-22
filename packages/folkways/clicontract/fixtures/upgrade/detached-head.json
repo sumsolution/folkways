@@ -4,8 +4,7 @@
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
@@ -27,9 +26,6 @@
         "stdout": "",
         "stderr": "folkways: detached HEAD; check out a branch first\n",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [

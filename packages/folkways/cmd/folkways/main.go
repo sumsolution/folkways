@@ -14,7 +14,6 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/doctor"
 	"github.com/sumsolution/folkways/packages/folkways/internal/git"
 	"github.com/sumsolution/folkways/packages/folkways/internal/hookrun"
-	"github.com/sumsolution/folkways/packages/folkways/internal/pkgmgr"
 	"github.com/sumsolution/folkways/packages/folkways/internal/scaffold"
 	"github.com/sumsolution/folkways/packages/folkways/internal/teamsync"
 	"github.com/sumsolution/folkways/packages/folkways/internal/upgrade"
@@ -25,15 +24,12 @@ var version = "dev"
 
 const usage = `usage: folkways <command> [options]
 
-  init <path> [--no-install] [--package-manager npm|pnpm]
-                               scaffold a team repo at <path>, pin this version, sync, commit
-                               (npx @folkways/cli init <path>, or pnpm dlx @folkways/cli init <path>)
-                               --package-manager  default: the one that ran this, else npm
+  init <path>                  scaffold a team repo at <path>, sync this version, commit
   sync [--force]               copy the installed version's files into this team repo
                                --force  discard edits to framework-owned files and overwrite
                                         differing team files at framework paths
-  upgrade <version>            install <version> on branch chore/folkways-<version>, sync, commit
-                               (uses the team repo's package manager)
+  upgrade <version>            sync <version> on branch chore/folkways-<version>, commit
+                               (run it with folkways <version> installed)
   hook <name>                  run a hook by hand; reads the payload on stdin
   doctor                       check config, versions, overlays, skills, settings and hooks;
                                prints each problem with its fix, exits 1 on errors
@@ -48,7 +44,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "folkways: usage: folkways hook <name> < payload.json")
 			return
 		}
-		hookrun.Run(os.Args[2], os.Stdin)
+		hookrun.Run(os.Args[2], version, os.Stdin)
 		return
 	}
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
@@ -73,24 +69,14 @@ func dispatch(args []string, stdout, stderr io.Writer) (int, error) {
 	b := bundle.Embedded(version)
 	switch command {
 	case "init":
-		pos, opts, err := parseArgs(rest, []string{"no-install"}, []string{"package-manager"}, true)
+		pos, _, err := parseArgs(rest, nil, nil, true)
 		if err != nil {
 			return 1, err
 		}
 		if len(pos) != 1 {
-			return 1, clierr.New("usage: folkways init <path> [--no-install] [--package-manager npm|pnpm]")
+			return 1, clierr.New("usage: folkways init <path>")
 		}
-		pm, set := opts["package-manager"]
-		if !set {
-			pm = pkgmgr.FromUserAgent(os.Getenv("npm_config_user_agent"))
-		}
-		if !set && pm == "" {
-			pm = "npm"
-		}
-		if !slices.Contains(pkgmgr.Supported, pm) {
-			return 1, clierr.New("--package-manager must be %s", strings.Join(pkgmgr.Supported, " or "))
-		}
-		dest, err := scaffold.Init(pos[0], b, scaffold.Options{Install: opts["no-install"] == "", PackageManager: pm})
+		dest, err := scaffold.Init(pos[0], b)
 		if err != nil {
 			return 1, err
 		}
@@ -132,7 +118,7 @@ func dispatch(args []string, stdout, stderr io.Writer) (int, error) {
 		if err != nil {
 			return 1, err
 		}
-		r, err := upgrade.Upgrade(cwd, pos[0], upgrade.PackageInstall)
+		r, err := upgrade.Upgrade(cwd, pos[0], b)
 		if err != nil {
 			return 1, err
 		}

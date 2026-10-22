@@ -1,9 +1,7 @@
-// Package upgrade moves a team repo to another folkways version (`folkways upgrade`). A port of
-// packages/cli/src/upgrade.ts.
+// Package upgrade moves a team repo to the running folkways version (`folkways upgrade`).
 package upgrade
 
 import (
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -11,12 +9,8 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/clierr"
 	"github.com/sumsolution/folkways/packages/folkways/internal/git"
 	"github.com/sumsolution/folkways/packages/folkways/internal/manifest"
-	"github.com/sumsolution/folkways/packages/folkways/internal/pkgmgr"
 	"github.com/sumsolution/folkways/packages/folkways/internal/teamsync"
 )
-
-// Installer pins version in the team repo, with its package manager in production.
-type Installer func(team, version string) error
 
 // Result is what an upgrade did. Branch is "" when the repo was already at To.
 type Result struct {
@@ -25,23 +19,14 @@ type Result struct {
 	To     string
 }
 
-// PackageInstall pins version with the team repo's own package manager.
-func PackageInstall(team, version string) error {
-	pm, err := pkgmgr.Detect(team)
-	if err != nil {
-		return err
-	}
-	return pkgmgr.Exec(team, pkgmgr.AddDevExactCommand(pm, bundle.PackageName+"@"+version), nil)
-}
-
 // semver is the semver.org grammar; the ident parts are the numeric and alphanumeric identifiers.
 const semver = `^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)` +
 	`(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?` +
 	`(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`
 
-// Upgrade installs version on branch chore/folkways-<version>, runs that version's sync, and commits. The
-// new version's own `sync` runs (node_modules/.bin/folkways), so its assets and rules apply.
-func Upgrade(cwd, versionArg string, install Installer) (Result, error) {
+// Upgrade syncs version on branch chore/folkways-<version> and commits. b is the running binary's content;
+// the binary must be that version, because the content and its rules are the binary's (ADR 0012).
+func Upgrade(cwd, versionArg string, b bundle.Bundle) (Result, error) {
 	version := strings.TrimPrefix(versionArg, "v")
 	if !regexp.MustCompile(semver).MatchString(version) {
 		return Result{}, clierr.New("'%s' is not a version; use an exact one, e.g. 1.2.0", versionArg)
@@ -84,7 +69,10 @@ func Upgrade(cwd, versionArg string, install Installer) (Result, error) {
 	if version == m.Version {
 		return Result{To: version, From: m.Version}, nil
 	}
-	// The tree was clean before we started, so every untracked file is ours. Ignored files (node_modules) stay.
+	if version != b.Version {
+		return Result{}, clierr.New("this is folkways %s; install folkways %s, then rerun 'folkways upgrade %s'", b.Version, version, version)
+	}
+	// The tree was clean before we started, so every untracked file is ours. Ignored files stay.
 	abandon := func() error {
 		for _, args := range [][]string{{"checkout", "-q", "-f", start}, {"clean", "-q", "-f", "-d"}, {"branch", "-q", "-D", branch}} {
 			if _, err := git.Run(team, args...); err != nil {
@@ -103,11 +91,7 @@ func Upgrade(cwd, versionArg string, install Installer) (Result, error) {
 	if _, err := git.Run(team, "checkout", "-q", "-b", branch); err != nil {
 		return Result{}, err
 	}
-	err = install(team, version)
-	if err == nil {
-		err = pkgmgr.Exec(team, []string{filepath.Join(team, "node_modules/.bin/folkways"), "sync"}, nil)
-	}
-	if err != nil {
+	if _, err := teamsync.Sync(team, b, teamsync.Options{}); err != nil {
 		return fail("upgrade to "+version, err)
 	}
 

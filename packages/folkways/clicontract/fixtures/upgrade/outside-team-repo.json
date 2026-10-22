@@ -10,10 +10,7 @@
       "expect": {
         "exit": 1,
         "stdout": "",
-        "stderr": "folkways: run this inside the team repo\n",
-        "files": {
-          "${CALLS}": null
-        }
+        "stderr": "folkways: run this inside the team repo\n"
       }
     }
   ]

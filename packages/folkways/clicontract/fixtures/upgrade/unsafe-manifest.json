@@ -1,11 +1,10 @@
 {
-  "description": "upgrade refuses a manifest naming a path outside the framework-owned locations, before installing. TS: it 'refuses an unsafe manifest'",
+  "description": "upgrade refuses a manifest naming a path outside the framework-owned locations, before branching. TS: it 'refuses an unsafe manifest'",
   "steps": [
     {
       "args": [
         "init",
-        "${TEAM}",
-        "--no-install"
+        "${TEAM}"
       ]
     },
     {
@@ -30,9 +29,6 @@
         "stdout": "",
         "stderr": "re:^folkways: .*unsafe path",
         "unchanged": true,
-        "files": {
-          "${CALLS}": null
-        },
         "git": [
           {
             "args": [
