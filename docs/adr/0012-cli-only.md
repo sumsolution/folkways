@@ -6,7 +6,7 @@
 | Date | 2026-10-21 |
 | Owner | Summer Jordan |
 | Reviewers | Summer Jordan |
-| Review window | Until the IDE `PATH` check below is done |
+| Review window | Until Summer accepts; the IDE `PATH` check is done (2026-10-22) |
 | Supersedes | [0007](0007-hook-delivery.md) (proposed), on acceptance |
 
 ## Issue
@@ -40,10 +40,17 @@ Does folkways still need a plugin, or only a CLI?
 - **ADR 0011** makes Homebrew, the install script and GitHub release binaries the first channel, npm the second,
   and leaves "which copy runs when the plugin's and `PATH`'s both exist" to the plan
   ([0011](0011-cli-in-go.md), Consequences).
-- **`PATH` in a GUI-launched tool, partly checked** (2026-10-21, Summer's Mac, `ps eww` on a session's parent
-  processes): `Claude.app` runs with `PATH=/usr/bin:/bin:/usr/sbin:/sbin`, but the Claude Code process it starts
-  (2.1.304) has the login-shell `PATH`, including `/opt/homebrew/bin` ([go-cli 22, answer 6][s-22-six]). VS Code,
-  JetBrains and Copilot (CLI and IDE) launched from the GUI are not checked.
+- **GUI-launched tools give hooks the login-shell `PATH`** (Summer's Mac, one run each):
+  - Claude desktop (2026-10-21, `ps eww` on a session's parent processes): `Claude.app` runs with
+    `PATH=/usr/bin:/bin:/usr/sbin:/sbin`, but the Claude Code process it starts (2.1.304) has the login-shell `PATH`,
+    including `/opt/homebrew/bin` ([go-cli 22, answer 6][s-22-six]).
+  - IntelliJ IDEA 2026.1 started from the Dock (2026-10-22, a throwaway repo whose hooks log `PATH`): the Claude Code
+    plugin's `SessionStart` and `PreToolUse` hooks, run by `~/.local/bin/claude`, and the GitHub Copilot plugin's
+    `sessionStart` and `preToolUse` hooks, run by its `copilot-language-server`, all had `/opt/homebrew/bin`.
+  - Not checked: VS Code.
+- **Copilot in JetBrains reads hooks only from `.github/hooks/`.** In the same run it ran the hooks in
+  `.github/hooks/path-check.json` and ignored the same hooks in `.claude/settings.json`. Copilot CLI and the cloud
+  agent did run `.claude/settings.json` hooks in earlier probes ([ADR 0006](0006-app-repo-files.md) context).
 
 ## Decision
 
@@ -100,9 +107,13 @@ and for reversing ADR 0002.
   script. 0011 gets a note on acceptance, as 0002 did.
 - **ADR 0007** is superseded on acceptance. Its cloud-agent exit and `CLAUDE_PROJECT_DIR` rules carry over.
 - **Sync migrates** existing entries: today's prefix joins `oldHookPrefixes` ([`settings.go:18`][c-prefix]).
-- **Open, before acceptance:** whether VS Code, JetBrains and Copilot (CLI and IDE) launched from the GUI see
-  Homebrew's `PATH`. If one doesn't, the guard can also try `/opt/homebrew/bin` and `~/.local/bin` directly, a few
-  lines, before this decision changes.
+- **Gap: Copilot in JetBrains gets no hooks.** It reads only `.github/hooks/`, and ADR 0006 has app repos carry
+  Claude-format files only, so `git-guard` doesn't run there and CI at PR time is the only check. The plugin route
+  (ADR 0007) wasn't shown to reach it either. Closing the gap means sync also writes a `.github/hooks/` file and the
+  binary skips a second run of the same event in Copilot CLI, which reads both; that amends ADR 0006 and is left to its
+  own record. Based on one run.
+- **If a GUI-launched tool lacks Homebrew's `PATH`** (VS Code is unchecked), the guard can also try
+  `/opt/homebrew/bin` and `~/.local/bin` directly, a few lines, without changing this decision.
 - **Revisit** if the install step stops teammates from getting hooks (then option 4), or if a team needs folkways in
   repos it can't commit to.
 
