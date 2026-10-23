@@ -14,9 +14,7 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: tag
-  cancel-in-progress: false
+# No concurrency group: it would cancel a pending run, and with it a tag. Two runs racing on one tag: one gets a 422.
 
 jobs:
   tag:
@@ -39,6 +37,8 @@ jobs:
           before=$(version "$BEFORE") # fails the step if BEFORE can't be read, rather than tagging
           if [ "$before" = "$v" ]; then
             echo "version unchanged ($v)"
+          elif [ "${v#*-}" != "$v" ]; then
+            echo "$v is a prerelease; tag it by hand"
           elif git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
             echo "v$v is already tagged"
           else
