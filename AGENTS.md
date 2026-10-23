@@ -66,7 +66,8 @@ From the repo root:
   (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one.
 - **Releasing `folkways`:** `pnpm changeset version` in a PR; merge it; tag that commit `v<version>` (the
   `packages/folkways/package.json` version; `v<version>-rc.<n>` for a prerelease) and push the tag. `release.yml`
-  builds, smoke-tests, and publishes after approval in the `release` environment. Never run `changeset tag`.
+  builds, smoke-tests, and publishes after approval in the `release` environment. A prerelease tag may come before
+  `changeset version` (its notes then say so); a final one needs its CHANGELOG section. Never run `changeset tag`.
 - **The Claude Code plugin is generated.** Its skills, instructions and `hooks.json` come from `packages/content/`
   at build time; edit them there. A content change that should reach team repos needs a `@folkways/hooks`
   changeset (the binary embeds the content), and one that should reach plugin users a `@folkways/claude-plugin`
