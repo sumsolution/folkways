@@ -4,26 +4,15 @@ Two paths: a **team lead** sets up the team repo once, then each **member** join
 Working alone? See [On your own](#on-your-own).
 Steps marked **coming soon** depend on pieces that aren't built yet; each says what to do today.
 
-You need Node 24+, git, and Claude Code or Copilot CLI. macOS or Linux (Windows is out of scope for v1).
+You need git, Claude Code or Copilot CLI, and the `folkways` binary on your `PATH`: [Install](../../README.md#install).
+macOS or Linux (Windows is out of scope for v1).
 
 ## For a team lead
 
 ### 1. Create the team repo
 
-Once `@folkways/cli` is on npm (**coming soon**):
-
 ```bash
-npx @folkways/cli init example-team
-# or: pnpm dlx @folkways/cli init example-team
-```
-
-Until then, run it from a clone of this repo:
-
-```bash
-git clone https://github.com/sumsolution/folkways.git
-cd folkways
-pnpm install
-node packages/cli/src/cli.ts init ../example-team --no-install
+folkways init example-team
 ```
 
 `init` refuses a non-empty directory. It then:
@@ -31,17 +20,13 @@ node packages/cli/src/cli.ts init ../example-team --no-install
 1. Copies the scaffold: `README.md`, `folkways.yaml`, `AGENTS.md`, `CLAUDE.md`, `.gitignore`,
    `.claude/settings.json`, and READMEs for `knowledge/`, `state/`, `efforts/`, `overlays/` and
    `people/`.
-2. Writes a private `package.json` that pins this exact `@folkways/cli` version.
-3. Runs `git init -b main`, installs (skipped with `--no-install`), and runs `sync`.
-4. Commits `chore(folkways): init at 0.1.0`.
+2. Runs `git init -b main` and `sync`, which records this `folkways` version in `.folkways/manifest.json`: the
+   team's pin.
+3. Commits `chore(folkways): init at 0.1.0`.
 
-If any step fails, it removes what it created so you can rerun. The package manager defaults to the one
-that ran it (`npx` → npm, `pnpm dlx` → pnpm); override with `--package-manager npm|pnpm`.
+If any step fails, it removes what it created so you can rerun. No Node, no `package.json`.
 
 Your team repo is ready. <(^_^<)
-
-> **Why `--no-install` today:** installing would fetch `@folkways/cli` from npm, and it isn't published
-> yet. Without it you get no lockfile and no `node_modules/`; that's fine for a look around.
 
 ### 2. Fill in the config
 
@@ -71,12 +56,12 @@ it needs one repo secret for the agent CLI it runs.
 ```bash
 git clone git@github.com:example/example-team.git
 cd example-team
-npm ci                              # or: pnpm install --frozen-lockfile, if there's a pnpm-lock.yaml
 ```
 
-Installing puts the pinned `@folkways/cli` and its `folkways-hook` binary in `node_modules/`, which is
-where hooks run from.
-(**Coming soon:** needs the npm release and a committed lockfile.)
+[Install](../../README.md#install) `folkways` once, the version in `.folkways/manifest.json`
+(`… | FOLKWAYS_VERSION=<version> sh` for the install script, or `go install …@v<version>`; Homebrew has only the latest). The hooks in
+`.claude/settings.json` call it on `PATH`; without it they do nothing, and each session starts with a line saying
+how to install it.
 
 ### 2. Onboard
 
@@ -113,20 +98,22 @@ format, review gate, which hooks to turn off. It writes `folkways.yaml`, `.local
 on, start sessions in the brain repo; code changes happen in worktrees of your projects. Folders such as
 `work/` and `inbox/` appear when a skill first needs them. Not now? Ignore the offer; it won't repeat.
 
-**Coming soon:** the plugin isn't on npm yet. Today, build it from a clone of this repo
+**The plugin won't be published:** it's being removed ([ADR 0012](../adr/0012-cli-only.md)). Until then, build it
+from a clone of this repo
 (`pnpm --filter "@folkways/claude-plugin..." run build`, needs Go) and start Claude Code with
 `claude --plugin-dir packages/claude-plugin/dist`.
 
 ## Staying current
 
-Once the package is on npm and a newer version ships (**coming soon**), the lead (or anyone)
-runs:
+When a newer version ships, the lead (or anyone) installs it, then runs, in the team repo:
 
 ```bash
-npx folkways upgrade 0.2.0             # or: pnpm exec folkways upgrade 0.2.0
+folkways upgrade 0.2.0
 ```
 
-Review the branch, push, open a PR. After it merges, everyone pulls and reinstalls. See
+It refuses unless the running `folkways` is that version. Review the branch, push, open a PR. After it merges,
+everyone pulls and installs the same version; until they do, each session starts with a warning that names both
+versions. See
 [How it works](how-it-works.md#upgrades).
 
 ## If something goes wrong

@@ -85,8 +85,8 @@ Small commands the tools run at set moments: before a shell command, after each 
 at session start, before compaction. They live in `.claude/settings.json`, which **both Claude Code and
 Copilot CLI read**.
 
-Each hook runs the pinned framework binary, `folkways-hook`, from `node_modules/`
-([spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)): `git-guard` (commit format, review before push, no checkouts in
+Each hook runs `folkways hook <name>`, the framework binary on your `PATH`, and does nothing if it isn't
+installed ([ADR 0012](../adr/0012-cli-only.md), [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)): `git-guard` (commit format, review before push, no checkouts in
 your main clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time),
 `session-start` (points the agent at the `start` skill) and `precompact` (logs a missed handoff).
 `.claude/settings.json` also holds one framework rule: `git push` asks first.

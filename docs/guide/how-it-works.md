@@ -4,28 +4,32 @@ The mechanics under [Concepts](concepts.md): how framework files reach a team re
 how upgrades land, and how the review gate stays honest. Details and reasoning:
 [v1 spec §3 and §7](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md).
 
-## Code runs from npm, text lives in git
+## Code runs from one binary, text lives in git
 
 folkways delivers two kinds of thing, two ways:
 
-- **Code** (the CLI, and hooks when they land) runs from the pinned package in `node_modules/`. The team
-  repo's `package.json` and lockfile set the version, so everyone runs the same one.
+- **Code** (the CLI and the hooks) is one binary, `folkways`, which each person installs once and runs from
+  `PATH` ([Install](../../README.md#install)). The hooks in `.claude/settings.json` call `folkways hook <name>`
+  and do nothing when it's missing ([ADR 0012](../adr/0012-cli-only.md)).
 - **Text** (instructions, skills, prompts, workflows) has to be real files in the repo, because the
-  tools read skills from `.claude/skills/`. `folkways sync` copies them in from the installed package.
-  Today that's `instructions.md`, the skills and the prompts; workflows are coming soon.
+  tools read skills from `.claude/skills/`. The binary carries the text of its version, and `folkways sync`
+  copies it in. Today that's `instructions.md`, the skills and the prompts; workflows are coming soon.
+
+The pin is the `version` in `.folkways/manifest.json`, the version the repo was last synced from. When someone's
+`folkways` differs, each session starts with a warning, and `folkways doctor` reports it.
 
 A nice side effect: every framework change shows up in an upgrade PR's diff, readable like any change.
 
-The design, end to end (today the package isn't on npm, and no workflows or hooks ship yet):
+The design, end to end (no workflows ship yet):
 
 ```mermaid
 flowchart LR
-  npm["npm registry<br/>@folkways/cli@x.y.z"] -->|"npm ci / pnpm install<br/>(exact pin)"| nm["team repo<br/>node_modules/@folkways/cli"]
+  rel["GitHub release, Homebrew,<br/>install script, go install"] -->|"once per person"| bin["folkways x.y.z<br/>on PATH"]
   ov["team overlays<br/>overlays/&lt;skill&gt;/OVERLAY.md"] -->|"compiled in"| synced
-  nm -->|"folkways sync"| synced[".folkways/instructions.md<br/>.folkways/prompts/<br/>.claude/skills/ (framework skills)<br/>.github/workflows/folkways-*.yml"]
-  nm -->|"folkways sync<br/>(merge)"| settings[".claude/settings.json"]
-  synced --> manifest[".folkways/manifest.json<br/>version + sha256 per file"]
-  team["team-owned<br/>AGENTS.md, folkways.yaml,<br/>overlays/, people/, team skills"] -. never written .- nm
+  bin -->|"folkways sync"| synced[".folkways/instructions.md<br/>.folkways/prompts/<br/>.claude/skills/ (framework skills)<br/>.github/workflows/folkways-*.yml"]
+  bin -->|"folkways sync<br/>(merge)"| settings[".claude/settings.json<br/>hooks call folkways hook &lt;name&gt;"]
+  synced --> manifest[".folkways/manifest.json<br/>version (the pin) + sha256 per file"]
+  team["team-owned<br/>AGENTS.md, folkways.yaml,<br/>overlays/, people/, team skills"] -. never written .- bin
 ```
 
 ## Who owns what
@@ -35,17 +39,17 @@ flowchart LR
 | `.folkways/**` | framework | replaces |
 | `.claude/skills/<name>/` listed in the manifest | framework | replaces; the output includes your team overlay, compiled in |
 | `.github/workflows/folkways-*.yml` | framework | replaces |
-| `.claude/settings.json` hook entries the framework owns | framework | replaces those entries; leaves every other key and entry alone (no hooks ship yet) |
+| `.claude/settings.json` hook entries the framework owns | framework | replaces those entries; leaves every other key and entry alone |
 | `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; never removes |
 | `AGENTS.md` | team | never writes after `init`; warns if the `@.folkways/instructions.md` line is missing |
-| everything else: `folkways.yaml`, `overlays/`, `people/`, team skills, `package.json` | team or person | never writes |
+| everything else: `folkways.yaml`, `overlays/`, `people/`, team skills | team or person | never writes |
 
 The team `AGENTS.md` pulls in the framework rules with one line, `@.folkways/instructions.md`. Claude
 Code and Copilot CLI both expand `@` imports there. `CLAUDE.md` is just `@AGENTS.md`.
 
 ## What sync does
 
-`folkways sync`, run inside the team repo, copies from the **installed** package version:
+`folkways sync`, run inside the team repo, copies the files of the **running** `folkways` version:
 
 1. **Checks for edits.** Every file in `.folkways/manifest.json` is compared against its sha256. Files
    added inside a framework skill folder count too. If anything changed, sync **stops**, lists the files,
@@ -66,16 +70,14 @@ team overlay so it's compiled in ([ADR 0001](../adr/0001-overlay-enforcement.md)
 
 `folkways upgrade 0.2.0`:
 
-1. Refuses on a dirty tree, or if framework files were edited.
-2. Creates branch `chore/folkways-0.2.0` (refuses if it exists).
-3. Installs `@folkways/cli@0.2.0` as an exact dev dependency, with the team's own package manager
-   (npm or pnpm, detected from `packageManager` or the lockfile).
-4. Runs the **new** version's `sync`, so its rules apply.
-5. Commits `chore(folkways): upgrade to 0.2.0`. If nothing changed, it deletes the branch and says so.
+1. Refuses on a dirty tree, if framework files were edited, or if branch `chore/folkways-0.2.0` exists.
+2. Refuses unless the running `folkways` is 0.2.0: install it first. The new version's `sync` runs, so its rules
+   apply.
+3. Creates the branch and syncs, which moves the manifest's `version` to 0.2.0.
+4. Commits `chore(folkways): upgrade to 0.2.0`. If nothing changed, it deletes the branch and says so.
 
 If a step fails, it puts you back on your branch and cleans up what it created. You read the diff, push
-and open the PR. Teammates reinstall after pulling. A Dependabot or Renovate bump works too: install and
-run `folkways sync` on its branch.
+and open the PR. Teammates install 0.2.0 after pulling; until then their sessions start with a warning.
 
 ## The review gate
 
