@@ -64,8 +64,8 @@ From the repo root:
   beside the code. A package never imports another's source.
 - **Versions are per package** (changesets, ADR 0003). A PR that changes a package adds a changeset
   (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one.
-- **Releasing `folkways`:** `pnpm changeset version` in a PR; merge it; tag that commit `v<version>` (the
-  `packages/folkways/package.json` version; `v<version>-rc.<n>` for a prerelease) and push the tag. `release.yml`
+- **Releasing `folkways`:** `pnpm changeset version` in a PR; merge it. `tag.yml` tags that commit `v<version>`
+  (the `packages/folkways/package.json` version); a prerelease tag `v<version>-rc.<n>` is pushed by hand. `release.yml`
   builds, smoke-tests, and publishes after approval in the `release` environment. A prerelease tag may come before
   `changeset version` (its notes then say so); a final one needs its CHANGELOG section. Never run `changeset tag`.
 - **The Claude Code plugin is generated.** Its skills, instructions and `hooks.json` come from `packages/content/`

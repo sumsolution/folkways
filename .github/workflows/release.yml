@@ -6,7 +6,7 @@ name: release
 #   publish  after approval in the `release` environment: provenance attestations, the GitHub release (the same
 #            files plus install.sh), then the formula to sumsolution/homebrew-tap (not for -rc tags)
 # Pull requests that touch the release files and manual runs build a snapshot and smoke it; they never publish.
-# Releasing: `pnpm changeset version` in a PR, merge, then tag that commit `v<version>` and push the tag.
+# Releasing: `pnpm changeset version` in a PR and merge it; tag.yml tags that commit `v<version>`.
 on:
   push:
     tags: ['v*']
