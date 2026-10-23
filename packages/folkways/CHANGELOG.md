@@ -18,13 +18,15 @@ Team repos need no Node (ADR 0011, ADR 0012).
 ### Hooks
 Committed in `.claude/settings.json` for Claude Code and Copilot CLI. Each calls `folkways hook <name>` on `PATH`;
 without the binary the hooks are off and the session start says how to install.
-- `git-guard`: commit format per `git.commit_convention`, a fresh review of HEAD before a push, no checkouts in
-  your main clone. The brain repo is exempt from the last two.
+- `git-guard`: commit format per `git.commit_convention`; with `review.trigger: pre-push`, a review of HEAD before a
+  push; no checkout, switch, pull, reset or rebase in your clones under `projects_dir`. The brain repo is exempt
+  from the last two.
 - `session-start`: points the agent at the `start` skill, prints the config, and warns when your `folkways` differs
   from the repo's pinned version.
-- `context-band`: announces 125K, 150K and 200K tokens.
+- `context-band`: announces 125K, 150K and 200K tokens (Claude Code only; it needs the transcript).
 - `precompact`: logs a missed handoff.
-- `hooks.<name>: false` in `folkways.yaml` turns one off; without `folkways.yaml` they do nothing.
+- `hooks.<name>: false` in `folkways.yaml` turns one off. Without `folkways.yaml` they do nothing, except that
+  `session-start` offers setup once per repo.
 
 ### Skills
 16 skills (`setup`, `onboard`, `start`, `status`, `handoff`, `session-close`, `research`, `side-quest`, `ticket`,
