@@ -74,8 +74,14 @@ jobs:
           base=${base%%-*}
           awk -v v="$base" '/^## / { p = ($2 == v); next } p' packages/folkways/CHANGELOG.md > dist/notes.md
           if ! grep -q '[^[:space:]]' dist/notes.md; then
-            echo "::error::packages/folkways/CHANGELOG.md has no section for $base"
-            exit 1
+            # A release candidate may come before `changeset version`; a final release needs its section.
+            case "$TAG" in
+            *-*) echo "Release candidate for $base; the notes come with the final release." > dist/notes.md ;;
+            *)
+              echo "::error::packages/folkways/CHANGELOG.md has no section for $base"
+              exit 1
+              ;;
+            esac
           fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
