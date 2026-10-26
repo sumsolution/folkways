@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | accepted |
+| Status | accepted; changesets part to be superseded by [0013](0013-release-please.md) (proposed): conventional commits and release-please set the version |
 | Date | 2026-09-29 |
 | Owner | Summer Jordan |
 
