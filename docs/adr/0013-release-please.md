@@ -5,7 +5,7 @@
 | Status | proposed |
 | Date | 2026-10-26 |
 | Owner | Summer Jordan |
-| Reviewers | Summer Jordan |
+| Reviewers | Summer Jordan (one-person team, `adr.reviewers.min: 0`) |
 | Review window | until Summer's review of the PR that adds this record |
 | Supersedes | In part, [0003](0003-repo-layout.md): "Independent versions with changesets" and the changesets row of its options |
 
@@ -16,7 +16,7 @@ folkways ships one thing now: the `folkways` binary, released by a `v<version>` 
 `pnpm changeset version` in a version PR, and `tag.yml` tags `v<version>` when that PR changes
 `packages/folkways/package.json` ([AGENTS.md][c-agents-rel], [tag.yml][c-tag]). `package.json` survives only to hold
 that version, so the release path still needs Node ([tag.yml][c-tag-node], [release.yml][c-rel-node]). Every PR
-title is already a conventional commit (63 of 63 on `main` but one `doc:`, [research 02][r-02-commits]), and that
+title is already a conventional commit (62 of 63 on `main`; the other is `doc:`, [research 02][r-02-commits]), and that
 information goes unused: the bump is a person's choice in each change file. 0.2.0 shipped this way on 2026-10-23.
 Changing tools is cheapest before the next release.
 
@@ -56,7 +56,7 @@ draft. Changesets, `tag.yml` and the release path's Node calls go.
 It is the only option that uses the commit types we already write and runs the release PR and the tag itself, with
 no bypass on `main`: the human step stays one PR merge, as today. knope with conventional commits gets the version
 from tags alone, without a manifest file, but leaves the release PR and post-merge tagging to scripts we'd write, and
-it has no setting to keep a breaking change below 1.0 ([research 02, knope comparison][r-02-knope]).
+we found no setting in it to keep a breaking change below 1.0 ([research 02, knope comparison][r-02-knope]).
 
 Config (as dry-run):
 
@@ -79,7 +79,8 @@ Non-goals: automating prereleases (`v<version>-rc.<n>` stays a hand-pushed tag),
 to reach 1.0, linting PR titles in CI.
 
 Size: two JSON files; a `release-please.yml` workflow of about 25 lines; delete `tag.yml`; about 10 changed lines in
-`release.yml`; delete `.changeset/` and `@changesets/cli`; `AGENTS.md` rules. One PR.
+`release.yml` (tag check, and the notes step's heading match, since release-please writes
+`## [<version>](<compare link>) (<date>)`); delete `.changeset/` and `@changesets/cli`; `AGENTS.md` rules. One PR.
 
 ## Options considered
 
@@ -107,13 +108,14 @@ describe itself.
 - **Two records of the version:** the manifest and the tag. A hand-pushed final tag without a release PR would put
   them out of step; release-please trusts the manifest.
 - **The tap App gains Pull requests: write** on `folkways`, alongside Contents: write. No new ruleset bypass.
-- **Removed:** `tag.yml`, `.changeset/` (with 6 pending `@folkways/claude-plugin` files), `@changesets/cli` and the
+- **Removed:** `tag.yml`, `.changeset/` (only its README and config are left), `@changesets/cli` and the
   `changeset` script, the version meaning of `packages/folkways/package.json`, the `node -p` calls in `tag.yml` and
   `release.yml`. `release.yml`'s tag check compares with the manifest via `jq`. Node stays for the TypeScript tests
   ([ci.yml][c-ci]).
 - **Changed:** `AGENTS.md` package and Releasing rules ([AGENTS.md][c-agents-rel]); ADR 0003's changesets bullet
   marked superseded by this record.
-- **Not yet proven end to end:** `ci` on the App's release PR, the draft hand-off to `release.yml`, and the merged
+- **Not yet proven end to end:** `ci` on the App's release PR, the draft hand-off to `release.yml`, the notes step
+  finding release-please's `## [<version>](…)` heading (today's awk match would fail the build), and the merged
   PR's title parsing back (the dry run warned the pattern lacks `${component}`). The first real release is the test;
   if tagging fails, the tag can be pushed by hand as with `tag.yml`.
 - **Revisit if** the notes prove too thin to read, we need more than one released package, release-please stops

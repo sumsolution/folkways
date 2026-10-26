@@ -12,7 +12,7 @@ Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folk
 |---|---|---|
 | [0001](0001-overlay-enforcement.md) | Mores are enforced by mechanism; folkways are layered by overlays | accepted |
 | [0002](0002-hook-runtime.md) | Hooks are a Go binary, shipped as per-platform optional dependencies | accepted; partly superseded by 0011 |
-| [0003](0003-repo-layout.md) | The repo is a pnpm workspace of independently versioned packages | accepted |
+| [0003](0003-repo-layout.md) | The repo is a pnpm workspace of independently versioned packages | accepted; partly superseded by 0013 |
 | [0004](0004-license.md) | folkways is licensed under Apache-2.0 | accepted |
 | [0005](0005-closing-efforts.md) | A closed effort is lifted, indexed and removed | accepted |
 | [0006](0006-app-repo-files.md) | What files does an app repo carry? | proposed |
