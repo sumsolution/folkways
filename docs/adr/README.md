@@ -20,4 +20,4 @@ Team repos keep their own ADRs ([spec §6.1](https://github.com/sumsolution/folk
 | [0010](0010-skill-architecture.md) | Partition folkways by session mode and effort ownership, not by SDLC agents | accepted |
 | [0011](0011-cli-in-go.md) | The CLI is one Go binary, installed without Node first | accepted; partly superseded by 0012 |
 | [0012](0012-cli-only.md) | folkways is only a CLI; every repo commits its skills and hooks | accepted |
-| [0013](0013-release-please.md) | Should conventional commits decide folkways' version, and which tool releases it? | proposed |
+| [0013](0013-release-please.md) | Conventional commits decide folkways' version; release-please opens the release PR and tags | accepted |

@@ -1,12 +1,12 @@
-# 0013. Should conventional commits decide folkways' version, and which tool releases it?
+# 0013. Conventional commits decide folkways' version; release-please opens the release PR and tags
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | accepted (Summer Jordan, 2026-10-26) |
 | Date | 2026-10-26 |
 | Owner | Summer Jordan |
 | Reviewers | Summer Jordan (one-person team, `adr.reviewers.min: 0`) |
-| Review window | until Summer's review of the PR that adds this record |
+| Review window | until Summer's review of the PR that adds this record, done 2026-10-26 |
 | Supersedes | In part, [0003](0003-repo-layout.md): "Independent versions with changesets" and the changesets row of its options |
 
 ## Issue
