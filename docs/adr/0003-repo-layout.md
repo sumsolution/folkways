@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | accepted |
+| Status | accepted; partly superseded by [0013](0013-release-please.md): conventional commits and release-please set the version, not changesets |
 | Date | 2026-09-29 |
 | Owner | Summer Jordan |
 
