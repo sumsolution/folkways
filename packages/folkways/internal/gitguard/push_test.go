@@ -177,3 +177,26 @@ func TestDefaultBranchFallsBackToMaster(t *testing.T) {
 		t.Errorf("no origin/HEAD and only master: got %+v, want a knowledge/ deny", got)
 	}
 }
+
+func TestWorktreeReviewStaysInThePersonsFolder(t *testing.T) {
+	r := newPushRepos(t)
+	commitFile(t, r.app, "main.go", "package main\n")
+	head := gitIn(t, r.app, "rev-parse", "HEAD")
+	inbox := filepath.Join(r.worktree, "people", "ann", "inbox")
+	if err := os.MkdirAll(inbox, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(inbox, "2026-10-27-review-"+head[:7]+".md"), []byte("review\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := r.cfg()
+	cfg.Team.Review.Trigger = "pre-push"
+	cfg.Me.Handle = "ann"
+	if got := evaluate("git push", r.app, cfg); got.deny != "" {
+		t.Errorf("ann's inbox review in the worktree must count, got %+v", got)
+	}
+	cfg.Me.Handle = "bob"
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error("another person's inbox review must not count")
+	}
+}

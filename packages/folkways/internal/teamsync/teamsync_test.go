@@ -276,3 +276,15 @@ func TestSyncWritesThePushAskRuleOnlyWhenTheBrainAlwaysAsks(t *testing.T) {
 		t.Errorf("push.brain default-branch: the rule (and the emptied permissions) must be removed:\n%s", got)
 	}
 }
+
+func TestSyncKeepsThePushAskRuleInASoloRepo(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "AGENTS.md", "@.folkways/instructions.md\n")
+	write(t, dir, "folkways.yaml", "mode: solo\n") // a solo repo's push.brain defaults to always
+	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(t, dir, ".claude/settings.json"); !strings.Contains(got, `"Bash(git push:*)"`) {
+		t.Errorf("solo: the ask rule must be written:\n%s", got)
+	}
+}
