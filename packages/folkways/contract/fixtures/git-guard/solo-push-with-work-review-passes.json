@@ -1,5 +1,5 @@
 {
-  "description": "mode: solo: a work/** file with frontmatter sha: <HEAD> allows the push",
+  "description": "mode: solo: a work/** file with frontmatter sha: <HEAD> allows the push; not denied, so push.app's default asks",
   "env": {
     "team": {
       "mode": "solo"
@@ -27,7 +27,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

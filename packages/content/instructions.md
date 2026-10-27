@@ -7,12 +7,15 @@ Framework skills: `start`, `status`, `handoff`, `session-close`, `research`, `si
 
 ## Session start
 
-- The session-start hook prints the personal root, the effective review trigger, and `folkways.yaml` and
-  `.local/me.yaml`, at session start and after each compaction. Read the files yourself only if that
+- The session-start hook prints the personal root, the effective review trigger and push approval, and
+  `folkways.yaml` and `.local/me.yaml`, at session start and after each compaction. Read the files yourself only if that
   output isn't in your context. No `folkways.yaml`: folkways isn't set up here. It runs
   from a brain repo, which holds no code: say to start sessions there, or offer the `setup` skill to
   create one. No `me.yaml`: run the `onboard` skill first. A solo repo (`mode: solo`) has no handle,
   no `people/` and no `efforts/`; its `me.yaml` holds `projects_dir`.
+- **Work in a worktree.** A session in the brain repo edits and commits in its own worktree, never the
+  main clone: `git fetch origin`, then `git worktree add <projects_dir>/.worktrees/<brain>/session-<slug>
+  -b session-<slug> origin/<default>`. Remove it when the session's work has landed.
 - **Resuming an effort:** read its `00-STATUS.md`, check git state, confirm next steps with the user.
 - **New effort:** ask for a ticket or docs, read them, suggest next steps (usually `research`), create
   `00-STATUS.md`. The `start` skill does this.
@@ -31,8 +34,10 @@ personal paths against it.
 | Side quests, drafts with no effort | `<personal root>/inbox/` | direct push |
 | Machine-local or private | `.local/` | never committed |
 
-Direct pushes are rebased and linear. Every push needs the user's approval. A solo repo's landing is the
-user's choice.
+A direct push lands the session worktree on the default branch: `git fetch origin`, `git rebase
+origin/<default>`, `git push origin HEAD:<default>`. History stays linear. `push.brain` decides whether to
+ask first (default: no). `knowledge/` goes by PR; git-guard stops it reaching the default branch directly.
+A solo repo's landing is the user's choice.
 
 ## Status docs
 
@@ -101,13 +106,15 @@ Session close lists them all.
 - PRs are squash-merged, so the PR title follows the commit rules.
 - A fresh-process review must cover the SHA before a PR opens: `folkways review`, or, in a solo repo (no
   CLI), the `review` skill in a fresh subagent.
-- Ask before every push. Ask whether a PR is draft or ready; open it as a draft if unclear.
+- Ask before a push when `push.brain` (the brain repo) or `push.app` (project repos) says to; the session
+  context gives the effective values (defaults: brain `never`, app `always`). git-guard asks for you where it
+  runs. Ask whether a PR is draft or ready; open it as a draft if unclear.
 
 ## Approval
 
 Ask first for anything destructive, public, or that would appear to come from the user: tracker and wiki
 writes, posting comments or messages, writes to `knowledge/` or `state/`, deleting files, running against
-non-local environments (QA in `qa.allowed_envs` is the exception), pushing.
+non-local environments (QA in `qa.allowed_envs` is the exception), pushing where `push.*` asks.
 
 A question with a recommendation also offers the smaller option and says what the bigger one costs.
 Recommend the bigger option only when it's worth that cost.

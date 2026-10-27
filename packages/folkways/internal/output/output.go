@@ -27,6 +27,22 @@ func Deny(reason string) {
 	}{decision{"PreToolUse", "deny", reason}, "deny", reason})
 }
 
+// Ask prints a PreToolUse ask decision: the user confirms the tool call.
+func Ask(reason string) {
+	type decision struct {
+		HookEventName            string `json:"hookEventName"`
+		PermissionDecision       string `json:"permissionDecision"`
+		PermissionDecisionReason string `json:"permissionDecisionReason"`
+	}
+	enc := json.NewEncoder(Stdout)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(struct {
+		HookSpecificOutput       decision `json:"hookSpecificOutput"`
+		PermissionDecision       string   `json:"permissionDecision"`
+		PermissionDecisionReason string   `json:"permissionDecisionReason"`
+	}{decision{"PreToolUse", "ask", reason}, "ask", reason})
+}
+
 // Context adds context to the conversation. Copilot CLI reads only the top-level additionalContext,
 // and only on SessionStart, so it is added there.
 func Context(event, text string) {

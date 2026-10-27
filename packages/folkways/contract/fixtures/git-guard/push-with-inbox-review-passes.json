@@ -1,5 +1,5 @@
 {
-  "description": "A review in people/<handle>/inbox/ named for HEAD allows the push",
+  "description": "A review in people/<handle>/inbox/ named for HEAD allows the push; not denied, so push.app's default asks",
   "env": {
     "files": {
       "people/alex/inbox/2026-01-15-review-${HEAD7}.md": "# Review\n\nVerdict: approve\n"
@@ -21,7 +21,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

@@ -58,7 +58,8 @@ team needs to see it.
 1. Confirm the folder and that no `efforts/<same name>/` exists.
 2. `git mv people/<handle>/work/<KEY>-<slug> efforts/<KEY>-<slug>` so history follows it.
 3. Update links inside the effort and the owner line in `00-STATUS.md`.
-4. Commit and push on approval (`efforts/` goes straight to the default branch, rebased).
+4. Commit and push (`efforts/` goes straight to the default branch, rebased; see the `commit` skill,
+   "Where commits go"). Ask first only if `push.brain` says to.
 
 ## Headless
 

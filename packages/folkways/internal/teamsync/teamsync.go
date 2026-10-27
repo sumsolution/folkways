@@ -20,6 +20,7 @@ import (
 	"github.com/sumsolution/folkways/packages/folkways/internal/manifest"
 	"github.com/sumsolution/folkways/packages/folkways/internal/overlays"
 	"github.com/sumsolution/folkways/packages/folkways/internal/settings"
+	teamcfg "github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
 // InstructionsImport is the AGENTS.md line that loads the framework instructions.
@@ -29,6 +30,9 @@ const InstructionsImport = "@.folkways/instructions.md"
 const stagePrefix = ".folkways-sync-"
 
 const settingsPath = ".claude/settings.json"
+
+// pushAskRule is the framework's permission rule for pushes (packages/content/settings.json).
+const pushAskRule = "Bash(git push:*)"
 
 // ops is the seam the atomicity tests replace.
 var ops = files.OS
@@ -491,8 +495,8 @@ func StaleOverlays(team string, m *manifest.Manifest) ([]string, error) {
 
 // mergedSettings is the merged .claude/settings.json content. It only reads, so sync can fail before
 // writing anything.
-func mergedSettings(team string, fsys fs.FS) (string, error) {
-	p := filepath.Join(team, settingsPath)
+func mergedSettings(teamDir string, fsys fs.FS) (string, error) {
+	p := filepath.Join(teamDir, settingsPath)
 	var current any = &settings.Object{}
 	if exists(p) {
 		b, err := os.ReadFile(p)
@@ -511,6 +515,11 @@ func mergedSettings(team string, fsys fs.FS) (string, error) {
 	merged, err := settings.Merge(current, fragment.(*settings.Object))
 	if err != nil {
 		return "", err
+	}
+	// The push ask rule is the fallback for push.brain: always when hooks are off; git-guard asks otherwise
+	// (ADR 0014). It reads folkways.yaml only: the committed file must not depend on one person's me.yaml.
+	if (teamcfg.Config{Team: teamcfg.LoadDir(teamDir).Team}).PushApproval("brain") != "always" {
+		settings.DropAsk(merged, pushAskRule)
 	}
 	return settings.Stringify(merged) + "\n", nil
 }

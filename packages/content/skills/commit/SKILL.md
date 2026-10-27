@@ -10,7 +10,7 @@ title into the commit on the default branch, so the same rules cover PR titles (
 
 ## Config
 
-- `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`.
+- `folkways.yaml`: `git.commit_convention`, `git.scopes`, `git.branch_pattern`, `review.trigger`, `push`.
 - `.local/me.yaml`: `projects_dir`, `review.trigger` (may only tighten the team value; the session context gives the effective one).
 
 The session-start hook puts these values in the session context; read `folkways.yaml` and `.local/me.yaml` only if they aren't there.
@@ -19,7 +19,8 @@ The session-start hook puts these values in the session context; read `folkways.
 
 1. **Find the repo and branch.** Project code is changed only in a worktree under
    `<projects_dir>/.worktrees/<repo>/<branch>`, never in the user's own clone. If you are in the
-   user's clone, stop and say so. In the team or solo repo, see [Where commits go](#where-commits-go).
+   user's clone, stop and say so. In the team or solo repo, see [Where commits go](#where-commits-go);
+   commit in the session worktree.
 2. **Check what is staged.** Read `git status` and `git diff --staged`. Stage files by name; don't stage
    everything blindly. Stop and ask if the diff holds:
    - more than one logical change (propose separate commits),
@@ -34,7 +35,7 @@ The session-start hook puts these values in the session context; read `folkways.
 6. **After the commit:** if the review trigger is `after-commit`, run
    `folkways review --repo <worktree> --effort <effort>` from the team repo root and say where the
    review file landed. In a solo repo there's no CLI: run the `review` skill in a fresh subagent given
-   only the repo, branch, base and HEAD SHA. Never push; that is the `pr` skill, and every push needs approval.
+   only the repo, branch, base and HEAD SHA. Never push a project repo; that is the `pr` skill. Brain repo pushes follow [Where commits go](#where-commits-go).
 
 ## Message format {#message-format}
 
@@ -95,7 +96,7 @@ Create the branch in a new worktree from a freshly fetched default branch:
 | Repo | Paths | Branch |
 |---|---|---|
 | Project repo | any | a feature branch in a worktree; never the default branch |
-| Team repo | `state/`, `efforts/`, `people/` | the default branch, rebased on push (keep history linear) |
+| Team repo | `state/`, `efforts/`, `people/` | the default branch: from the session worktree, `git rebase origin/<default>`, then `git push origin HEAD:<default>`; ask first only if `push.brain` says to |
 | Solo repo | `state/`, `work/`, `inbox/`, `knowledge/`, `folkways.yaml` | the user's choice; ask |
 | Team repo | `knowledge/`, `overlays/`, team skills, `folkways.yaml`, framework upgrades | a branch and a PR |
 

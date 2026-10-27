@@ -1,5 +1,5 @@
 {
-  "description": "`pushd` is not tracked: the directory is unknown, fail open",
+  "description": "`pushd` is not tracked: the directory is unknown, fail open; nothing is denied, but an unknown directory asks",
   "steps": [
     {
       "payload": {
@@ -16,7 +16,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

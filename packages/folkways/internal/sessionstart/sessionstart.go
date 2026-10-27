@@ -61,7 +61,8 @@ func configBlock(cfg team.Config) string {
 		trigger = "none"
 	}
 	return "\n\nfolkways config (from the session-start hook; skills use these values instead of reading the files):\n" +
-		"- personal root: " + root + "\n- review trigger: " + trigger + "\n\n" +
+		"- personal root: " + root + "\n- review trigger: " + trigger +
+		"\n- push approval: brain " + cfg.PushApproval("brain") + ", app " + cfg.PushApproval("app") + "\n\n" +
 		section(cfg.Dir, "folkways.yaml", "") + "\n\n" +
 		section(cfg.Dir, ".local/me.yaml", " Run the `"+skill.Name("onboard")+"` skill to create it.")
 }

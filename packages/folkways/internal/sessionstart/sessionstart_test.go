@@ -126,7 +126,7 @@ func TestConfigBlock(t *testing.T) {
 	got := load(d)
 	for _, want := range []string{
 		"for this session.\n\nfolkways config (",
-		"- personal root: people/alex\n- review trigger: after-commit\n",
+		"- personal root: people/alex\n- review trigger: after-commit\n- push approval: brain never, app always\n",
 		"folkways.yaml:\n```yaml\nreview:\n  trigger: after-commit\n```\n\n.local/me.yaml:\n```yaml\nhandle: alex\n```",
 	} {
 		if !strings.Contains(got, want) {

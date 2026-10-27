@@ -254,3 +254,25 @@ func TestStaleOverlays(t *testing.T) {
 		t.Fatalf("after removal: %v, %v", stale, err)
 	}
 }
+
+func TestSyncWritesThePushAskRuleOnlyWhenTheBrainAlwaysAsks(t *testing.T) {
+	dir := team(t) // folkways.yaml sets no push: the brain pushes without asking (ADR 0014)
+	if got := read(t, dir, ".claude/settings.json"); strings.Contains(got, "git push") {
+		t.Errorf("default: the push ask rule must be absent:\n%s", got)
+	}
+	write(t, dir, "folkways.yaml", "team: Example Team\npush:\n  brain: always\n")
+	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(t, dir, ".claude/settings.json"); !strings.Contains(got, `"Bash(git push:*)"`) {
+		t.Errorf("push.brain always: the ask rule must be written:\n%s", got)
+	}
+	write(t, dir, "folkways.yaml", "team: Example Team\npush:\n  brain: default-branch\n")
+	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
+		t.Fatal(err)
+	}
+	got := read(t, dir, ".claude/settings.json")
+	if strings.Contains(got, "git push") || strings.Contains(got, "permissions") {
+		t.Errorf("push.brain default-branch: the rule (and the emptied permissions) must be removed:\n%s", got)
+	}
+}

@@ -31,8 +31,8 @@ The session-start hook puts these values in the session context; read `folkways.
    defers them; deferred ones go in the PR description. Don't open a PR over an unaddressed blocking
    finding without saying so.
 4. **Write the title and description** per [Title](#title) and [Description](#description).
-5. **Ask two things together:** may I push, and draft or ready for review? If the answer on draft is
-   unclear, open it as a draft.
+5. **Ask two things together:** may I push (skip this when the session context's push approval for the
+   repo is `never`), and draft or ready for review? If the answer on draft is unclear, open it as a draft.
 6. **Push and open on approval.** `git push -u origin <branch>`, then create the PR with the GitHub
    CLI (`gh pr create`) or the tracker's equivalent. If no tool is available, say so and give the
    user the title and description to paste. Never force-push a branch someone else has checked out

@@ -1,5 +1,5 @@
 {
-  "description": "A review file in an effort whose sha is HEAD allows the push",
+  "description": "A review file in an effort whose sha is HEAD allows the push; not denied, so push.app's default asks",
   "env": {
     "files": {
       "efforts/EX-1-orders/03-review-${HEAD7}.md": "---\nsha: ${HEAD}\n---\n# Review\n\nVerdict: approve\n"
@@ -21,7 +21,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

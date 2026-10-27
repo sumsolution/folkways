@@ -99,9 +99,18 @@ change them here and in the fixtures together.
   characters of HEAD. The personal root is `people/<handle>/` (`handle` in `.local/me.yaml`) in a team repo
   and the repo root when `mode: solo` (no handle needed). Only the person's own folder counts; another
   person's `people/<other>/` is ignored, and in a team repo with no handle only `efforts/**` counts.
-  The brain repo itself is never gated: when the target repo's git top level is the project dir (symlinks
-  resolved, in either mode), the push passes without a review. A repo nested inside it and a worktree of it
-  have their own top level and are still gated.
+  The brain repo itself is never gated: when the target repo shares the project dir's git common dir
+  (the brain clone or any worktree of it; symlinks resolved, in either mode), the push passes without a
+  review. A repo nested inside it has its own common dir and is still gated.
+- `git push` approval ([ADR 0014](../../../docs/adr/0014-brain-pushes-without-asking.md)): `push.brain` in the brain
+  repo and its worktrees, `push.app` elsewhere; `always`, `default-branch` or `never`. Defaults: `brain: never`,
+  `app: always`; `.local/me.yaml` `push` can tighten, not loosen. `always` prints an `ask` decision;
+  `default-branch` asks when a destination is the remote's default branch (`refs/remotes/<remote>/HEAD`, else
+  `main`), or isn't known (`--all`, `--mirror`, an unresolved word). The destination comes from the refspecs
+  (`src:dst`, `+`, `refs/heads/`, a bare `HEAD` is the current branch), else the branch's upstream, else the
+  current branch. A deny wins over an ask.
+- In the brain repo, a push to the default branch whose new commits (`<remote>/<default>..<src>`) change
+  `knowledge/` is denied: knowledge lands by PR. When the remote branch can't be read, it passes.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. The folkways repo itself (top level = project dir, in either mode) is never denied. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.
@@ -114,7 +123,8 @@ change them here and in the fixtures together.
   (`cd "$X"`, `cd` in `||`, `if`, a pipeline or the background) makes it unknown; a `( )` subshell never
   changes the outer directory. Git options: `-C <resolvable>` moves it; `-c`, `--no-pager`, `-p`, `-P`, ... are
   skipped; any other option before the subcommand, or a `GIT_DIR=`/`GIT_WORK_TREE=` prefix, makes it unknown.
-- **Unknown means skip:** no push or main-clone check (fail open). The commit message check always runs.
+- **Unknown means skip:** no review, `knowledge/` or main-clone check (fail open). A push in an unknown
+  directory asks, unless both `push.brain` and `push.app` are `never`. The commit message check always runs.
 - A commit message is read from `-m`, `-am`, `-m<msg>`, `--message <msg>`, `--message=<msg>` or
   `-m "$(cat <<'EOF' ... EOF)"`. A short-option cluster is read left to right: an `m` ends it with the
   message; an option with an operand (`-F`, `-c`, `-C`, `-t`, and `-S`/`-u` with an attached one) ends it
@@ -135,6 +145,7 @@ folkways: follow the `start` skill for this session.[ compaction sentence]
 folkways config (from the session-start hook; skills use these values instead of reading the files):
 - personal root: <root>
 - review trigger: <trigger>
+- push approval: brain <push.brain>, app <push.app>
 
 folkways.yaml:
 ```yaml
@@ -151,6 +162,7 @@ folkways.yaml:
   repo, `.` when `mode: solo`, `none` in a team repo without a safe handle (missing, `.`, containing `..`, a separator or whitespace).
 - `<trigger>`: the effective `review.trigger` (the stricter of the two files, as `git-guard` uses it), or
   `none` when neither holds a known value.
+- `<push.brain>`, `<push.app>`: the effective push approvals, as `git-guard` uses them (defaults `never`, `always`).
 - A file larger than 4096 bytes is not printed: its section is the one line `<name>: over 4096 bytes, not
   shown. Read the file.` A missing `.local/me.yaml` is the line ``.local/me.yaml: missing. Run the `onboard`
   skill to create it.``, naming the skill as the plugin does (`folkways:onboard`).

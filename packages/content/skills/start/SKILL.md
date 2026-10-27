@@ -24,8 +24,9 @@ The session-start hook puts these values in the session context; read `folkways.
 
 - **Compacted context:** if this session was just compacted, update the effort's `00-STATUS.md` before
   anything else (the `handoff` skill).
-- **Repo freshness:** `git fetch` and say if the repo's default branch is ahead of the local
-  one. Pull only with the user's approval.
+- **Session worktree:** `git fetch origin`. Unless this session already has one, create the brain repo's
+  session worktree from `origin/<default>` (instructions, Session start) and read and write there. The main
+  clone is not pulled, so it can lag `origin`; say so if it does, and leave it.
 
 ## Which case
 

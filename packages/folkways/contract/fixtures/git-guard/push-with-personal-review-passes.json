@@ -1,5 +1,5 @@
 {
-  "description": "A review in people/<handle>/work/ counts too",
+  "description": "A review in people/<handle>/work/ counts too; not denied, so push.app's default asks",
   "env": {
     "files": {
       "people/alex/work/EX-1-orders/02-review-${HEAD7}.md": "---\nsha: ${HEAD}\n---\n# Review\n\nVerdict: approve\n"
@@ -21,7 +21,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

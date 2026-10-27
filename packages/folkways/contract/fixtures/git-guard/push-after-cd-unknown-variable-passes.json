@@ -1,5 +1,5 @@
 {
-  "description": "`cd $UNSET_DIR && git push` cannot be resolved statically: fail open",
+  "description": "`cd $UNSET_DIR && git push` cannot be resolved statically: fail open; nothing is denied, but an unknown directory asks",
   "steps": [
     {
       "payload": {
@@ -16,7 +16,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

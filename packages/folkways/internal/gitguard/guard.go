@@ -25,17 +25,25 @@ func Run(p payload.Payload, cfg team.Config) {
 	if cmd == "" {
 		return
 	}
-	if reason := checkCommand(cmd, p.Cwd, cfg); reason != "" {
-		output.Deny(reason)
+	switch v := evaluate(cmd, p.Cwd, cfg); {
+	case v.deny != "":
+		output.Deny(v.deny)
+	case v.ask != "":
+		output.Ask(v.ask)
 	}
 }
 
-// checkCommand checks every git command of a command line and returns the first deny reason ("" to allow).
-// A line that does not parse is allowed: git-guard catches mistakes, it is not a shell.
+// checkCommand returns the first deny reason of a command line ("" to allow).
 func checkCommand(cmd, payloadCwd string, cfg team.Config) string {
+	return evaluate(cmd, payloadCwd, cfg).deny
+}
+
+// evaluate checks every git command of a command line: the first deny reason, else the first ask reason.
+// A line that does not parse is allowed: git-guard catches mistakes, it is not a shell.
+func evaluate(cmd, payloadCwd string, cfg team.Config) verdict {
 	file, err := syntax.NewParser(syntax.Variant(syntax.LangBash)).Parse(strings.NewReader(cmd), "")
 	if err != nil {
-		return ""
+		return verdict{}
 	}
 	dir := payloadCwd
 	if dir == "" {
@@ -44,7 +52,10 @@ func checkCommand(cmd, payloadCwd string, cfg team.Config) string {
 	home, _ := os.UserHomeDir()
 	w := &walker{cfg: cfg, res: newResolver(home)}
 	w.list(file.Stmts, cwd{dir, dir != ""}, true)
-	return w.reason
+	if w.reason != "" {
+		return verdict{deny: w.reason}
+	}
+	return verdict{ask: w.ask}
 }
 
 // Commit options that take an operand. A short one in a cluster (`-Skey`, `-Fmsg.txt`) takes the rest of the
@@ -168,8 +179,8 @@ func checkPush(dir string, cfg team.Config) string {
 	if cfg.ReviewTrigger() != "pre-push" {
 		return ""
 	}
-	if top, err := gitOut(dir, "rev-parse", "--show-toplevel"); err == nil && sameDir(top, cfg.Dir) {
-		return "" // the brain repo itself: knowledge goes by PR, state and work by direct push
+	if isBrain(dir, cfg) {
+		return "" // the brain repo or its worktrees: knowledge goes by PR, state and work by direct push
 	}
 	head, err := gitOut(dir, "rev-parse", "HEAD")
 	if err != nil || head == "" {

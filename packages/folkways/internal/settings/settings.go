@@ -184,3 +184,29 @@ func sameScalar(a, b any) bool {
 	}
 	return a == b
 }
+
+// DropAsk removes rule from permissions.ask, then an emptied ask list and an emptied permissions object.
+func DropAsk(o *Object, rule string) {
+	p, _ := o.Get("permissions")
+	permissions, ok := p.(*Object)
+	if !ok {
+		return
+	}
+	a, _ := permissions.Get("ask")
+	ask, ok := a.([]any)
+	if !ok {
+		return
+	}
+	kept := slices.DeleteFunc(slices.Clone(ask), func(x any) bool { return sameScalar(x, rule) })
+	if len(kept) == len(ask) {
+		return
+	}
+	if len(kept) > 0 {
+		permissions.Set("ask", kept)
+		return
+	}
+	permissions.Delete("ask")
+	if len(permissions.Keys) == 0 {
+		o.Delete("permissions")
+	}
+}

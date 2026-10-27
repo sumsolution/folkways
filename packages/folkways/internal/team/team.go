@@ -22,8 +22,9 @@ type TeamYAML struct {
 		CommitPattern    string   `yaml:"commit_pattern"`
 		Scopes           []string `yaml:"scopes"`
 	} `yaml:"git"`
-	Hooks   map[string]bool `yaml:"hooks"` // a hook set to false is off; a missing key is on
-	Review  Review          `yaml:"review"`
+	Hooks   map[string]bool   `yaml:"hooks"` // a hook set to false is off; a missing key is on
+	Review  Review            `yaml:"review"`
+	Push    map[string]string `yaml:"push"` // brain | app → always | default-branch | never (ADR 0014)
 	Handoff struct {
 		Bands []int `yaml:"bands"` // token thresholds for context-band
 	} `yaml:"handoff"`
@@ -31,9 +32,10 @@ type TeamYAML struct {
 
 // MeYAML is the part of .local/me.yaml the hooks read.
 type MeYAML struct {
-	Handle      string `yaml:"handle"`
-	ProjectsDir string `yaml:"projects_dir"`
-	Review      Review `yaml:"review"`
+	Handle      string            `yaml:"handle"`
+	ProjectsDir string            `yaml:"projects_dir"`
+	Review      Review            `yaml:"review"`
+	Push        map[string]string `yaml:"push"` // may only tighten folkways.yaml push
 }
 
 // Config is the loaded configuration of a team repo.
@@ -94,6 +96,26 @@ func (c Config) ReviewTrigger() string {
 		if triggerRank[t] > triggerRank[best] {
 			best = t
 		}
+	}
+	return best
+}
+
+// Push approvals in increasing strictness. Unknown values have no rank.
+var approvalRank = map[string]int{"never": 1, "default-branch": 2, "always": 3}
+
+// defaultApproval is the push approval when folkways.yaml sets none: the brain repo pushes without asking,
+// app repos ask (ADR 0014).
+var defaultApproval = map[string]string{"brain": "never", "app": "always"}
+
+// PushApproval is the effective push approval for kind ("brain" or "app"): the stricter of folkways.yaml (or
+// the default) and .local/me.yaml. A person can only tighten the team's setting.
+func (c Config) PushApproval(kind string) string {
+	best := defaultApproval[kind]
+	if t := c.Team.Push[kind]; approvalRank[t] > 0 {
+		best = t
+	}
+	if m := c.Me.Push[kind]; approvalRank[m] > approvalRank[best] {
+		best = m
 	}
 	return best
 }

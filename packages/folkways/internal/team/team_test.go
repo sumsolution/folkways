@@ -104,3 +104,25 @@ func TestPersonalRootTeam(t *testing.T) {
 		t.Error("an unsafe handle has no personal root")
 	}
 }
+
+func TestPushApproval(t *testing.T) {
+	cases := []struct{ kind, team, me, want string }{
+		{"brain", "", "", "never"}, // brain repos push without asking by default
+		{"app", "", "", "always"},  // app repos ask by default
+		{"brain", "always", "", "always"},
+		{"brain", "always", "never", "always"},                 // me cannot loosen
+		{"brain", "never", "default-branch", "default-branch"}, // me can tighten
+		{"app", "never", "", "never"},
+		{"app", "default-branch", "always", "always"},
+		{"app", "bogus", "", "always"}, // unknown values are ignored
+		{"brain", "", "bogus", "never"},
+	}
+	for _, c := range cases {
+		var cfg Config
+		cfg.Team.Push = map[string]string{c.kind: c.team}
+		cfg.Me.Push = map[string]string{c.kind: c.me}
+		if got := cfg.PushApproval(c.kind); got != c.want {
+			t.Errorf("%s team=%q me=%q: got %q, want %q", c.kind, c.team, c.me, got, c.want)
+		}
+	}
+}
