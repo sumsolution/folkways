@@ -103,7 +103,7 @@ func (c Config) ReviewTrigger() string {
 // Push approvals in increasing strictness. Unknown values have no rank.
 var approvalRank = map[string]int{"never": 1, "default-branch": 2, "always": 3}
 
-// defaultApproval is the push approval when folkways.yaml sets none: the brain repo pushes without asking,
+// defaultApproval is the push approval when folkways.yaml sets none: a team brain repo pushes without asking,
 // app repos ask (ADR 0014).
 var defaultApproval = map[string]string{"brain": "never", "app": "always"}
 
@@ -111,6 +111,9 @@ var defaultApproval = map[string]string{"brain": "never", "app": "always"}
 // the default) and .local/me.yaml. A person can only tighten the team's setting.
 func (c Config) PushApproval(kind string) string {
 	best := defaultApproval[kind]
+	if kind == "brain" && c.Solo() {
+		best = "always" // a solo repo's landing is the person's choice: ask
+	}
 	if t := c.Team.Push[kind]; approvalRank[t] > 0 {
 		best = t
 	}

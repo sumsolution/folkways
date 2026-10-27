@@ -19,7 +19,7 @@
         "stdout": {
           "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": "re:folkways config \\(from the session-start hook; skills use these values instead of reading the files\\):\\n- personal root: \\.\\n- review trigger: pre-push\\n- push approval: brain never, app always\\n\\nfolkways\\.yaml:\\n```yaml\\n[^`]*mode\\W+solo"
+            "additionalContext": "re:folkways config \\(from the session-start hook; skills use these values instead of reading the files\\):\\n- personal root: \\.\\n- review trigger: pre-push\\n- push approval: brain always, app always\\n\\nfolkways\\.yaml:\\n```yaml\\n[^`]*mode\\W+solo"
           }
         }
       }

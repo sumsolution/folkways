@@ -101,15 +101,15 @@ change them here and in the fixtures together.
   person's `people/<other>/` is ignored, and in a team repo with no handle only `efforts/**` counts.
   The brain repo itself is never gated: when the target repo shares the project dir's git common dir
   (the brain clone or any worktree of it; symlinks resolved, in either mode), the push passes without a
-  review. A repo nested inside it has its own common dir and is still gated.
+  review. Reviews are looked up in the brain clone and in each of its worktrees (`git worktree list`). A repo nested inside it has its own common dir and is still gated.
 - `git push` approval ([ADR 0014](../../../docs/adr/0014-brain-pushes-without-asking.md)): `push.brain` in the brain
   repo and its worktrees, `push.app` elsewhere; `always`, `default-branch` or `never`. Defaults: `brain: never`,
-  `app: always`; `.local/me.yaml` `push` can tighten, not loosen. `always` prints an `ask` decision;
+  `app: always`, and `brain: always` when `mode: solo`; `.local/me.yaml` `push` can tighten, not loosen. `always` prints an `ask` decision;
   `default-branch` asks when a destination is the remote's default branch (`refs/remotes/<remote>/HEAD`, else
-  `main`), or isn't known (`--all`, `--mirror`, an unresolved word). The destination comes from the refspecs
+  `master` when the remote has it and no `main`, else `main`), or isn't known (`--all`, `--mirror`, an unresolved word). The destination comes from the refspecs
   (`src:dst`, `+`, `refs/heads/`, a bare `HEAD` is the current branch), else the branch's upstream, else the
   current branch. A deny wins over an ask.
-- In the brain repo, a push to the default branch whose new commits (`<remote>/<default>..<src>`) change
+- In a team brain repo (not `mode: solo`), a push to the default branch whose new commits (`<remote>/<default>..<src>`) change
   `knowledge/` is denied: knowledge lands by PR. When the remote branch can't be read, it passes.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. The folkways repo itself (top level = project dir, in either mode) is never denied. Worktrees (`.git` is a file), repos outside `projects_dir`,

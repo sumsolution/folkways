@@ -35,19 +35,20 @@ should a push ask, and where does a brain session work?
 ## Decision
 
 1. **Config.** `folkways.yaml` gets `push.brain` and `push.app`, each `always`, `default-branch` or `never`.
-   Defaults: `brain: never`, `app: always`. `.local/me.yaml` `push` may only tighten them, like
-   `review.trigger`. The session-start hook prints the effective values.
+   Defaults: `brain: never` (`always` in a solo repo, whose landing is the person's choice), `app: always`.
+   `.local/me.yaml` `push` may only tighten them, like `review.trigger`. The session-start hook prints the effective values.
 2. **git-guard asks.** On `git push` it reads the target repo: the brain repo or any worktree of it (same
    git common dir) uses `push.brain`, anything else `push.app`. `always` returns `ask`; `default-branch`
    asks when a destination is the remote's default branch or isn't known. A push in an unknown directory
    asks unless both are `never`. A deny wins over an ask.
-3. **knowledge/ by PR, enforced.** In the brain repo, a push to the default branch whose new commits change
-   `knowledge/` is denied.
+3. **knowledge/ by PR, enforced.** In a team brain repo, a push to the default branch whose new commits change
+   `knowledge/` is denied. A solo repo is exempt.
 4. **The static rule is the fallback.** `sync` writes `ask: Bash(git push:*)` only when `push.brain` is
    `always` (read from `folkways.yaml` alone, since the file is committed), and removes it otherwise.
 5. **Brain sessions work in a worktree.** Each session edits in `<projects_dir>/.worktrees/<brain>/session-<slug>`
    off `origin/<default>`, and lands with `git rebase origin/<default>` and `git push origin HEAD:<default>`.
-   The main clone isn't pulled. The brain's worktrees count as the brain for the review gate.
+   The brain's worktrees count as the brain, and the review gate finds reviews in any of them. Hooks,
+   config and skills load from the main clone, so `start` fast-forwards it when it is clean.
 
 ## Options considered
 
@@ -67,7 +68,7 @@ should a push ask, and where does a brain session work?
   every push anyway.
 - Copilot CLI: if it ignores `ask`, its pushes go unasked where the static rule is gone. To probe.
 - `default-branch` and the `knowledge/` deny need the remote's default branch: `refs/remotes/<remote>/HEAD`,
-  else `main`. When the remote branch can't be read, the `knowledge/` check passes (fail open).
+  else `master` when the remote has it and no `main`, else `main`. When the remote branch can't be read, the `knowledge/` check passes (fail open).
 - The brain is found by the project dir (`CLAUDE_PROJECT_DIR`). An app repo synced with its own
   `folkways.yaml` (ADR 0012) would read as a brain; it needs a repo-kind marker when app repo sync lands.
 - Skills changed: `start` creates the session worktree; `commit`, `pr`, `status`, `handoff`, `onboard` follow

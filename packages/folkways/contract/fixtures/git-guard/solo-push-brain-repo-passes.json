@@ -1,5 +1,5 @@
 {
-  "description": "mode: solo: the brain repo itself pushes without a review",
+  "description": "mode: solo: the brain repo itself pushes without a review; a solo repo's push.brain defaults to always, so it asks",
   "env": {
     "team": {
       "mode": "solo"
@@ -32,7 +32,12 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask",
+            "permissionDecisionReason": "re:push\\.brain is always"
+          }
+        }
       }
     }
   ]

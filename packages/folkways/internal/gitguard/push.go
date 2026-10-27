@@ -2,6 +2,7 @@ package gitguard
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/sumsolution/folkways/packages/folkways/internal/team"
@@ -84,14 +85,46 @@ func parsePush(dir string, args []arg) pushTarget {
 	return t
 }
 
-// defaultBranch is the remote's default branch, from refs/remotes/<remote>/HEAD, else "main".
+// defaultBranch is the remote's default branch: refs/remotes/<remote>/HEAD, else "master" when the remote has
+// a master and no main (a repo pushed after `git init` has no remote HEAD), else "main".
 func defaultBranch(dir, remote string) string {
 	if ref, err := gitOut(dir, "symbolic-ref", "--short", "refs/remotes/"+remote+"/HEAD"); err == nil {
 		if b, ok := strings.CutPrefix(ref, remote+"/"); ok && b != "" {
 			return b
 		}
 	}
+	hasRef := func(b string) bool {
+		_, err := gitOut(dir, "rev-parse", "--verify", "-q", "refs/remotes/"+remote+"/"+b)
+		return err == nil
+	}
+	if !hasRef("main") && hasRef("master") {
+		return "master"
+	}
 	return "main"
+}
+
+// brainCheckouts is the brain repo's main clone and its worktrees: a session writes reviews in its worktree.
+func brainCheckouts(cfg team.Config) []string {
+	dirs := []string{cfg.Dir}
+	out, err := gitOut(cfg.Dir, "worktree", "list", "--porcelain")
+	if err != nil {
+		return dirs
+	}
+	for _, line := range strings.Split(out, "\n") {
+		if p, ok := strings.CutPrefix(line, "worktree "); ok && !sameDir(p, cfg.Dir) {
+			dirs = append(dirs, p)
+		}
+	}
+	return dirs
+}
+
+// rebase moves path from under root to the same place under other ("" stays "").
+func rebase(path, root, other string) string {
+	rel, err := filepath.Rel(root, path)
+	if path == "" || err != nil {
+		return path
+	}
+	return filepath.Join(other, rel)
 }
 
 // isBrain reports whether dir is in the brain repo or one of its worktrees: they share a git common dir.
@@ -118,7 +151,7 @@ func checkPushVerdict(dir string, args []arg, cfg team.Config) verdict {
 			continue
 		}
 		toDefault = true
-		if brain {
+		if brain && !cfg.Solo() { // a solo repo's knowledge/ lands where the person chooses
 			if reason := checkKnowledge(dir, t.remote, r[0], def); reason != "" {
 				return verdict{deny: reason}
 			}

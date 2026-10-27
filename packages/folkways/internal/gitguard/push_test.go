@@ -136,3 +136,44 @@ func TestPushInUnknownDirectoryAsks(t *testing.T) {
 		t.Errorf("unknown directory, both never: got %+v, want nothing", got)
 	}
 }
+
+func TestReviewInABrainWorktreeCounts(t *testing.T) {
+	r := newPushRepos(t)
+	commitFile(t, r.app, "main.go", "package main\n")
+	head := gitIn(t, r.app, "rev-parse", "HEAD")
+	review := filepath.Join(r.worktree, "efforts", "x", "01-review.md")
+	if err := os.MkdirAll(filepath.Dir(review), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(review, []byte("---\nsha: "+head+"\n---\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := r.cfg()
+	cfg.Team.Review.Trigger = "pre-push"
+	if got := evaluate("git push", r.app, cfg); got.deny != "" {
+		t.Errorf("a review written in the session worktree must count, got %+v", got)
+	}
+}
+
+func TestSoloBrainKeepsKnowledgeAndAsks(t *testing.T) {
+	r := newPushRepos(t)
+	commitFile(t, r.worktree, "knowledge/fact.md", "fact\n")
+	cfg := r.cfg()
+	cfg.Team.Mode = "solo"
+	got := evaluate("git push origin HEAD:main", r.worktree, cfg)
+	if got.deny != "" || got.ask == "" {
+		t.Errorf("solo: knowledge lands where the user chooses, and pushes ask by default; got %+v", got)
+	}
+}
+
+func TestDefaultBranchFallsBackToMaster(t *testing.T) {
+	r := newPushRepos(t)
+	gitIn(t, r.worktree, "push", "-q", "origin", "HEAD:refs/heads/master")
+	gitIn(t, r.worktree, "fetch", "-q", "origin")
+	gitIn(t, r.brain, "remote", "set-head", "origin", "-d")
+	gitIn(t, r.brain, "update-ref", "-d", "refs/remotes/origin/main") // as if origin had only master
+	commitFile(t, r.worktree, "knowledge/fact.md", "fact\n")
+	if got := evaluate("git push origin HEAD:master", r.worktree, r.cfg()); !strings.Contains(got.deny, "knowledge/") {
+		t.Errorf("no origin/HEAD and only master: got %+v, want a knowledge/ deny", got)
+	}
+}

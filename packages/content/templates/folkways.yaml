@@ -40,8 +40,8 @@ review:
   trigger: pre-push            # on-demand | after-commit | pre-push
 
 push:                          # ask before a push? always | default-branch | never (me.yaml may only tighten)
-  brain: never                 # this repo: sessions push their worktree to the default branch; knowledge/ still goes by PR
-  app: always                  # project repos
+  # brain: never               # this repo. Default: never in a team repo (knowledge/ still goes by PR), always in a solo repo
+  # app: always                # project repos. Default: always
 
 adr:
   targets: [repo]              # confluence and/or repo

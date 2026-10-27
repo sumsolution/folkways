@@ -25,8 +25,9 @@ The session-start hook puts these values in the session context; read `folkways.
 - **Compacted context:** if this session was just compacted, update the effort's `00-STATUS.md` before
   anything else (the `handoff` skill).
 - **Session worktree:** `git fetch origin`. Unless this session already has one, create the brain repo's
-  session worktree from `origin/<default>` (instructions, Session start) and read and write there. The main
-  clone is not pulled, so it can lag `origin`; say so if it does, and leave it.
+  session worktree from `origin/<default>` (instructions, Session start) and read and write there. Hooks,
+  config and skills load from the main clone, so fast-forward it when it is clean
+  (`git merge --ff-only origin/<default>` there); if it isn't clean or can't fast-forward, say so and leave it.
 
 ## Which case
 
