@@ -100,7 +100,7 @@ So the review runs in a **fresh process**:
 | `pre-push` | `git-guard` blocks a project repo's push until a review covers HEAD; the brain repo pushes without one |
 
 A review of an earlier commit still covers HEAD when every path changed since matches `review.skip_paths`
-(globs, default `docs/**`; `[]` turns it off). Only `folkways.yaml` sets it.
+([doublestar](https://github.com/bmatcuk/doublestar#patterns) globs, default `docs/**`; `[]` turns it off). Only `folkways.yaml` sets it.
 
 **Coming soon:** `folkways review`. The prompt, the `commit` and `review` skills and `git-guard` ship;
 the command says "not built yet", so with `pre-push` the review file has to come from the `review` skill. The gate is agent-side by design: no CI checks in project repos

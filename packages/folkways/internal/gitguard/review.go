@@ -5,12 +5,12 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"gopkg.in/yaml.v3"
 )
 
@@ -68,7 +68,8 @@ func inboxSHAs(personal string) []string {
 }
 
 // coversHead reports whether a review of reviewed covers head in repo: reviewed (a full SHA or a prefix) is an
-// ancestor of head and every path changed between them, renames as delete plus add, matches one of skip.
+// ancestor of head and every path changed between them, renames as delete plus add, matches one of skip
+// (doublestar globs; a malformed one matches nothing).
 func coversHead(repo, reviewed, head string, skip []string) bool {
 	if len(skip) == 0 || strings.HasPrefix(reviewed, "-") {
 		return false
@@ -85,39 +86,11 @@ func coversHead(repo, reviewed, head string, skip []string) bool {
 		return false
 	}
 	for _, p := range strings.Split(out, "\x00") {
-		if p != "" && !slices.ContainsFunc(skip, func(g string) bool { return matchPath(g, p) }) {
+		if p != "" && !slices.ContainsFunc(skip, func(g string) bool { return doublestar.MatchUnvalidated(g, p) }) {
 			return false
 		}
 	}
 	return true
-}
-
-// matchPath matches a slash-separated repo path against a glob: `**` is any number of whole segments, other
-// segments follow path.Match; a trailing `**` needs at least one segment. A malformed pattern matches nothing.
-func matchPath(pattern, p string) bool {
-	return matchSegments(strings.Split(pattern, "/"), strings.Split(p, "/"))
-}
-
-func matchSegments(pat, segs []string) bool {
-	if len(pat) == 0 {
-		return len(segs) == 0
-	}
-	if pat[0] == "**" {
-		if len(pat) == 1 {
-			return len(segs) > 0 // a trailing ** needs something under it
-		}
-		for i := 0; i <= len(segs); i++ {
-			if matchSegments(pat[1:], segs[i:]) {
-				return true
-			}
-		}
-		return false
-	}
-	if len(segs) == 0 {
-		return false
-	}
-	ok, err := path.Match(pat[0], segs[0])
-	return ok && err == nil && matchSegments(pat[1:], segs[1:])
 }
 
 // Frontmatter limits: a review file's frontmatter is small; never read more than this of any file.
