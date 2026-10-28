@@ -23,6 +23,7 @@ type resolver struct {
 // read-only to expand, so `${W:=x}` is unresolvable.
 type vars struct {
 	m      map[string]string
+	home   string
 	frozen bool // after a command that can change variables in ways the walker can't follow
 }
 
@@ -42,7 +43,7 @@ func (v *vars) Each(f func(string, expand.Variable) bool) {
 }
 
 func newResolver(home string) resolver {
-	v := &vars{m: map[string]string{}}
+	v := &vars{m: map[string]string{}, home: home}
 	if home != "" {
 		v.m["HOME"] = home
 	}
@@ -68,10 +69,24 @@ func (r resolver) set(name, value string) {
 
 func (r resolver) unset(name string) { delete(r.vars.m, name) }
 
-// stop forgets every variable and ignores later assignments.
+// stop forgets every variable and ignores later assignments. HOME keeps its starting value, as before
+// git-guard tracked variables.
 func (r resolver) stop() {
+	home, ok := r.vars.m["HOME"]
 	clear(r.vars.m)
+	if ok && home == r.vars.home {
+		r.vars.m["HOME"] = home
+	}
 	r.vars.frozen = true
+}
+
+// forgetChanged forgets the variables set since before was copied.
+func (r resolver) forgetChanged(before map[string]string) {
+	for name, v := range r.vars.m {
+		if old, ok := before[name]; !ok || old != v {
+			delete(r.vars.m, name)
+		}
+	}
 }
 
 // scope runs f with a copy of the variables and drops it afterwards, as a subshell does.

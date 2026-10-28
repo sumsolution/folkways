@@ -1,9 +1,8 @@
 package gitguard
 
 import (
+	"maps"
 	"path/filepath"
-	"regexp"
-	"slices"
 	"strings"
 
 	"github.com/sumsolution/folkways/packages/folkways/internal/team"
@@ -48,13 +47,32 @@ func (w *walker) stmt(s *syntax.Stmt, cur cwd, top bool) cwd {
 	case *syntax.CallExpr:
 		return w.call(c, cur, top)
 	case *syntax.BinaryCmd: // a cd in `||` or a pipeline could run or not: only `&&` keeps tracking it
-		top = top && c.Op == syntax.AndStmt
-		return w.stmt(c.Y, w.stmt(c.X, cur, top), top)
+		if c.Op != syntax.AndStmt {
+			return w.stmt(c.Y, w.stmt(c.X, cur, false), false)
+		}
+		// In `a && b && c`, b and c see what runs before them, but may not run: after the chain, what
+		// they changed is unknown.
+		chain := andChain(c)
+		cur = w.stmt(chain[0], cur, top)
+		before, dir := maps.Clone(w.res.vars.m), cur
+		for _, s := range chain[1:] {
+			cur = w.stmt(s, cur, top)
+		}
+		w.res.forgetChanged(before)
+		if cur != dir {
+			return unknown
+		}
+		return cur
 	case *syntax.Subshell: // never changes the outer directory or variables
 		w.res.scope(func() { w.list(c.Stmts, cur, top) })
 		return cur
 	case *syntax.Block:
 		return w.list(c.Stmts, cur, top)
+	case *syntax.ForClause, *syntax.WhileClause: // the next iteration sees what the body changed
+		if after := w.inner(c, cur); after != cur {
+			cur = unknown
+		}
+		return w.inner(c, cur)
 	case nil:
 		return cur
 	default: // if, while, for, case, functions, [[ ]], ...: a cd inside makes the directory unknown
@@ -95,7 +113,7 @@ func (w *walker) inner(n syntax.Node, cur cwd) cwd {
 			if x.Exp != nil && (x.Exp.Op == syntax.AssignUnset || x.Exp.Op == syntax.AssignUnsetOrNull) {
 				w.res.unset(x.Param.Value)
 			}
-		case *syntax.FuncDecl:
+		case *syntax.FuncDecl, *syntax.CoprocClause, *syntax.LetClause:
 			w.res.stop()
 		case *syntax.DeclClause:
 			if x.Variant.Value == "nameref" || declaresNameref(x) {
@@ -126,10 +144,12 @@ func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
 		return cur
 	}
 	name, ok := w.res.word(c.Args[0])
+	if !ok || !keepsVars(name, c.Args[1:], w.res) {
+		w.res.stop()
+	}
 	if !ok {
 		return cur
 	}
-	w.builtinVars(c.Args)
 	switch name {
 	case "cd":
 		target, ok := w.cdTarget(c.Args[1:])
@@ -149,38 +169,37 @@ func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
 	return cur
 }
 
-var shellName = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+// keepVars lists commands that leave the shell's variables alone: git, builtins that set none
+// (cd, pushd and popd set PWD and OLDPWD, handled in keepsVars) and programs agents often chain with git.
+// Any other command stops tracking: a builtin, function or alias could set any variable.
+var keepVars = map[string]bool{"git": true, "gh": true, "cd": true, "pushd": true, "popd": true,
+	"echo": true, "printf": true, "pwd": true, "test": true, "[": true, "true": true, "false": true, ":": true,
+	"ls": true, "cat": true, "mkdir": true, "rm": true, "cp": true, "mv": true, "grep": true, "head": true,
+	"tail": true, "wc": true, "go": true, "npm": true, "make": true}
 
-// builtinVars applies what a builtin does to variables: those that set a variable named in their
-// arguments make it unknown; those that can run any code stop tracking.
-func (w *walker) builtinVars(args []*syntax.Word) {
-	name, _ := w.res.word(args[0])
-	for (name == "command" || name == "builtin") && len(args) > 1 {
-		args = args[1:]
-		name, _ = w.res.word(args[0])
-	}
+// keepsVars reports whether `name args...` leaves the tracked variables as they are.
+func keepsVars(name string, args []*syntax.Word, res resolver) bool {
 	switch name {
-	case "eval", "source", ".", "trap":
-		w.res.stop()
-	case "read", "mapfile", "readarray", "getopts", "unset", "printf":
-		vals := make([]string, 0, len(args)-1)
-		for _, a := range args[1:] {
-			v, ok := w.res.word(a)
-			if !ok { // the name could be anything
-				w.res.stop()
-				return
-			}
-			vals = append(vals, v)
-		}
-		if name == "printf" && !slices.Contains(vals, "-v") {
-			return
-		}
-		for _, v := range vals {
-			if shellName.MatchString(v) {
-				w.res.unset(v)
+	case "cd", "pushd", "popd":
+		res.unset("PWD")
+		res.unset("OLDPWD")
+	case "printf": // `printf -v NAME` sets NAME
+		for _, a := range args {
+			if v, ok := res.word(a); !ok || strings.HasPrefix(v, "-v") {
+				return false
 			}
 		}
 	}
+	return keepVars[name]
+}
+
+// andChain returns the statements of an `a && b && c` chain in order.
+func andChain(c *syntax.BinaryCmd) []*syntax.Stmt {
+	if x, ok := c.X.Cmd.(*syntax.BinaryCmd); ok && x.Op == syntax.AndStmt && !c.X.Negated && !c.X.Background &&
+		len(c.X.Redirs) == 0 {
+		return append(andChain(x), c.Y)
+	}
+	return []*syntax.Stmt{c.X, c.Y}
 }
 
 // unsetArithm makes the variable an arithmetic assignment writes unknown.

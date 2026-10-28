@@ -147,6 +147,16 @@ func TestPushPathInVariableGetsTheRepoVerdict(t *testing.T) {
 			t.Errorf("%s: got %+v, want the push.app ask", cmd, got)
 		}
 	}
+	// What may not run is unknown afterwards: the right of `&&`, and a loop body for the next iteration.
+	for _, cmd := range []string{
+		"W=" + r.app + "; false && W=" + r.brain + `; git -C "$W" push`,
+		"W=" + r.brain + `; for i in 1 2; do git -C "$W" push; W=` + r.app + "; done",
+		"for i in 1 2; do git push; cd " + r.app + "; done",
+	} {
+		if got := evaluate(cmd, r.brain, r.cfg()); got.ask != unknownAsk || got.deny != "" {
+			t.Errorf("%s: got %+v, want the unknown-repo ask", cmd, got)
+		}
+	}
 }
 
 func TestReviewInABrainWorktreeCounts(t *testing.T) {

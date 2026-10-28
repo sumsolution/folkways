@@ -173,7 +173,10 @@ func TestCheckCommandShellVariables(t *testing.T) {
 		{"chained", "A=" + filepath.Dir(wt) + `; W=$A/app-wt; git -C "$W" push`, "/", "Push blocked"},
 		{"same statement", "A=" + filepath.Dir(wt) + ` W=$A/app-wt; git -C "$W" push`, "/", "Push blocked"},
 		{"reassigned", "W=/elsewhere; " + set + `git -C "$W" push`, "/", "Push blocked"},
-		{"set again after removal", set + "read W; " + set + `git -C "$W" push`, "/", "Push blocked"},
+		{"set again after removal", set + "W=$(pwd); " + set + `git -C "$W" push`, "/", "Push blocked"},
+		{"later in an and chain", set + `true && git -C "$W" push`, "/", "Push blocked"},
+		{"first of an and chain", "W=" + wt + ` && true; git -C "$W" push`, "/", "Push blocked"},
+		{"allowlisted command", set + `echo hi; git status; git -C "$W" push`, "/", "Push blocked"},
 		{"subshell sees it", set + `(git -C "$W" push)`, "/", "Push blocked"},
 		{"set in subshell", "(" + set + `git -C "$W" push)`, "/", "Push blocked"},
 		{"subshell does not leak", set + `(W=/elsewhere); git -C "$W" push`, "/", "Push blocked"},
@@ -211,6 +214,10 @@ func TestCheckCommandShellVariables(t *testing.T) {
 		{"unset", set + `unset W; git -C "$W" push`, "/", ""},
 		{"command read", set + `command read W; git -C "$W" push`, "/", ""},
 		{"builtin read", set + `builtin read W; git -C "$W" push`, "/", ""},
+		{"cd in an and chain", `false && cd ` + wt + `; git push`, "/", ""},
+		{"PWD after cd", "PWD=" + wt + `; cd /; git -C "$PWD" push`, "/", ""},
+		{"coproc", set + `coproc W { :; }; git -C "$W" push`, "/", ""},
+		{"quoted let", set + `let "W=5"; git -C "$W" push`, "/", ""},
 
 		// Stop tracking: nothing is known for the rest of the line.
 		{"function", set + `f() { :; }; git -C "$W" push`, "/", ""},
@@ -221,6 +228,14 @@ func TestCheckCommandShellVariables(t *testing.T) {
 		{"set after eval", `eval :; ` + set + `git -C "$W" push`, "/", ""},
 		{"source", set + `source ./env.sh; git -C "$W" push`, "/", ""},
 		{"dot", set + `. ./env.sh; git -C "$W" push`, "/", ""},
+		{"unresolved command name", set + `$CMD 'W=/x'; git -C "$W" push`, "/", ""},
+		{"printf -v joined", set + `printf -vW /x; git -C "$W" push`, "/", ""},
+		{"read into an index", set + `read 'W[0]'; git -C "$W" push`, "/", ""},
+		{"command -p eval", set + `command -p eval W=/x; git -C "$W" push`, "/", ""},
+		{"command -- eval", set + `command -- eval W=/x; git -C "$W" push`, "/", ""},
+		{"exec fd variable", set + `exec {W}>/dev/null; git -C "$W" push`, "/", ""},
+		{"wait -p", set + `wait -p W; git -C "$W" push`, "/", ""},
+		{"any other command", set + `./build.sh; git -C "$W" push`, "/", ""},
 	})
 }
 
