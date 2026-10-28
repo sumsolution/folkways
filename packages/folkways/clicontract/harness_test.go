@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -57,8 +58,8 @@ type GitCheck struct {
 
 var (
 	repoRoot = mustAbs("../../..")
-	// versionPkg holds the CLI's version; changesets bump it.
-	versionPkg = filepath.Join(repoRoot, "packages/folkways/package.json")
+	// versionManifest holds the CLI's version; release-please bumps it (ADR 0013).
+	versionManifest = filepath.Join(repoRoot, ".release-please-manifest.json")
 )
 
 func mustAbs(p string) string {
@@ -95,7 +96,7 @@ func TestMain(m *testing.M) {
 }
 
 // run builds ./cmd/folkways into a temp dir, unless FOLKWAYS_CLI_CMD names the binary, then runs the tests.
-// The build carries the version in packages/folkways/package.json, which the fixtures expect from `version`.
+// The build carries the version in .release-please-manifest.json, which the fixtures expect from `version`.
 func run(m *testing.M) int {
 	if os.Getenv("FOLKWAYS_CLI_CMD") == "" {
 		dir, err := os.MkdirTemp("", "folkways-clicontract-bin-")
@@ -104,19 +105,13 @@ func run(m *testing.M) int {
 			return 1
 		}
 		defer os.RemoveAll(dir)
-		raw, err := os.ReadFile(versionPkg)
-		var pkg struct {
-			Version string `json:"version"`
-		}
-		if err == nil {
-			err = json.Unmarshal(raw, &pkg)
-		}
+		version, err := cliVersion()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, versionPkg+":", err)
+			fmt.Fprintln(os.Stderr, versionManifest+":", err)
 			return 1
 		}
 		builtCLI = filepath.Join(dir, "folkways")
-		build := exec.Command("go", "build", "-ldflags", "-X main.version="+pkg.Version, "-o", builtCLI, "./cmd/folkways")
+		build := exec.Command("go", "build", "-ldflags", "-X main.version="+version, "-o", builtCLI, "./cmd/folkways")
 		build.Dir = filepath.Join(repoRoot, "packages/folkways")
 		build.Stdout, build.Stderr = os.Stdout, os.Stderr
 		if err := build.Run(); err != nil {
@@ -147,18 +142,28 @@ func TestContract(t *testing.T) {
 	}
 }
 
-func readVersions(t *testing.T) map[string]string {
-	raw, err := os.ReadFile(versionPkg)
+// cliVersion is the root package's version in the release-please manifest.
+func cliVersion() (string, error) {
+	raw, err := os.ReadFile(versionManifest)
 	if err != nil {
-		t.Fatal(err)
+		return "", err
 	}
-	var pkg struct {
-		Version string `json:"version"`
+	var manifest map[string]string
+	if err := json.Unmarshal(raw, &manifest); err != nil {
+		return "", err
 	}
-	if err := json.Unmarshal(raw, &pkg); err != nil {
-		t.Fatal(err)
+	if manifest["."] == "" {
+		return "", errors.New(`no "." version`)
 	}
-	return map[string]string{"VERSION": pkg.Version}
+	return manifest["."], nil
+}
+
+func readVersions(t *testing.T) map[string]string {
+	version, err := cliVersion()
+	if err != nil {
+		t.Fatal(versionManifest+": ", err)
+	}
+	return map[string]string{"VERSION": version}
 }
 
 func loadFixture(t *testing.T, file string) Fixture {

@@ -1,12 +1,13 @@
 name: release
 
-# A v<version> tag (or v<version>-rc.<n>) on a commit whose packages/folkways/package.json has that version:
+# A v<version> tag (or v<version>-rc.<n>) on a commit whose .release-please-manifest.json has that version:
 #   build    GoReleaser builds the four archives, checksums.txt and the Homebrew formula (--skip=publish)
 #   smoke    each archive, installed with install.sh and tested on its own platform
 #   publish  after approval in the `release` environment: provenance attestations, the GitHub release (the same
 #            files plus install.sh), then the formula to sumsolution/homebrew-tap (not for -rc tags)
 # Pull requests that touch the release files and manual runs build a snapshot and smoke it; they never publish.
-# Releasing: `pnpm changeset version` in a PR and merge it; tag.yml tags that commit `v<version>`.
+# Releasing: merge the release PR; release-please.yml tags that commit `v<version>` and opens a draft release, which
+# publish fills and publishes.
 on:
   push:
     tags: ['v*']
@@ -41,16 +42,16 @@ jobs:
         with:
           go-version-file: go.mod
           cache-dependency-path: go.sum
-      - name: The tag matches packages/folkways/package.json
+      - name: The tag matches .release-please-manifest.json
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          want=$(node -p "require('./packages/folkways/package.json').version")
+          want=$(jq -r '."."' .release-please-manifest.json)
           base=${TAG#v}
           base=${base%%-*}
           if [ "$base" != "$want" ]; then
-            echo "::error::tag $TAG doesn't match packages/folkways/package.json ($want); tag the commit that 'pnpm changeset version' made"
+            echo "::error::tag $TAG doesn't match .release-please-manifest.json ($want); tag the merged release PR's commit"
             exit 1
           fi
       - name: Go vet and tests
@@ -72,9 +73,12 @@ jobs:
         run: |
           base=${TAG#v}
           base=${base%%-*}
-          awk -v v="$base" '/^## / { p = ($2 == v); next } p' packages/folkways/CHANGELOG.md > dist/notes.md
+          # Version headings are `## 0.2.0` (changesets) or `## [0.3.0](<compare link>) (<date>)` (release-please,
+          # `###` on some patch releases); section headings such as `### Features` stay in the notes.
+          awk -v v="$base" '/^##+ \[?[0-9]/ { h = $2; gsub(/^\[|\].*$/, "", h); p = (h == v); next } p' \
+            packages/folkways/CHANGELOG.md > dist/notes.md
           if ! grep -q '[^[:space:]]' dist/notes.md; then
-            # A release candidate may come before `changeset version`; a final release needs its section.
+            # A release candidate may come before its release PR; a final release needs its section.
             case "$TAG" in
             *-*) echo "Release candidate for $base; the notes come with the final release." > dist/notes.md ;;
             *)
