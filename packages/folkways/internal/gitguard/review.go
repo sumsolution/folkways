@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -67,11 +68,14 @@ func inboxSHAs(personal string) []string {
 	return shas
 }
 
+// shaLike is a full or abbreviated commit SHA, nothing git would read as another revision or an option.
+var shaLike = regexp.MustCompile(`^[0-9a-f]{7,40}$`)
+
 // coversHead reports whether a review of reviewed covers head in repo: reviewed (a full SHA or a prefix) is an
 // ancestor of head and every path changed between them, renames as delete plus add, matches one of skip
 // (doublestar globs; a malformed one matches nothing).
 func coversHead(repo, reviewed, head string, skip []string) bool {
-	if len(skip) == 0 || strings.HasPrefix(reviewed, "-") {
+	if len(skip) == 0 || !shaLike.MatchString(reviewed) {
 		return false
 	}
 	base, err := gitOut(repo, "rev-parse", "--verify", "--quiet", reviewed+"^{commit}")
@@ -81,11 +85,12 @@ func coversHead(repo, reviewed, head string, skip []string) bool {
 	if _, err := gitOut(repo, "merge-base", "--is-ancestor", base, head); err != nil {
 		return false
 	}
-	out, err := gitOut(repo, "diff", "--name-only", "--no-renames", "-z", base, head)
+	// Not gitOut: trimming would strip a leading space from the first path (" docs/x.go").
+	out, err := exec.Command("git", "-C", repo, "diff", "--name-only", "--no-renames", "--ignore-submodules=none", "-z", base, head).Output()
 	if err != nil {
 		return false
 	}
-	for _, p := range strings.Split(out, "\x00") {
+	for _, p := range strings.Split(string(out), "\x00") {
 		if p != "" && !slices.ContainsFunc(skip, func(g string) bool { return doublestar.MatchUnvalidated(g, p) }) {
 			return false
 		}

@@ -301,3 +301,20 @@ func TestInboxReviewOfAncestorCovers(t *testing.T) {
 		t.Errorf("an inbox review of an ancestor must cover docs-only commits, got %+v", got)
 	}
 }
+
+func TestLeadingSpaceDirIsNotDocs(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	commitFile(t, r.app, " docs/evil.go", "package evil\n")
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error(`a file under " docs/" is outside docs/** and needs a review`)
+	}
+}
+
+func TestReviewSHAMustBeAHash(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	commitFile(t, r.app, "docs/guide.md", "guide\n")
+	write(t, r.brain, "efforts/x/01-review.md", "---\nsha: HEAD~1\n---\n")
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error("a review sha that is a revision expression must not count")
+	}
+}
