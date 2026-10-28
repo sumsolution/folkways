@@ -36,7 +36,8 @@ personal paths against it.
 
 A direct push lands the session worktree on the default branch: `git fetch origin`, `git rebase
 origin/<default>`, `git push origin HEAD:<default>`. History stays linear. `push.brain` decides whether to
-ask first (default: no in a team repo, yes in a solo repo). `knowledge/` goes by PR; git-guard stops it reaching the default branch directly.
+ask first (default: no in a team repo, yes in a solo repo). `knowledge/` goes by PR unless `push.knowledge` is
+`direct` (the session context says which); git-guard enforces it.
 A solo repo's landing is the user's choice.
 
 ## Status docs

@@ -14,7 +14,7 @@
         "stdout": {
           "hookSpecificOutput": {
             "hookEventName": "SessionStart",
-            "additionalContext": "re:^folkways: follow the `start` skill for this session\\.\\n\\nfolkways config \\(from the session-start hook; skills use these values instead of reading the files\\):\\n- personal root: people/alex\\n- review trigger: pre-push\\n- push approval: brain never, app always\\n\\nfolkways\\.yaml:\\n```yaml\\n[^`]*name\\W+Example Team[^`]*```\\n\\n\\.local/me\\.yaml:\\n```yaml\\n[^`]*handle\\W+alex[^`]*```$"
+            "additionalContext": "re:^folkways: follow the `start` skill for this session\\.\\n\\nfolkways config \\(from the session-start hook; skills use these values instead of reading the files\\):\\n- personal root: people/alex\\n- review trigger: pre-push\\n- push approval: brain never, app always\\n- knowledge/ lands by: PR\\n\\nfolkways\\.yaml:\\n```yaml\\n[^`]*name\\W+Example Team[^`]*```\\n\\n\\.local/me\\.yaml:\\n```yaml\\n[^`]*handle\\W+alex[^`]*```$"
           }
         }
       }

@@ -20,7 +20,7 @@ import (
 // The unit cases the sync fixtures can't express (fixtures/sync/COVERAGE.md): failure injection, the
 // executable bit, and StaleOverlays. They use a synthetic bundle, as the TS tests' makePackage does.
 
-const fragment = `{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR:-.}\"/node_modules/.bin/folkways-hook session-start"}]}]},"permissions":{"ask":["Bash(git push:*)"]}}`
+const fragment = `{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR:-.}\"/node_modules/.bin/folkways-hook session-start"}]}]}}`
 
 func file(s string) *fstest.MapFile { return &fstest.MapFile{Data: []byte(s), Mode: 0o644} }
 
@@ -255,36 +255,16 @@ func TestStaleOverlays(t *testing.T) {
 	}
 }
 
-func TestSyncWritesThePushAskRuleOnlyWhenTheBrainAlwaysAsks(t *testing.T) {
-	dir := team(t) // folkways.yaml sets no push: the brain pushes without asking (ADR 0014)
-	if got := read(t, dir, ".claude/settings.json"); strings.Contains(got, "git push") {
-		t.Errorf("default: the push ask rule must be absent:\n%s", got)
-	}
-	write(t, dir, "folkways.yaml", "team: Example Team\npush:\n  brain: always\n")
-	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
-		t.Fatal(err)
-	}
-	if got := read(t, dir, ".claude/settings.json"); !strings.Contains(got, `"Bash(git push:*)"`) {
-		t.Errorf("push.brain always: the ask rule must be written:\n%s", got)
-	}
-	write(t, dir, "folkways.yaml", "team: Example Team\npush:\n  brain: default-branch\n")
-	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
-		t.Fatal(err)
-	}
-	got := read(t, dir, ".claude/settings.json")
-	if strings.Contains(got, "git push") || strings.Contains(got, "permissions") {
-		t.Errorf("push.brain default-branch: the rule (and the emptied permissions) must be removed:\n%s", got)
-	}
-}
-
-func TestSyncKeepsThePushAskRuleInASoloRepo(t *testing.T) {
-	dir := t.TempDir()
-	write(t, dir, "AGENTS.md", "@.folkways/instructions.md\n")
-	write(t, dir, "folkways.yaml", "mode: solo\n") // a solo repo's push.brain defaults to always
-	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
-		t.Fatal(err)
-	}
-	if got := read(t, dir, ".claude/settings.json"); !strings.Contains(got, `"Bash(git push:*)"`) {
-		t.Errorf("solo: the ask rule must be written:\n%s", got)
+func TestSyncRemovesThePushAskRule(t *testing.T) {
+	for _, yaml := range []string{"team: Example Team\npush:\n  brain: always\n", "mode: solo\n"} {
+		dir := team(t)
+		write(t, dir, "folkways.yaml", yaml)
+		write(t, dir, ".claude/settings.json", `{"permissions":{"ask":["Bash(git push:*)"]}}`)
+		if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
+			t.Fatal(err)
+		}
+		if got := read(t, dir, ".claude/settings.json"); strings.Contains(got, "git push") || strings.Contains(got, "permissions") {
+			t.Errorf("%q: git-guard asks, so the rule (and the emptied permissions) must be removed:\n%s", yaml, got)
+		}
 	}
 }

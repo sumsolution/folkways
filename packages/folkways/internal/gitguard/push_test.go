@@ -166,6 +166,23 @@ func TestSoloBrainKeepsKnowledgeAndAsks(t *testing.T) {
 	}
 }
 
+func TestKnowledgeLandingFromConfig(t *testing.T) {
+	r := newPushRepos(t)
+	commitFile(t, r.worktree, "knowledge/fact.md", "fact\n")
+	cfg := r.cfg()
+	cfg.Team.Push = map[string]string{"knowledge": "direct"}
+	cfg.Me.Push = map[string]string{"brain": "always"} // me.yaml loosens or tightens the ask, not the landing
+	if got := evaluate("git push origin HEAD:main", r.worktree, cfg); got.deny != "" || got.ask == "" {
+		t.Errorf("push.knowledge direct: want an ask and no deny, got %+v", got)
+	}
+	cfg.Team.Push = map[string]string{"knowledge": "pr"}
+	cfg.Team.Mode = "solo"
+	cfg.Me.Push = map[string]string{"knowledge": "direct"}
+	if got := evaluate("git push origin HEAD:main", r.worktree, cfg); !strings.Contains(got.deny, "knowledge/") {
+		t.Errorf("solo with push.knowledge pr, me.yaml direct: want a knowledge/ deny, got %+v", got)
+	}
+}
+
 func TestDefaultBranchFallsBackToMaster(t *testing.T) {
 	r := newPushRepos(t)
 	gitIn(t, r.worktree, "push", "-q", "origin", "HEAD:refs/heads/master")

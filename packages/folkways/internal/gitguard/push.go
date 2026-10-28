@@ -135,7 +135,8 @@ func isBrain(dir string, cfg team.Config) bool {
 }
 
 // checkPushVerdict is the push rule set (ADR 0014): outside the brain, the review gate; in the brain, no
-// knowledge/ change goes straight to the default branch; then push.brain or push.app decides whether to ask.
+// knowledge/ change goes straight to the default branch unless push.knowledge is direct; then push.brain or
+// push.app decides whether to ask.
 func checkPushVerdict(dir string, args []arg, cfg team.Config) verdict {
 	brain := isBrain(dir, cfg)
 	if !brain {
@@ -151,7 +152,7 @@ func checkPushVerdict(dir string, args []arg, cfg team.Config) verdict {
 			continue
 		}
 		toDefault = true
-		if brain && !cfg.Solo() { // a solo repo's knowledge/ lands where the person chooses
+		if brain && cfg.KnowledgeByPR() {
 			if reason := checkKnowledge(dir, t.remote, r[0], def); reason != "" {
 				return verdict{deny: reason}
 			}

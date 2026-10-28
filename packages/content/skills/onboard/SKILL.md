@@ -48,6 +48,7 @@ projects_dir: /Users/alex/projects     # absolute
 tool: claude                           # claude | copilot (default for `folkways run`)
 review:
   trigger: pre-push                    # optional; may only tighten folkways.yaml
+push: { brain: never, app: always }    # optional; overrides folkways.yaml push.brain / push.app either way
 models: {}                             # optional; overrides folkways.yaml models
 notifications: { slack_user: "@alex" } # optional
 ```

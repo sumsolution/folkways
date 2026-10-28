@@ -104,13 +104,16 @@ change them here and in the fixtures together.
   review. Reviews are looked up in the brain clone and in each of its worktrees (`git worktree list`). A repo nested inside it has its own common dir and is still gated.
 - `git push` approval ([ADR 0014](../../../docs/adr/0014-brain-pushes-without-asking.md)): `push.brain` in the brain
   repo and its worktrees, `push.app` elsewhere; `always`, `default-branch` or `never`. Defaults: `brain: never`,
-  `app: always`, and `brain: always` when `mode: solo`; `.local/me.yaml` `push` can tighten, not loosen. `always` prints an `ask` decision;
+  `app: always`, and `brain: always` when `mode: solo`; `.local/me.yaml` `push.brain` / `push.app` replace the team values,
+  stricter or looser. `always` prints an `ask` decision;
   `default-branch` asks when a destination is the remote's default branch (`refs/remotes/<remote>/HEAD`, else
   `master` when the remote has it and no `main`, else `main`), or isn't known (`--all`, `--mirror`, an unresolved word). The destination comes from the refspecs
   (`src:dst`, `+`, `refs/heads/`, a bare `HEAD` is the current branch), else the branch's upstream, else the
   current branch. A deny wins over an ask.
-- In a team brain repo (not `mode: solo`), a push to the default branch whose new commits (`<remote>/<default>..<src>`) change
-  `knowledge/` is denied: knowledge lands by PR. When the remote branch can't be read, it passes.
+- In the brain repo, with `push.knowledge: pr` (the default, `direct` when `mode: solo`), a push to the default branch
+  whose new commits (`<remote>/<default>..<src>`) change `knowledge/` is denied: knowledge lands by PR.
+  `push.knowledge` is read from `folkways.yaml` only; `.local/me.yaml` can't change it. When the remote branch can't
+  be read, it passes.
 - `checkout`, `switch`, `pull`, `reset`, `rebase` in a **main clone** under `projects_dir` (its `.git` is a
   directory): deny, and say to use a worktree. The folkways repo itself (top level = project dir, in either mode) is never denied. Worktrees (`.git` is a file), repos outside `projects_dir`,
   and other commands (`fetch`, `worktree add`) pass. No `.local/me.yaml`: no clone guard.

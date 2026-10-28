@@ -1,0 +1,43 @@
+{
+  "description": ".local/me.yaml push.brain: never loosens a team push.brain: always: the push passes unasked",
+  "env": {
+    "team": {
+      "push": {
+        "brain": "always"
+      }
+    },
+    "commits": [
+      {
+        "files": {
+          "state/now.md": "state\n"
+        },
+        "message": "docs(state): update"
+      }
+    ],
+    "me": {
+      "push": {
+        "brain": "never"
+      }
+    }
+  },
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git push -u origin HEAD",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "expect": {
+        "stdout": null
+      }
+    }
+  ]
+}

@@ -60,9 +60,14 @@ func configBlock(cfg team.Config) string {
 	if trigger == "" {
 		trigger = "none"
 	}
+	knowledge := "direct push"
+	if cfg.KnowledgeByPR() {
+		knowledge = "PR"
+	}
 	return "\n\nfolkways config (from the session-start hook; skills use these values instead of reading the files):\n" +
 		"- personal root: " + root + "\n- review trigger: " + trigger +
-		"\n- push approval: brain " + cfg.PushApproval("brain") + ", app " + cfg.PushApproval("app") + "\n\n" +
+		"\n- push approval: brain " + cfg.PushApproval("brain") + ", app " + cfg.PushApproval("app") +
+		"\n- knowledge/ lands by: " + knowledge + "\n\n" +
 		section(cfg.Dir, "folkways.yaml", "") + "\n\n" +
 		section(cfg.Dir, ".local/me.yaml", " Run the `"+skill.Name("onboard")+"` skill to create it.")
 }

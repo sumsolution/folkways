@@ -1,8 +1,5 @@
 {
   "disableAllHooks": false,
-  "permissions": {
-    "ask": ["Bash(git push:*)"]
-  },
   "hooks": {
     "SessionStart": [
       { "hooks": [{ "type": "command", "command": "command -v folkways >/dev/null 2>&1 || { echo 'folkways is not installed, so its hooks are off: https://github.com/sumsolution/folkways#install'; exit 0; }; folkways hook session-start" }] }
