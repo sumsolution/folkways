@@ -23,7 +23,10 @@ Set and setting matter: the team repo is where every session starts.
 | `.folkways/` | Framework files. `sync` owns them; don't edit | PR (upgrades) |
 | `.local/` | Machine-local config (`me.yaml`), never committed | — |
 
-Direct pushes are rebased and linear. Every push, direct or not, waits for the person's approval.
+Direct pushes are rebased and linear: a session works in its own worktree and pushes it to the default
+branch. `push.brain` in `folkways.yaml` decides whether that asks first (default: no); `push.app` does the
+same for project repos (default: yes). A person can set either one differently in `.local/me.yaml`. `knowledge/`
+changes go by PR unless the team sets `push.knowledge: direct` ([ADR 0014](../adr/0014-brain-pushes-without-asking.md)).
 
 ## Solo repos
 
@@ -103,8 +106,11 @@ A few things are **mores**: norms the team agrees are worth enforcing, so they'r
 hooks, not just instructions. They live in config (`folkways.yaml`, framework settings), which changes by
 PR, so an overlay can't loosen them.
 
-- Ask before every push. Built: a permission rule, enforced in Claude Code (whether Copilot CLI honors
-  `permissions.ask` is unverified).
+- Ask before a push, per `push.brain` and `push.app`. Built: `git-guard` asks (whether Copilot CLI honors
+  `ask` is unverified). A `Bash(git push:*)` ask rule in `.claude/settings.json`, which earlier versions
+  wrote, asks for every push whatever `push.*` says; delete it to let `push.*` decide.
+- `knowledge/` lands by PR, per `push.knowledge`. Built: `git-guard` denies a direct push of `knowledge/` to the
+  default branch; `.local/me.yaml` can't change it.
 - Framework files aren't edited. Built: `sync` checks their checksums.
 - Team overlay overrides apply. Built: `sync` compiles them in and fails on an unknown ID.
 - Commits follow the team's format. Built: `git-guard`.

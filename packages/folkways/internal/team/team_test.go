@@ -104,3 +104,49 @@ func TestPersonalRootTeam(t *testing.T) {
 		t.Error("an unsafe handle has no personal root")
 	}
 }
+
+func TestPushApproval(t *testing.T) {
+	cases := []struct{ kind, team, me, want string }{
+		{"brain", "", "", "never"}, // brain repos push without asking by default
+		{"app", "", "", "always"},  // app repos ask by default
+		{"brain", "always", "", "always"},
+		{"brain", "always", "never", "never"},                  // me can loosen
+		{"brain", "never", "default-branch", "default-branch"}, // me can tighten
+		{"app", "never", "", "never"},
+		{"app", "default-branch", "always", "always"},
+		{"app", "bogus", "", "always"}, // unknown values are ignored
+		{"brain", "", "bogus", "never"},
+		{"app", "", "never", "never"}, // me overrides the default too
+	}
+	for _, c := range cases {
+		var cfg Config
+		cfg.Team.Push = map[string]string{c.kind: c.team}
+		cfg.Me.Push = map[string]string{c.kind: c.me}
+		if got := cfg.PushApproval(c.kind); got != c.want {
+			t.Errorf("%s team=%q me=%q: got %q, want %q", c.kind, c.team, c.me, got, c.want)
+		}
+	}
+}
+
+func TestKnowledgeByPR(t *testing.T) {
+	cases := []struct {
+		mode, team, me string
+		want           bool
+	}{
+		{"", "", "", true},      // a team repo lands knowledge/ by PR
+		{"solo", "", "", false}, // a solo repo's landing is the person's choice
+		{"", "direct", "", false},
+		{"solo", "pr", "", true},
+		{"", "", "direct", true}, // me.yaml can't change it
+		{"", "bogus", "", true},
+	}
+	for _, c := range cases {
+		var cfg Config
+		cfg.Team.Mode = c.mode
+		cfg.Team.Push = map[string]string{"knowledge": c.team}
+		cfg.Me.Push = map[string]string{"knowledge": c.me}
+		if got := cfg.KnowledgeByPR(); got != c.want {
+			t.Errorf("mode=%q team=%q me=%q: got %v, want %v", c.mode, c.team, c.me, got, c.want)
+		}
+	}
+}

@@ -39,6 +39,13 @@ git:
 review:
   trigger: pre-push            # on-demand | after-commit | pre-push
 
+push:                          # ask before a push? always | default-branch | never (me.yaml may override either way;
+                               # a Bash(git push:*) ask rule in .claude/settings.json overrides both)
+  # brain: never               # this repo. Default: never in a team repo, always in a solo repo
+  # app: always                # project repos. Default: always
+  # knowledge: pr              # pr | direct: may knowledge/ go straight to the default branch? Default: pr in a team
+                               # repo, direct in a solo repo. Team only: me.yaml can't change it
+
 adr:
   targets: [repo]              # confluence and/or repo
   repo_path: docs/adr

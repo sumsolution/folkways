@@ -36,8 +36,8 @@ The session-start hook puts these values in the session context; read `folkways.
    logged in (`gh auth status`), each `kind: url` source is reachable. List what's missing and how to
    fix it; don't install anything without approval.
 8. **Run `folkways doctor`** from the team repo root and report its findings.
-9. **Commit `people/<handle>/`** and push on approval (`people/` goes straight to the default branch,
-   rebased).
+9. **Commit `people/<handle>/`** and push (`people/` goes straight to the default branch, rebased; ask first
+   only if `push.brain` says to).
 10. **Report** what's set up, what's missing, and the next step: run `start`.
 
 ## me.yaml {#me-yaml}
@@ -48,6 +48,7 @@ projects_dir: /Users/alex/projects     # absolute
 tool: claude                           # claude | copilot (default for `folkways run`)
 review:
   trigger: pre-push                    # optional; may only tighten folkways.yaml
+push: { brain: never, app: always }    # optional; overrides folkways.yaml push.brain / push.app either way
 models: {}                             # optional; overrides folkways.yaml models
 notifications: { slack_user: "@alex" } # optional
 ```

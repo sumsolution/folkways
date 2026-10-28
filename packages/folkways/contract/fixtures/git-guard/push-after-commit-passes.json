@@ -1,5 +1,5 @@
 {
-  "description": "Trigger after-commit does not gate pushes",
+  "description": "Trigger after-commit does not gate pushes; not denied, so push.app's default asks",
   "env": {
     "team": {
       "review": {
@@ -23,7 +23,11 @@
         "tool_use_id": "toolu_01"
       },
       "expect": {
-        "stdout": null
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
       }
     }
   ]

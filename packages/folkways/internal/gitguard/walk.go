@@ -22,6 +22,7 @@ type walker struct {
 	cfg    team.Config
 	res    resolver
 	reason string
+	ask    string // the first ask reason; a deny anywhere wins
 }
 
 // list walks statements in order. top is true where a `cd` is tracked: a top-level `&&` or `;` chain,
@@ -104,7 +105,11 @@ func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
 	case "pushd", "popd":
 		return unknown
 	case "git":
-		w.reason = w.git(c.Args[1:], c.Assigns, cur)
+		v := w.git(c.Args[1:], c.Assigns, cur)
+		w.reason = v.deny
+		if w.ask == "" {
+			w.ask = v.ask
+		}
 	}
 	return cur
 }
@@ -159,7 +164,7 @@ var gitOptWithArg = map[string]bool{"--git-dir": true, "--work-tree": true, "--n
 // git checks one `git [global options] <sub> args...` run in cur. The commit message check always runs.
 // The push and main-clone checks run only when the directory is known: `-C <resolvable>`, `-c` and the
 // flags above keep it known; any other global option, or a GIT_DIR/GIT_WORK_TREE prefix, makes it unknown.
-func (w *walker) git(words []*syntax.Word, assigns []*syntax.Assign, cur cwd) string {
+func (w *walker) git(words []*syntax.Word, assigns []*syntax.Assign, cur cwd) verdict {
 	args := make([]arg, len(words))
 	for i, word := range words {
 		args[i] = arg{w: word}
@@ -175,7 +180,7 @@ func (w *walker) git(words []*syntax.Word, assigns []*syntax.Assign, cur cwd) st
 		v := args[i].val
 		if !args[i].ok { // `-C"$D"` is still an option; an unresolvable subcommand is not checked
 			if !strings.HasPrefix(literalPrefix(args[i].w), "-") {
-				return ""
+				return verdict{}
 			}
 			cur = unknown
 			i++
@@ -209,20 +214,22 @@ func (w *walker) git(words []*syntax.Word, assigns []*syntax.Assign, cur cwd) st
 		}
 	}
 	if i >= len(args) {
-		return ""
+		return verdict{}
 	}
 	sub, rest := args[i].val, args[i+1:]
 	switch {
 	case sub == "commit":
-		return checkCommit(rest, w.cfg)
+		return verdict{deny: checkCommit(rest, w.cfg)}
+	case sub == "push" && !cur.known:
+		return unknownPush(w.cfg)
 	case !cur.known:
-		return ""
+		return verdict{}
 	case sub == "push":
-		return checkPush(cur.dir, w.cfg)
+		return checkPushVerdict(cur.dir, rest, w.cfg)
 	case mainGuard[sub]:
-		return checkMainClone(sub, cur.dir, w.cfg)
+		return verdict{deny: checkMainClone(sub, cur.dir, w.cfg)}
 	}
-	return ""
+	return verdict{}
 }
 
 // literalPrefix returns the text of the leading literal part of w ("" if it starts with anything else).

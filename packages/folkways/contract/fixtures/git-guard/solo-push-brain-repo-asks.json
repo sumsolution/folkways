@@ -1,0 +1,44 @@
+{
+  "description": "mode: solo: the brain repo itself pushes without a review; a solo repo's push.brain defaults to always, so it asks",
+  "env": {
+    "team": {
+      "mode": "solo"
+    },
+    "me": {
+      "handle": null
+    },
+    "commits": [
+      {
+        "files": {
+          "work/notes.md": "notes\n"
+        },
+        "message": "docs(work): notes"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "git push -u origin HEAD",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask",
+            "permissionDecisionReason": "re:push\\.brain is always"
+          }
+        }
+      }
+    }
+  ]
+}

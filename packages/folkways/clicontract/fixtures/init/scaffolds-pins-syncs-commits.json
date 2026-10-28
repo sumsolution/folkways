@@ -18,7 +18,7 @@
           "package.json": null,
           "pnpm-workspace.yaml": null,
           ".folkways/manifest.json": "re:^\\{\n  \"version\": \"${VERSION}\",",
-          ".claude/settings.json": "re:\"Bash\\(git push:\\*\\)\""
+          ".claude/settings.json": "re:^\\{\\n  \"hooks\": \\{\\n(?: {4,}[^\\n]*\\n)*  \\},\\n  \"disableAllHooks\": false\\n\\}\\n$"
         },
         "git": [
           {

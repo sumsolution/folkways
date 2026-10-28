@@ -22,8 +22,9 @@ type TeamYAML struct {
 		CommitPattern    string   `yaml:"commit_pattern"`
 		Scopes           []string `yaml:"scopes"`
 	} `yaml:"git"`
-	Hooks   map[string]bool `yaml:"hooks"` // a hook set to false is off; a missing key is on
-	Review  Review          `yaml:"review"`
+	Hooks   map[string]bool   `yaml:"hooks"` // a hook set to false is off; a missing key is on
+	Review  Review            `yaml:"review"`
+	Push    map[string]string `yaml:"push"` // brain | app → always | default-branch | never; knowledge → pr | direct (ADR 0014)
 	Handoff struct {
 		Bands []int `yaml:"bands"` // token thresholds for context-band
 	} `yaml:"handoff"`
@@ -31,9 +32,10 @@ type TeamYAML struct {
 
 // MeYAML is the part of .local/me.yaml the hooks read.
 type MeYAML struct {
-	Handle      string `yaml:"handle"`
-	ProjectsDir string `yaml:"projects_dir"`
-	Review      Review `yaml:"review"`
+	Handle      string            `yaml:"handle"`
+	ProjectsDir string            `yaml:"projects_dir"`
+	Review      Review            `yaml:"review"`
+	Push        map[string]string `yaml:"push"` // brain | app override folkways.yaml; knowledge is ignored
 }
 
 // Config is the loaded configuration of a team repo.
@@ -96,6 +98,41 @@ func (c Config) ReviewTrigger() string {
 		}
 	}
 	return best
+}
+
+// approvals are the known push approvals.
+var approvals = map[string]bool{"never": true, "default-branch": true, "always": true}
+
+// defaultApproval is the push approval when neither file sets one: a team brain repo pushes without asking,
+// app repos ask (ADR 0014).
+var defaultApproval = map[string]string{"brain": "never", "app": "always"}
+
+// PushApproval is the effective push approval for kind ("brain" or "app"): .local/me.yaml, else folkways.yaml,
+// else the default. A person may set it either way; only the knowledge/ landing is the team's alone.
+func (c Config) PushApproval(kind string) string {
+	if m := c.Me.Push[kind]; approvals[m] {
+		return m
+	}
+	if t := c.Team.Push[kind]; approvals[t] {
+		return t
+	}
+	if kind == "brain" && c.Solo() {
+		return "always" // a solo repo's landing is the person's choice: ask
+	}
+	return defaultApproval[kind]
+}
+
+// KnowledgeByPR reports whether a brain push to the default branch that changes knowledge/ is denied:
+// folkways.yaml push.knowledge `pr` (the team default) or `direct` (the solo default). .local/me.yaml can't
+// change it.
+func (c Config) KnowledgeByPR() bool {
+	switch c.Team.Push["knowledge"] {
+	case "pr":
+		return true
+	case "direct":
+		return false
+	}
+	return !c.Solo()
 }
 
 // HookEnabled reports whether folkways.yaml leaves the hook on: only an explicit `false` turns it off.

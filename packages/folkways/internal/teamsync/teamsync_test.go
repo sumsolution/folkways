@@ -20,7 +20,7 @@ import (
 // The unit cases the sync fixtures can't express (fixtures/sync/COVERAGE.md): failure injection, the
 // executable bit, and StaleOverlays. They use a synthetic bundle, as the TS tests' makePackage does.
 
-const fragment = `{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR:-.}\"/node_modules/.bin/folkways-hook session-start"}]}]},"permissions":{"ask":["Bash(git push:*)"]}}`
+const fragment = `{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"\"${CLAUDE_PROJECT_DIR:-.}\"/node_modules/.bin/folkways-hook session-start"}]}]}}`
 
 func file(s string) *fstest.MapFile { return &fstest.MapFile{Data: []byte(s), Mode: 0o644} }
 
@@ -252,5 +252,16 @@ func TestStaleOverlays(t *testing.T) {
 	}
 	if stale, err := StaleOverlays(dir, m); err != nil || len(stale) != 1 || stale[0] != "overlays/start/OVERLAY.md" {
 		t.Fatalf("after removal: %v, %v", stale, err)
+	}
+}
+
+func TestSyncKeepsATeamPushAskRule(t *testing.T) {
+	dir := team(t) // the framework no longer writes it (ADR 0014); a team's own rule stays
+	write(t, dir, ".claude/settings.json", `{"permissions":{"ask":["Bash(git push:*)"]}}`)
+	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(t, dir, ".claude/settings.json"); !strings.Contains(got, `"Bash(git push:*)"`) {
+		t.Errorf("sync must keep the team's push ask rule:\n%s", got)
 	}
 }

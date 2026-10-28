@@ -40,7 +40,6 @@ Rebuild after changing skills, instructions or hooks; the next session picks it 
 
 - **Overlays** aren't applied. Team overlays in `overlays/` need `folkways sync` to compile them in, and
   personal overlays no longer exist, so a solo repo has no overlays until the Go CLI.
-- **The push ask rule** isn't set: plugins can't add permission rules.
 - **Synced team repos** (with `.folkways/manifest.json`) are left alone: their own settings run the hooks.
 - **Hooks without a team repo** read no `folkways.yaml` or `me.yaml`. `git-guard` still denies commits that
   aren't Angular `type(scope): subject`; `precompact` writes `.local/precompact.log` into the repo;

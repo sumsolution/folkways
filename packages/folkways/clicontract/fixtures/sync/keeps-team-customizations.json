@@ -37,7 +37,7 @@
           "AGENTS.md": "# Example Team\n\n@.folkways/instructions.md\n\nTeam footer.\n",
           "overlays/start/OVERLAY.md": "team overlay\n",
           ".claude/skills/team-skill/SKILL.md": "team skill\n",
-          ".claude/settings.json": "re:(?s)\"permissions\": \\{\\s*\"allow\": \\[\\s*\"Bash\\(ls:\\*\\)\"\\s*\\],\\s*\"ask\": \\[\\s*\"Bash\\(git push:\\*\\)\"\\s*\\]\\s*\\}"
+          ".claude/settings.json": "re:(?s)\"permissions\": \\{\\s*\"allow\": \\[\\s*\"Bash\\(ls:\\*\\)\"\\s*\\]\\s*\\}"
         }
       }
     }

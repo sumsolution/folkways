@@ -1,20 +1,24 @@
 {
-  "description": "mode: solo: the brain repo itself pushes without a review",
+  "description": ".local/me.yaml push.brain: never loosens a team push.brain: always: the push passes unasked",
   "env": {
     "team": {
-      "mode": "solo"
-    },
-    "me": {
-      "handle": null
+      "push": {
+        "brain": "always"
+      }
     },
     "commits": [
       {
         "files": {
-          "work/notes.md": "notes\n"
+          "state/now.md": "state\n"
         },
-        "message": "docs(work): notes"
+        "message": "docs(state): update"
       }
-    ]
+    ],
+    "me": {
+      "push": {
+        "brain": "never"
+      }
+    }
   },
   "steps": [
     {

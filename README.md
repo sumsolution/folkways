@@ -31,9 +31,9 @@ just files in a git repo your team already knows how to review.
 - **Upgrades are PRs.** `folkways upgrade <version>` makes a branch, syncs and commits; run it with
   that version installed. You
   read the diff like any other change.
-- **A few rules have teeth.** Pushing asks first (a permission rule, built; Copilot CLI support unverified).
-  Commit format, the fresh-process review gate and "don't touch my main clone" are enforced by the
-  `git-guard` hook (built; the `folkways review` command that writes reviews is coming soon).
+- **A few rules have teeth.** The `git-guard` hook asks before a push per `push.brain` / `push.app` and keeps
+  `knowledge/` off the default branch (built; Copilot CLI support for `ask` unverified). Commit format, the
+  fresh-process review gate and "don't touch my main clone" are enforced by the same hook (built; the `folkways review` command that writes reviews is coming soon).
 
 More: [How it works](docs/guide/how-it-works.md).
 
