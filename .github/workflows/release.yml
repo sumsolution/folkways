@@ -50,6 +50,8 @@ jobs:
           want=$(jq -r '."."' .release-please-manifest.json)
           base=${TAG#v}
           base=${base%%-*}
+          # A release candidate comes before its release PR, so the manifest still has the previous version.
+          case "$TAG" in *-*) echo "release candidate; the manifest has $want"; exit 0 ;; esac
           if [ "$base" != "$want" ]; then
             echo "::error::tag $TAG doesn't match .release-please-manifest.json ($want); tag the merged release PR's commit"
             exit 1

@@ -69,8 +69,9 @@ From the repo root:
   `packages/folkways/CHANGELOG.md` and `.release-please-manifest.json`. Merging it creates the `v<version>` tag and a
   draft release; `release.yml` builds, smoke-tests, and publishes into that draft after approval in the `release`
   environment. Edit the release PR to fix notes; `Release-As: <version>` in a commit body forces a version. A
-  prerelease tag `v<version>-rc.<n>` is pushed by hand (its notes then say so); a final one only if release-please
-  fails to tag a merged release PR.
+  prerelease tag `v<version>-rc.<n>` is pushed by hand on `main` before the release PR merges (its notes then say
+  so; `release.yml` skips the manifest check for it); a final one only if release-please fails to tag a merged
+  release PR.
 - **The Claude Code plugin is generated.** Its skills, instructions and `hooks.json` come from `packages/content/`
   at build time; edit them there. The binary embeds the content, so a `feat(content)` or `fix(content)` change
   reaches team repos in the next release.
