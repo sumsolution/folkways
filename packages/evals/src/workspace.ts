@@ -24,9 +24,19 @@ function git(cwd: string, ...args: string[]): string {
 /** The ref where the Go CLI got `init` (#58); arms need it or later. */
 const FIRST_GO_INIT = '141a6f4';
 
-/** Builds the Go CLI in `root` (a checkout of this repo) to `out`, with the version changesets keep. */
+/**
+ * The CLI's version in `root`: the release-please manifest (ADR 0013), else `packages/folkways/package.json` for refs
+ * from before it.
+ */
+function cliVersion(root: string): string {
+  const manifest = join(root, '.release-please-manifest.json');
+  if (existsSync(manifest)) return (JSON.parse(readFileSync(manifest, 'utf8')) as { '.': string })['.'];
+  return (JSON.parse(readFileSync(join(root, 'packages/folkways/package.json'), 'utf8')) as { version: string }).version;
+}
+
+/** Builds the Go CLI in `root` (a checkout of this repo) to `out`, with its version. */
 function buildCli(root: string, out: string): void {
-  const { version } = JSON.parse(readFileSync(join(root, 'packages/folkways/package.json'), 'utf8')) as { version: string };
+  const version = cliVersion(root);
   execFileSync('go', ['build', '-ldflags', `-X main.version=${version}`, '-o', out, './packages/folkways/cmd/folkways'], {
     cwd: root,
     stdio: ['ignore', 'pipe', 'pipe'],

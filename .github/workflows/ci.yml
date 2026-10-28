@@ -58,6 +58,7 @@ jobs:
               - '.claude-plugin/**'
             shared:
               - 'package.json'
+              - '.release-please-manifest.json'   # the CLI's version, read by the CLI contract suite
               - 'pnpm-lock.yaml'
               - 'pnpm-workspace.yaml'
               - 'tsconfig.base.json'
@@ -113,7 +114,7 @@ jobs:
         working-directory: packages/folkways
         run: |
           go build -o bin/folkways-hook ./cmd/folkways-hook
-          go build -ldflags "-X main.version=$(node -p "require('./package.json').version")" -o bin/folkways ./cmd/folkways
+          go build -ldflags "-X main.version=$(jq -r '."."' ../../.release-please-manifest.json)" -o bin/folkways ./cmd/folkways
       - name: Go vet and tests, whole module (includes the CLI contract suite against a fresh build)
         run: go vet ./... && go test ./...
       - name: Contract suite against folkways-hook
