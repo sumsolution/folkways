@@ -10,11 +10,11 @@
 
 ## Issue
 
-Sessions can now start in an app repo or in the team repo (app-repo-first direction, row 1). Every effort,
+Sessions can now start in an app repo or in the team repo (a direction decided separately; its ADR is to come). Every effort,
 review and inbox path the skills write is still relative to the team repo, and the pre-push review gate
 looks for reviews only in team-repo checkouts. A session that starts in an app repo then has to reach a second
-repo for every status update and every review. Agents on GitHub (the cloud agent and code review) can't see that
-repo at all. Where should efforts, reviews and personal notes live when work starts in an app repo?
+repo for every status update and every review. Agents on GitHub (the cloud agent and code review) work from the
+app repo, so they likely can't see that repo at all (inferred). Where should efforts, reviews and personal notes live when work starts in an app repo?
 
 ## Relevant context
 
@@ -34,9 +34,11 @@ repo at all. Where should efforts, reviews and personal notes live when work sta
 - Specs and plans are already settled as numbered topic files in the effort folder, wherever the effort lives
   (team repo `efforts/lifecycle-skills/02` item 9).
 - Prior art: spec-kit keeps `specs/<branch-name>/` on the feature branch and merges it with the code
-  ([spec-driven.md][spec-kit]). Kiro writes specs into `.kiro/` in the project.
+  ([spec-driven.md][spec-kit]). Kiro writes per-feature specs into the project ([Kiro specs][kiro]); its docs
+  don't say whether to commit them.
 - Copilot code review reads `CLAUDE.md`, `AGENTS.md`, `REVIEW.md` and `.claude/skills` from the repo (team
-  repo `efforts/app-repo-first/23`). Files in the app repo are what GitHub's agents can see.
+  repo `efforts/app-repo-first/23`). Files in the app repo are likely what GitHub's agents can see; that they
+  read an effort folder is inferred, not probed.
 - `.folkways/` is owned by the framework (sync's manifest tracks it), so team artifacts can't go there.
 - Closed efforts are indexed in the team repo's `state/closed-efforts.md` ([0005][adr-0005]).
 
@@ -56,8 +58,9 @@ Option 2: split by scope. We will keep each artifact next to the thing it descri
   resolves it.
 - A child effort's `00-STATUS.md` header has a `parent:` line. The cross-repo effort lists its children by
   repo and path. If a single-repo effort grows to span repos, it moves to the team repo and leaves a pointer.
-- The gate: `review.skip_paths` defaults to `["docs/**", "efforts/**/*.md"]`. git-guard also looks for
-  reviews in the pushing repo's own effort root, not only in brain checkouts. A team that sets `skip_paths`
+- The gate: `review.skip_paths` defaults to `["docs/**", "<efforts.root>/**/*.md"]`. git-guard also looks for
+  reviews in the pushing repo's `efforts.root`, not only in brain checkouts. Both follow `efforts.root`, so a
+  custom root keeps the rule. A team that sets `skip_paths`
   replaces the default, so it adds the effort glob itself.
 
 Why: work on one repo is planned and reviewed where the code is. It merges with the code, and GitHub's agents
@@ -65,11 +68,11 @@ and human reviewers see it in the PR. Today's gate already has the rule a commit
 the lookup in the pushing repo. Status updates going in with the next PR avoid direct pushes to app-repo
 `main`, which `push.app: always` ([0014][adr-0014]) and branch protection work against.
 
-Non-goals: how the team repo syncs into app repos (draft 0009); the path resolver's design; the inbound hub
-scan; `state/` and `knowledge/`, which stay in the team repo; where sessions start (row 1, its own ADR).
+Non-goals: how the team repo syncs into app repos (draft 0009); the path resolver's design; a hub scan of app
+repos; `state/` and `knowledge/`, which stay in the team repo; where sessions start (its own ADR).
 
 Size: git-guard lookup about 20–40 lines plus tests; the `skip_paths` default one line. Skill path changes
-follow the resolver (lifecycle-skills 06) and are sized there. (unconfirmed)
+follow the path resolver and are sized with it. (unconfirmed)
 
 ## Options considered
 
@@ -89,16 +92,18 @@ PR comments and gitignored files for reviews.
 
 - Easier: a session in an app repo plans, reviews and hands off without a second clone. Cloud agents and
   reviewers read the plan from the PR.
-- Harder: `status` roll-ups. Until the hub scan (phase 1, I2) exists, they read local clones' `origin/<default>`
+- Harder: `status` roll-ups. Until a hub scan of app repos exists, they read local clones' `origin/<default>`
   and see only merged efforts.
 - Status and review files add churn to app-repo PR diffs and history. Spec-kit accepts the same cost.
 - A rebase or squash before a push drops the reviewed commit from HEAD's ancestry, so the review stops
   counting. This is unchanged from today.
 - A `.md` symlink under `efforts/` passes the gate. A link is not code, so this is accepted.
 - Edits to another effort's Markdown also pass the gate. Accepted, since it's Markdown only.
+- The new `skip_paths` default applies to every repo that never set `skip_paths`: Markdown under the effort root
+  no longer needs a fresh review after a reviewed commit. Repos that set `skip_paths` are unchanged.
 - Follow-on work:
   - git-guard: search the pushing repo's effort root and add the `skip_paths` default. Ticket to draft.
-  - Effort-root config key and resolver (lifecycle-skills 06).
+  - The `efforts.root` key and the path resolver.
   - The start, review, handoff and session-close skills write to the resolved paths.
   - Closing: `state/closed-efforts.md` indexes app-repo efforts, via the hub scan or `session-close`.
 - Revisit if status churn makes app-repo PRs hard to review, or if roll-ups keep missing branch-only efforts
@@ -122,6 +127,7 @@ PR comments and gitignored files for reviews.
 [c-review-go]: https://github.com/sumsolution/folkways/blob/a0fc9ff/packages/folkways/internal/gitguard/review.go
 [c-team]: https://github.com/sumsolution/folkways/blob/a0fc9ff/packages/folkways/internal/team/team.go#L106-L111
 [spec-kit]: https://github.com/github/spec-kit/blob/222a973f8b8794366680c043fb935a31f71902af/spec-driven.md
+[kiro]: https://kiro.dev/docs/specs/
 [adr-0005]: 0005-closing-efforts.md
 [adr-0006]: 0006-app-repo-files.md
 [adr-0014]: 0014-brain-pushes-without-asking.md
