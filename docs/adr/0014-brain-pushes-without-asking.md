@@ -1,12 +1,12 @@
-# 0014. Should brain repo sessions push to the default branch without asking?
+# 0014. Brain repo sessions push without asking; `folkways.yaml` sets when a push asks
 
 | | |
 |---|---|
-| Status | proposed |
+| Status | accepted (Summer Jordan, 2026-10-27) |
 | Date | 2026-10-27 |
 | Owner | Summer Jordan |
 | Reviewers | Summer Jordan (one-person team, `adr.reviewers.min: 0`) |
-| Review window | until Summer's review of the PR that adds this record |
+| Review window | until Summer's review of the PR that adds this record, done 2026-10-27 |
 | Amends | [0001](0001-overlay-enforcement.md) M2 ("Push needs the user's approval") |
 
 ## Issue
