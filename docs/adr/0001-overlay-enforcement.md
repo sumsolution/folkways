@@ -159,3 +159,9 @@ their own user-level instructions, which already sit below the team's. So:
   have no overlays until the Go CLI brings compile to the plugin.
 - The eval in [07 §6](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/overlay-enforcement/07-research-overlay-enforcement.md#6-eval-does-the-model-keep-the-team-rule)
   stays as the record of why the precedence text mattered; its personal arm is historical.
+
+**Update (2026-10-28): M3 covers docs-only commits.** A review now covers HEAD when it names HEAD, or an
+ancestor of HEAD with every path changed since matching `folkways.yaml` `review.skip_paths` (globs, default
+`docs/**`, `[]` for exact HEAD only). Renames count as delete plus add. `.local/me.yaml` can't set it, so M3 stays
+a team rule. Docs edits after review cost a fresh review run each push, with no code to review
+([folkways#75](https://github.com/sumsolution/folkways/issues/75)).

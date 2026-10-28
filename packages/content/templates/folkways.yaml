@@ -38,6 +38,7 @@ git:
 
 review:
   trigger: pre-push            # on-demand | after-commit | pre-push
+  # skip_paths: ["docs/**"]    # pre-push: a review of an ancestor of HEAD covers changes only here; [] = none
 
 push:                          # ask before a push? always | default-branch | never (me.yaml may override either way;
                                # a Bash(git push:*) ask rule in .claude/settings.json overrides both)

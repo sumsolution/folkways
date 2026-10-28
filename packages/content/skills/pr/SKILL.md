@@ -20,9 +20,10 @@ The session-start hook puts these values in the session context; read `folkways.
 
 1. **Check the branch.** Not the default branch; name follows `git.branch_pattern`; working tree clean.
    Uncommitted changes go through the `commit` skill first.
-2. **Check the review gate.** A fresh-process review must cover the exact HEAD SHA: a file
+2. **Check the review gate.** A fresh-process review must cover HEAD: a file
    `NN-review-<sha7>.md` in the effort (or `<YYYY-MM-DD>-review-<sha7>.md` in `<personal root>/inbox/`) whose frontmatter `sha` equals
-   `git rev-parse HEAD`. If there is none, or it covers an older SHA, run
+   `git rev-parse HEAD`, or an ancestor of HEAD when every path changed since matches `review.skip_paths`
+   (default `docs/**`; git-guard checks this). If there is none, run
    `folkways review --repo <worktree> --effort <effort>` from the team repo root and
    wait for it. This holds for every trigger setting; the trigger only decides when the review runs
    on its own. In a solo repo there's no CLI: run the `review` skill in a fresh subagent given only the
@@ -41,7 +42,7 @@ The session-start hook puts these values in the session context; read `folkways.
    reviewers only if the user agrees; an @mention notifies immediately.
 
 Updating an existing PR: same gate. After new commits, the review must cover the new HEAD before you
-push again.
+push again; commits that only touch `review.skip_paths` need no new review.
 
 ## Acting on review feedback {#feedback}
 

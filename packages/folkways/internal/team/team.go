@@ -11,7 +11,8 @@ import (
 
 // Review is the review section of folkways.yaml and me.yaml.
 type Review struct {
-	Trigger string `yaml:"trigger"`
+	Trigger   string   `yaml:"trigger"`
+	SkipPaths []string `yaml:"skip_paths"` // folkways.yaml only; ignored in me.yaml
 }
 
 // TeamYAML is the part of folkways.yaml the hooks read.
@@ -98,6 +99,15 @@ func (c Config) ReviewTrigger() string {
 		}
 	}
 	return best
+}
+
+// ReviewSkipPaths are the path globs whose changes don't need a new review under pre-push: folkways.yaml
+// review.skip_paths, else docs/**. An empty list means every change does. .local/me.yaml can't change it.
+func (c Config) ReviewSkipPaths() []string {
+	if c.Team.Review.SkipPaths == nil {
+		return []string{"docs/**"}
+	}
+	return c.Team.Review.SkipPaths
 }
 
 // approvals are the known push approvals.

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
 
@@ -140,6 +141,32 @@ func TestHasReviewSoloRoot(t *testing.T) {
 		cfg.Dir, cfg.Team.Mode = dir, "solo" // no handle: solo needs none
 		if got := hasReview(dir, cfg.PersonalRoot(), head); got != c.want {
 			t.Errorf("%s: hasReview = %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+// TestSkipPathGlobs pins the doublestar behaviour review.skip_paths relies on.
+func TestSkipPathGlobs(t *testing.T) {
+	cases := []struct {
+		pattern, path string
+		want          bool
+	}{
+		{"docs/**", "docs/a.md", true},
+		{"docs/**", "docs/adr/0001.md", true},
+		{"docs/**", "docs", true}, // the directory itself; git diff lists only files
+		{"docs/**", "packages/docs/a.md", false},
+		{"**/*.md", "README.md", true},
+		{"**/*.md", "a/b/c.md", true},
+		{"**/*.md", "a/b/c.go", false},
+		{"*.md", "a/b.md", false},
+		{"docs/*.md", "docs/a.md", true},
+		{"docs/*.md", "docs/adr/a.md", false},
+		{"**", "anything/at/all", true},
+		{"[", "[", false}, // a bad pattern matches nothing
+	}
+	for _, c := range cases {
+		if got := doublestar.MatchUnvalidated(c.pattern, c.path); got != c.want {
+			t.Errorf("Match(%q, %q) = %v, want %v", c.pattern, c.path, got, c.want)
 		}
 	}
 }
