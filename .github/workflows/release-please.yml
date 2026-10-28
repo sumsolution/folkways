@@ -1,0 +1,40 @@
+name: release-please
+
+# Keeps one release PR open from the conventional commits on main since the last release (ADR 0013; config in
+# release-please-config.json, version in .release-please-manifest.json). Merging that PR makes this create the
+# v<version> tag and a draft GitHub release; the tag starts release.yml, which builds, waits for approval in the
+# `release` environment and publishes into that draft.
+# It uses the tap App, not the workflow token: a tag or PR made with GITHUB_TOKEN starts no workflows (neither
+# release.yml nor ci on the release PR), and the `release tags` ruleset lets only the App and admins create v* tags.
+# The App needs Contents and Pull requests: write; its credentials are in the `tag` environment (main only).
+# Prerelease tags (v<version>-rc.<n>) stay manual.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Queued, never cancelled: a cancelled run could stop between the tag and the release. A later run redoes the work.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: tag
+    steps:
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app
+        with:
+          client-id: ${{ vars.TAP_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TAP_APP_PRIVATE_KEY }}
+          repositories: folkways
+          permission-contents: write
+          permission-pull-requests: write
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app.outputs.token }}

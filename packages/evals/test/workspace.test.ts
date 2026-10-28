@@ -11,7 +11,7 @@ const scratch = () => mkdtempSync(join(tmpdir(), 'evals-ws-'));
 describe('armCli', () => {
   it('builds the working tree CLI for WORKTREE', () => {
     const cli = armCli(repoRoot, WORKTREE, scratch());
-    const { version } = JSON.parse(readFileSync(join(repoRoot, 'packages/folkways/package.json'), 'utf8'));
+    const version = JSON.parse(readFileSync(join(repoRoot, '.release-please-manifest.json'), 'utf8'))['.'];
     expect(execFileSync(cli, ['version'], { encoding: 'utf8' })).toBe(`${version}\n`);
   });
 

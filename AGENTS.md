@@ -11,7 +11,7 @@ A pnpm workspace ([ADR 0003](docs/adr/0003-repo-layout.md)). Each package owns i
 |---|---|
 | `packages/content/` | `@folkways/content` (private): the framework's skills, instructions, prompts, settings fragment, workflows and init templates. `content.go` embeds it in the `folkways` binary; the plugin distributes it too |
 | `packages/content/templates/` | One-time scaffold for `init`. `dot-x` becomes `.x`; `name.tmpl` becomes `name` |
-| `go.mod`, `packages/folkways/` | The Go module (repo root, `github.com/sumsolution/folkways`). `packages/folkways` is `@folkways/hooks` (private); its `package.json` holds the CLI's version. `cmd/folkways` is the CLI (ADR 0011), with `folkways hook <name>`; `cmd/folkways-hook` is the hook binary the plugin bundles (ADR 0002) until the plugin is removed |
+| `go.mod`, `packages/folkways/` | The Go module (repo root, `github.com/sumsolution/folkways`). `packages/folkways` is `@folkways/hooks` (private); `.release-please-manifest.json` holds the CLI's version (ADR 0013). `cmd/folkways` is the CLI (ADR 0011), with `folkways hook <name>`; `cmd/folkways-hook` is the hook binary the plugin bundles (ADR 0002) until the plugin is removed |
 | `packages/folkways/contract/` | Black-box hook contract suite: fixtures, rules, and the Go runner (`*_test.go`, run by `go test`) |
 | `packages/folkways/clicontract/` | Black-box CLI contract suite (Go, `go test`): fixtures pinning the Go CLI (ADR 0011) |
 | `packages/claude-plugin/` | `@folkways/claude-plugin`: builds the Claude Code plugin into `dist/` from `packages/content/` and the hook binaries. The root `.claude-plugin/marketplace.json` installs it from npm |
@@ -39,7 +39,6 @@ From the repo root:
 | `cd packages/folkways && go test -count=1 ./clicontract/` | the CLI contract suite against a fresh Go build; set `FOLKWAYS_CLI_CMD` to run it against another build |
 | `go run ./packages/folkways/cmd/folkways <command>` | run the CLI from source |
 | `node packages/evals/src/cli.ts run packages/evals/suites/<suite> --dry-run` | plan a behavior eval; drop `--dry-run` to run it (model calls on your account; needs Go; see `packages/evals/README.md`) |
-| `pnpm changeset` | record a change for the next release of the packages it touches |
 | `goreleaser release --snapshot --clean --skip=publish` | build the release archives, `checksums.txt` and the formula into `dist/` (GoReleaser v2, the version `release.yml` pins) |
 | `sh scripts/smoke-release.sh dist` | install the archive for this platform from `dist/` with `install.sh` and smoke-test it, with the hook contract suite when Go is on `PATH` |
 
@@ -62,16 +61,20 @@ From the repo root:
   `docs`, `test`, `build`, `research`). Squash PRs.
 - **Tests live with their package:** TypeScript in `packages/<pkg>/test/`, Go as `*_test.go`
   beside the code. A package never imports another's source.
-- **Versions are per package** (changesets, ADR 0003). A PR that changes a package adds a changeset
-  (`pnpm changeset`); docs, research, CI-only and `packages/evals` changes don't need one.
-- **Releasing `folkways`:** `pnpm changeset version` in a PR; merge it. `tag.yml` tags that commit `v<version>`
-  (the `packages/folkways/package.json` version); a prerelease tag `v<version>-rc.<n>` is pushed by hand. `release.yml`
-  builds, smoke-tests, and publishes after approval in the `release` environment. A prerelease tag may come before
-  `changeset version` (its notes then say so); a final one needs its CHANGELOG section. Never run `changeset tag`.
+- **Versions come from commits** (release-please, ADR 0013). On `main`, `feat` and `fix` (and breaking changes) in
+  PR titles decide the next `folkways` version; below 1.0 a breaking change is a minor bump. `packages/evals` is
+  excluded. PR titles become the release notes, so write them for users. A paragraph in a PR body that starts with a
+  type (`feat:`, `fix:` …) also becomes an entry and can raise the bump: don't start one that way unless you mean it.
+- **Releasing `folkways`:** `release-please.yml` keeps a release PR open (`build: release folkways <version>`) with
+  `packages/folkways/CHANGELOG.md` and `.release-please-manifest.json`. Merging it creates the `v<version>` tag and a
+  draft release; `release.yml` builds, smoke-tests, and publishes into that draft after approval in the `release`
+  environment. Edit the release PR to fix notes; `Release-As: <version>` in a commit body forces a version. A
+  prerelease tag `v<version>-rc.<n>` is pushed by hand on `main` before the release PR merges (its notes then say
+  so; `release.yml` skips the manifest check for it); a final one only if release-please fails to tag a merged
+  release PR.
 - **The Claude Code plugin is generated.** Its skills, instructions and `hooks.json` come from `packages/content/`
-  at build time; edit them there. A content change that should reach team repos needs a `@folkways/hooks`
-  changeset (the binary embeds the content), and one that should reach plugin users a `@folkways/claude-plugin`
-  changeset too.
+  at build time; edit them there. The binary embeds the content, so a `feat(content)` or `fix(content)` change
+  reaches team repos in the next release.
 - **Hook renames, removals and event changes** are major bumps of `@folkways/hooks`.
 - **CI** runs only the jobs for the packages a change touches; the `ci` job is the required check. A new
   package gets a filter and jobs in `.github/workflows/ci.yml`.
