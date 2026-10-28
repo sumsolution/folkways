@@ -217,3 +217,87 @@ func TestWorktreeReviewStaysInThePersonsFolder(t *testing.T) {
 		t.Error("another person's inbox review must not count")
 	}
 }
+
+// skipRepos is an app repo with a reviewed commit R (a review of it in the brain repo's efforts/) and a
+// pre-push config with the default skip paths.
+func skipRepos(t *testing.T) (pushRepos, team.Config, string) {
+	t.Helper()
+	r := newPushRepos(t)
+	commitFile(t, r.app, "main.go", "package main\n")
+	reviewed := gitIn(t, r.app, "rev-parse", "HEAD")
+	write(t, r.brain, "efforts/x/01-review.md", "---\nsha: "+reviewed+"\n---\n")
+	cfg := r.cfg()
+	cfg.Team.Review.Trigger = "pre-push"
+	return r, cfg, reviewed
+}
+
+func TestReviewOfAncestorCoversSkipPathChanges(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	commitFile(t, r.app, "docs/adr/0001.md", "status\n")
+	commitFile(t, r.app, "docs/guide.md", "guide\n")
+	if got := evaluate("git push", r.app, cfg); got.deny != "" {
+		t.Errorf("docs-only commits after a reviewed commit must pass, got %+v", got)
+	}
+}
+
+func TestReviewOfAncestorDoesNotCoverOtherChanges(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	commitFile(t, r.app, "docs/guide.md", "guide\n")
+	commitFile(t, r.app, "README.md", "readme\n")
+	if got := evaluate("git push", r.app, cfg); !strings.Contains(got.deny, "no review of HEAD") {
+		t.Errorf("a change outside the skip paths needs a review, got %+v", got)
+	}
+}
+
+func TestRenameIntoSkipPathsNeedsReview(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	if err := os.MkdirAll(filepath.Join(r.app, "docs"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	gitIn(t, r.app, "mv", "main.go", "docs/main.go")
+	gitIn(t, r.app, "commit", "-q", "-m", "docs: move")
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error("a rename from outside the skip paths must need a review")
+	}
+}
+
+func TestReviewOfNonAncestorDoesNotCover(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	gitIn(t, r.app, "reset", "-q", "--hard", "HEAD~1") // as after a rebase that dropped the reviewed commit
+	commitFile(t, r.app, "docs/guide.md", "guide\n")
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error("a review of a commit that is not an ancestor of HEAD must not count")
+	}
+}
+
+func TestEmptySkipPathsNeedsExactReview(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	commitFile(t, r.app, "docs/guide.md", "guide\n")
+	cfg.Team.Review.SkipPaths = []string{}
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error("review.skip_paths: [] must keep the exact-HEAD rule")
+	}
+}
+
+func TestMeCannotWidenSkipPaths(t *testing.T) {
+	r, cfg, _ := skipRepos(t)
+	commitFile(t, r.app, "README.md", "readme\n")
+	cfg.Me.Review.SkipPaths = []string{"**"}
+	if got := evaluate("git push", r.app, cfg); got.deny == "" {
+		t.Error("me.yaml review.skip_paths must be ignored")
+	}
+}
+
+func TestInboxReviewOfAncestorCovers(t *testing.T) {
+	r := newPushRepos(t)
+	commitFile(t, r.app, "main.go", "package main\n")
+	reviewed := gitIn(t, r.app, "rev-parse", "HEAD")
+	write(t, r.brain, "people/ann/inbox/2026-10-28-review-"+reviewed[:7]+".md", "review\n")
+	commitFile(t, r.app, "docs/guide.md", "guide\n")
+	cfg := r.cfg()
+	cfg.Team.Review.Trigger = "pre-push"
+	cfg.Me.Handle = "ann"
+	if got := evaluate("git push", r.app, cfg); got.deny != "" {
+		t.Errorf("an inbox review of an ancestor must cover docs-only commits, got %+v", got)
+	}
+}

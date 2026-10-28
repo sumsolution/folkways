@@ -143,3 +143,28 @@ func TestHasReviewSoloRoot(t *testing.T) {
 		}
 	}
 }
+
+func TestMatchPath(t *testing.T) {
+	cases := []struct {
+		pattern, path string
+		want          bool
+	}{
+		{"docs/**", "docs/a.md", true},
+		{"docs/**", "docs/adr/0001.md", true},
+		{"docs/**", "docs", false},
+		{"docs/**", "packages/docs/a.md", false},
+		{"**/*.md", "README.md", true},
+		{"**/*.md", "a/b/c.md", true},
+		{"**/*.md", "a/b/c.go", false},
+		{"*.md", "a/b.md", false},
+		{"docs/*.md", "docs/a.md", true},
+		{"docs/*.md", "docs/adr/a.md", false},
+		{"**", "anything/at/all", true},
+		{"[", "[", false}, // a bad pattern matches nothing
+	}
+	for _, c := range cases {
+		if got := matchPath(c.pattern, c.path); got != c.want {
+			t.Errorf("matchPath(%q, %q) = %v, want %v", c.pattern, c.path, got, c.want)
+		}
+	}
+}

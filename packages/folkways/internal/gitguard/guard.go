@@ -186,9 +186,16 @@ func checkPush(dir string, cfg team.Config) string {
 	if err != nil || head == "" {
 		return "" // not a repo we can read: fail open
 	}
-	for _, dir := range brainCheckouts(cfg) {
-		if hasReview(dir, rebase(cfg.PersonalRoot(), cfg.Dir, dir), head) {
+	skip := cfg.ReviewSkipPaths()
+	for _, brain := range brainCheckouts(cfg) {
+		personal := rebase(cfg.PersonalRoot(), cfg.Dir, brain)
+		if hasReview(brain, personal, head) {
 			return ""
+		}
+		for _, sha := range reviewedSHAs(brain, personal) {
+			if coversHead(dir, sha, head, skip) {
+				return ""
+			}
 		}
 	}
 	return fmt.Sprintf("Push blocked: review.trigger is pre-push and no review of HEAD %s exists. Run the review first (a file under efforts/ or %s/work/ with frontmatter sha: %s, or %s/inbox/<date>-review-%s.md).", head[:min(7, len(head))], personalHint(cfg), head, personalHint(cfg), head[:min(7, len(head))])

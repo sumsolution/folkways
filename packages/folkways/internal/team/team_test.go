@@ -3,6 +3,7 @@ package team
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -147,6 +148,26 @@ func TestKnowledgeByPR(t *testing.T) {
 		cfg.Me.Push = map[string]string{"knowledge": c.me}
 		if got := cfg.KnowledgeByPR(); got != c.want {
 			t.Errorf("mode=%q team=%q me=%q: got %v, want %v", c.mode, c.team, c.me, got, c.want)
+		}
+	}
+}
+
+func TestReviewSkipPaths(t *testing.T) {
+	cases := []struct {
+		yaml string
+		want []string
+	}{
+		{"review:\n  trigger: pre-push\n", []string{"docs/**"}},
+		{"review:\n  skip_paths: []\n", []string{}},
+		{"review:\n  skip_paths: [\"docs/**\", \"**/*.md\"]\n", []string{"docs/**", "**/*.md"}},
+	}
+	for _, c := range cases {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "folkways.yaml"), []byte(c.yaml), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if got := LoadDir(dir).ReviewSkipPaths(); !slices.Equal(got, c.want) || (got == nil) != (c.want == nil) {
+			t.Errorf("%q: ReviewSkipPaths = %#v, want %#v", c.yaml, got, c.want)
 		}
 	}
 }

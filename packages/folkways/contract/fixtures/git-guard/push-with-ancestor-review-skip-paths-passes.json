@@ -1,0 +1,39 @@
+{
+  "description": "A review of an older commit counts when every change since matches review.skip_paths",
+  "env": {
+    "files": {
+      "efforts/EX-1-orders/03-review-old.md": "---\nsha: ${OLD_HEAD}\n---\n# Review\n\nVerdict: approve\n"
+    },
+    "team": {
+      "review": {
+        "skip_paths": [
+          "*.md"
+        ]
+      }
+    }
+  },
+  "steps": [
+    {
+      "payload": {
+        "session_id": "11111111-1111-4111-8111-111111111111",
+        "transcript_path": "${TRANSCRIPT}",
+        "cwd": "${TEAM}",
+        "permission_mode": "default",
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "cd ${WORKTREE} && git push",
+          "description": "Run a command"
+        },
+        "tool_use_id": "toolu_01"
+      },
+      "expect": {
+        "stdout": {
+          "hookSpecificOutput": {
+            "permissionDecision": "ask"
+          }
+        }
+      }
+    }
+  ]
+}
