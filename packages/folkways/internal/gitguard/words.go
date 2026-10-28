@@ -24,8 +24,12 @@ type resolver struct {
 type vars struct {
 	m      map[string]string
 	home   string
-	frozen bool // after a command that can change variables in ways the walker can't follow
+	frozen bool            // after a command that can change variables in ways the walker can't follow
+	setIn  map[string]bool // names set inside forgetSet
 }
+
+// shellSet are variables the shell itself rewrites, so an assigned value does not last.
+var shellSet = map[string]bool{"_": true, "RANDOM": true, "SECONDS": true, "LINENO": true}
 
 func (v *vars) Get(name string) expand.Variable {
 	if s, ok := v.m[name]; ok {
@@ -62,15 +66,21 @@ func (r resolver) get(name string) (string, bool) {
 }
 
 func (r resolver) set(name, value string) {
-	if !r.vars.frozen {
-		r.vars.m[name] = value
+	if r.vars.frozen || shellSet[name] {
+		return
+	}
+	r.vars.m[name] = value
+	if r.vars.setIn != nil {
+		r.vars.setIn[name] = true
 	}
 }
 
 func (r resolver) unset(name string) { delete(r.vars.m, name) }
 
 // stop forgets every variable and ignores later assignments. HOME keeps its starting value, as before
-// git-guard tracked variables.
+// git-guard tracked variables: forgetting it would make every `cd` and `~` after an unknown command ask.
+// The cost is a command that writes HOME itself (`eval HOME=...`, `read HOME`), which agents do not run:
+// then the hook's own HOME is used.
 func (r resolver) stop() {
 	home, ok := r.vars.m["HOME"]
 	clear(r.vars.m)
@@ -80,13 +90,18 @@ func (r resolver) stop() {
 	r.vars.frozen = true
 }
 
-// forgetChanged forgets the variables set since before was copied.
-func (r resolver) forgetChanged(before map[string]string) {
-	for name, v := range r.vars.m {
-		if old, ok := before[name]; !ok || old != v {
-			delete(r.vars.m, name)
+// forgetSet runs f and then forgets every variable f set, even one set back to its old value.
+func (r resolver) forgetSet(f func()) {
+	outer := r.vars.setIn
+	r.vars.setIn = map[string]bool{}
+	f()
+	for name := range r.vars.setIn {
+		delete(r.vars.m, name)
+		if outer != nil {
+			outer[name] = true
 		}
 	}
+	r.vars.setIn = outer
 }
 
 // scope runs f with a copy of the variables and drops it afterwards, as a subshell does.

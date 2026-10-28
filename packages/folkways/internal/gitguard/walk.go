@@ -24,6 +24,7 @@ type walker struct {
 	res    resolver
 	reason string
 	ask    string // the first ask reason; a deny anywhere wins
+	cds    int    // cd, pushd and popd commands walked so far
 }
 
 // list walks statements in order. top is true where a `cd` is tracked: a top-level `&&` or `;` chain,
@@ -54,12 +55,13 @@ func (w *walker) stmt(s *syntax.Stmt, cur cwd, top bool) cwd {
 		// they changed is unknown.
 		chain := andChain(c)
 		cur = w.stmt(chain[0], cur, top)
-		before, dir := maps.Clone(w.res.vars.m), cur
-		for _, s := range chain[1:] {
-			cur = w.stmt(s, cur, top)
-		}
-		w.res.forgetChanged(before)
-		if cur != dir {
+		dir, cds := cur, w.cds
+		w.res.forgetSet(func() {
+			for _, s := range chain[1:] {
+				cur = w.stmt(s, cur, top)
+			}
+		})
+		if cur != dir || w.cds != cds {
 			return unknown
 		}
 		return cur
@@ -69,10 +71,12 @@ func (w *walker) stmt(s *syntax.Stmt, cur cwd, top bool) cwd {
 	case *syntax.Block:
 		return w.list(c.Stmts, cur, top)
 	case *syntax.ForClause, *syntax.WhileClause: // the next iteration sees what the body changed
-		if after := w.inner(c, cur); after != cur {
-			cur = unknown
+		before := maps.Clone(w.res.vars.m)
+		after := w.inner(c, cur)
+		if after == cur && maps.Equal(before, w.res.vars.m) {
+			return cur
 		}
-		return w.inner(c, cur)
+		return w.inner(c, unknown)
 	case nil:
 		return cur
 	default: // if, while, for, case, functions, [[ ]], ...: a cd inside makes the directory unknown
@@ -95,6 +99,10 @@ func (w *walker) inner(n syntax.Node, cur cwd) cwd {
 		case *syntax.ProcSubst:
 			w.res.scope(func() { w.list(x.Stmts, cur, true) })
 			return false
+		case *syntax.Redirect: // `{W}>file` sets W to the fd number
+			if x.N != nil && strings.HasPrefix(x.N.Value, "{") {
+				w.res.unset(strings.Trim(x.N.Value, "{}"))
+			}
 		case *syntax.Assign:
 			if x.Name != nil {
 				w.res.unset(x.Name.Value)
@@ -152,12 +160,14 @@ func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
 	}
 	switch name {
 	case "cd":
+		w.cds++
 		target, ok := w.cdTarget(c.Args[1:])
 		if !ok || !top {
 			return unknown
 		}
 		return cur.cd(target)
 	case "pushd", "popd":
+		w.cds++
 		return unknown
 	case "git":
 		v := w.git(c.Args[1:], c.Assigns, cur)
@@ -202,11 +212,13 @@ func andChain(c *syntax.BinaryCmd) []*syntax.Stmt {
 	return []*syntax.Stmt{c.X, c.Y}
 }
 
-// unsetArithm makes the variable an arithmetic assignment writes unknown.
+// unsetArithm makes the variable an arithmetic assignment writes unknown; `W[0]=5` writes W.
 func (w *walker) unsetArithm(x syntax.ArithmExpr) {
 	if word, ok := x.(*syntax.Word); ok {
 		if name := word.Lit(); name != "" {
 			w.res.unset(name)
+		} else if p, ok := word.Parts[0].(*syntax.ParamExp); ok && p.Short && len(word.Parts) == 1 {
+			w.res.unset(p.Param.Value)
 		}
 	}
 }

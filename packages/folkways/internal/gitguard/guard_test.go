@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
@@ -236,7 +237,30 @@ func TestCheckCommandShellVariables(t *testing.T) {
 		{"exec fd variable", set + `exec {W}>/dev/null; git -C "$W" push`, "/", ""},
 		{"wait -p", set + `wait -p W; git -C "$W" push`, "/", ""},
 		{"any other command", set + `./build.sh; git -C "$W" push`, "/", ""},
+
+		// Set back later in an and chain: the step that restores it may not run.
+		{"restored in an and chain", set + `true && W=/b && false && ` + set + `git -C "$W" push`, "/", ""},
+		{"cd back in an and chain", "cd " + wt + " && true && cd /b && false && cd " + wt + "; git push", "/", ""},
+		{"fd variable redirect", set + `echo hi {W}>/dev/null; git -C "$W" push`, "/", ""},
+		{"fd variable on true", set + `true {W}>/dev/null; git -C "$W" push`, "/", ""},
+		{"arithmetic index", set + `echo $((W[0]=5)); git -C "$W" push`, "/", ""},
+		{"underscore", "_=" + wt + `; echo hi; git -C "$_" push`, "/", ""},
 	})
+}
+
+// A loop body is walked a second time only when the first pass changed something, so nesting stays linear.
+func TestCheckCommandNestedLoops(t *testing.T) {
+	e := newEnv(t)
+	e.cfg.Team.Review.Trigger = "on-demand" // a push that passes, so every pass runs its checks
+	cmd := "git push"
+	for range 10 {
+		cmd = "for i in a b; do " + cmd + "; done"
+	}
+	start := time.Now()
+	checkAll(t, e, []dirCase{{"nested loops", cmd, e.worktree, ""}})
+	if d := time.Since(start); d > 5*time.Second {
+		t.Errorf("10 nested loops took %v", d)
+	}
 }
 
 // Git commands are found wherever the shell would run them; data is not commands.
