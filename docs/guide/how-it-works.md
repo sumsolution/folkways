@@ -40,7 +40,7 @@ flowchart LR
 | `.claude/skills/<name>/` listed in the manifest | framework | replaces; the output includes your team overlay, compiled in |
 | `.github/workflows/folkways-*.yml` | framework | replaces |
 | `.claude/settings.json` hook entries the framework owns | framework | replaces those entries; leaves every other key and entry alone |
-| `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; removes only the old `Bash(git push:*)`, exactly that string, even one a person added (ADR 0014) |
+| `.claude/settings.json` framework `permissions.ask` rules | framework | adds if missing; never removes |
 | `AGENTS.md` | team | never writes after `init`; warns if the `@.folkways/instructions.md` line is missing |
 | everything else: `folkways.yaml`, `overlays/`, `people/`, team skills | team or person | never writes |
 

@@ -107,7 +107,8 @@ hooks, not just instructions. They live in config (`folkways.yaml`, framework se
 PR, so an overlay can't loosen them.
 
 - Ask before a push, per `push.brain` and `push.app`. Built: `git-guard` asks (whether Copilot CLI honors
-  `ask` is unverified).
+  `ask` is unverified). A `Bash(git push:*)` ask rule in `.claude/settings.json`, which earlier versions
+  wrote, asks for every push whatever `push.*` says; delete it to let `push.*` decide.
 - `knowledge/` lands by PR, per `push.knowledge`. Built: `git-guard` denies a direct push of `knowledge/` to the
   default branch; `.local/me.yaml` can't change it.
 - Framework files aren't edited. Built: `sync` checks their checksums.

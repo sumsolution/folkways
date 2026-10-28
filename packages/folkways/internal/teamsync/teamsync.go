@@ -30,9 +30,6 @@ const stagePrefix = ".folkways-sync-"
 
 const settingsPath = ".claude/settings.json"
 
-// pushAskRule is the permission rule for pushes that framework versions before ADR 0014 wrote.
-const pushAskRule = "Bash(git push:*)"
-
 // ops is the seam the atomicity tests replace.
 var ops = files.OS
 
@@ -515,9 +512,6 @@ func mergedSettings(team string, fsys fs.FS) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// git-guard decides when a push asks (ADR 0014). A static ask rule would prompt whatever the hook says, so
-	// .local/me.yaml could not loosen push.*: remove the one earlier versions wrote.
-	settings.DropAsk(merged, pushAskRule)
 	return settings.Stringify(merged) + "\n", nil
 }
 

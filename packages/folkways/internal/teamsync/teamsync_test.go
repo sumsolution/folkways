@@ -255,16 +255,13 @@ func TestStaleOverlays(t *testing.T) {
 	}
 }
 
-func TestSyncRemovesThePushAskRule(t *testing.T) {
-	for _, yaml := range []string{"team: Example Team\npush:\n  brain: always\n", "mode: solo\n"} {
-		dir := team(t)
-		write(t, dir, "folkways.yaml", yaml)
-		write(t, dir, ".claude/settings.json", `{"permissions":{"ask":["Bash(git push:*)"]}}`)
-		if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
-			t.Fatal(err)
-		}
-		if got := read(t, dir, ".claude/settings.json"); strings.Contains(got, "git push") || strings.Contains(got, "permissions") {
-			t.Errorf("%q: git-guard asks, so the rule (and the emptied permissions) must be removed:\n%s", yaml, got)
-		}
+func TestSyncKeepsATeamPushAskRule(t *testing.T) {
+	dir := team(t) // the framework no longer writes it (ADR 0014); a team's own rule stays
+	write(t, dir, ".claude/settings.json", `{"permissions":{"ask":["Bash(git push:*)"]}}`)
+	if _, err := Sync(dir, pkg("0.2.0"), Options{}); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(t, dir, ".claude/settings.json"); !strings.Contains(got, `"Bash(git push:*)"`) {
+		t.Errorf("sync must keep the team's push ask rule:\n%s", got)
 	}
 }

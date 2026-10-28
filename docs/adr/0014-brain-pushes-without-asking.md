@@ -50,8 +50,10 @@ should a push ask, and where does a brain session work?
    `knowledge/` is denied. Only `folkways.yaml` sets it: `.local/me.yaml` can't. It is a separate key, not
    folded into `push.brain`, because asking and landing are different questions, and a person may change one
    but not the other.
-4. **No static rule.** The framework's `ask: Bash(git push:*)` goes, and `sync` removes it from existing
-   settings: it would prompt even when `.local/me.yaml` says not to.
+4. **No static rule.** The framework stops writing `ask: Bash(git push:*)`: it would prompt even when
+   `.local/me.yaml` says not to. `sync` doesn't remove it from existing settings, since it can't tell the
+   old framework rule from one a team keeps on purpose (say, as a backstop for when hooks are off). A repo
+   synced before this change deletes the rule by hand to let `push.*` decide.
 5. **Brain sessions work in a worktree.** Each session edits in `<projects_dir>/.worktrees/<brain>/session-<slug>`
    off `origin/<default>`, and lands with `git rebase origin/<default>` and `git push origin HEAD:<default>`.
    The brain's worktrees count as the brain, and the review gate finds reviews in any of them. Hooks,
@@ -71,8 +73,10 @@ should a push ask, and where does a brain session work?
 - Brain pushes need no approval by default. A team that wants the old behavior sets `push.brain: always`; a
   person can still set `never` for themselves.
 - Every push ask now comes from git-guard. With hooks off (no `folkways` on `PATH`), or when git-guard fails or
-  times out, nothing asks for any push
-  and `knowledge/` isn't enforced: the instructions still say to ask and to use a PR.
+  times out, nothing asks for any push and `knowledge/` isn't enforced: the instructions still say to ask and
+  to use a PR.
+- Repos synced before this change keep the `Bash(git push:*)` rule, so every push there still asks until
+  someone deletes it. A team may keep it on purpose as a hooks-off backstop; then `push.*` can't loosen.
 - Pushes in an unknown directory (`cd "$X" && git push`) now ask, where before the static rule asked for
   every push anyway.
 - Copilot CLI: if it ignores `ask`, its pushes go unasked where the static rule is gone. To probe.
