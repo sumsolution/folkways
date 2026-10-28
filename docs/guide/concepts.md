@@ -37,7 +37,7 @@ with one layer removed: what lives in `people/<handle>/` in a team repo lives at
 Skills call that folder the **personal root**.
 
 A repo is set up when it has a `folkways.yaml`. Without one, the plugin stays quiet: the first session
-points to the brain repo and offers `setup` once, and after that it says nothing ([spec §2.3](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)).
+points to the brain repo and offers `setup` once, and after that it says nothing.
 
 ## Knowledge, state, efforts, people
 
@@ -59,7 +59,7 @@ only, so the same file works in both.
 Framework skills are synced in from the package. Teams can add their own skills next to them. Sixteen
 ship: `setup`, `onboard`, `start`, `status`, `handoff`, `session-close`, `side-quest`, `research`,
 `ticket`, `adr`, `tests`, `commit`, `pr`, `review`, `qa` and `knowledge-audit`
-([spec §6](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)).
+([`packages/content/skills/`](../../packages/content/skills/)).
 
 ## Overlays
 
@@ -89,10 +89,10 @@ at session start, before compaction. They live in `.claude/settings.json`, which
 Copilot CLI read**.
 
 Each hook runs `folkways hook <name>`, the framework binary on your `PATH`, and does nothing if it isn't
-installed ([ADR 0012](../adr/0012-cli-only.md), [spec §7.1](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/v1-design/06-v1-spec.md)): `git-guard` (commit format, review before push, no checkouts in
+installed ([ADR 0012](../adr/0012-cli-only.md)): `git-guard` (commit format, review before push, no checkouts in
 your main clone), `context-band` (announces 125K, 150K and 200K tokens so you hand off in time),
 `session-start` (points the agent at the `start` skill) and `precompact` (logs a missed handoff).
-`.claude/settings.json` also holds one framework rule: `git push` asks first.
+`git-guard` also asks before a push, per `push.brain` and `push.app` ([ADR 0014](../adr/0014-brain-pushes-without-asking.md)).
 
 `folkways.yaml` decides what they check. `git.commit_convention` picks Angular, your own pattern or no
 commit rule; `hooks:` turns a hook off. Without a `folkways.yaml` the hooks do nothing.

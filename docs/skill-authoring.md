@@ -180,7 +180,7 @@ Lessons that apply to any skill:
    realistic prompt; ask which skill it would load, or none. Use 5 to 10 prompts per skill, half of
    them near-misses that should load a neighbouring skill or none. Run each prompt 3 times. Fix a
    description that misfires and re-run with new prompts, so you aren't tuning to the test set.
-   Record results in [09 §12](https://github.com/sumsolution/folkways-command/blob/14c47bd/efforts/skill-authoring/09-research-skill-authoring.md#12-trigger-eval).
+   Record the results where the change is argued (the PR, a retro or research file).
 3. **Behavior eval** (for a new or heavily changed skill): run the same task in a fresh session with and
    without the skill, one variable changed, at least 3 runs, graded blind against an answer key where
    one exists. Watch where the agent skips or misreads a step; fix the wording there.

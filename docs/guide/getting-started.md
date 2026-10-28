@@ -22,7 +22,7 @@ folkways init example-team
    `people/`.
 2. Runs `git init -b main` and `sync`, which records this `folkways` version in `.folkways/manifest.json`: the
    team's pin.
-3. Commits `chore(folkways): init at 0.1.0`.
+3. Commits `chore(folkways): init at <version>`.
 
 If any step fails, it removes what it created so you can rerun. No Node, no `package.json`.
 
@@ -123,4 +123,4 @@ versions. See
 | `folkways: framework files were edited:` | Someone changed a synced file. Move the change into `overlays/`, or rerun with `--force` to discard it |
 | `folkways: team skills clash with new framework skills: ...` | A team skill has a framework skill's name. Rename yours |
 | `warning: AGENTS.md has no '@.folkways/instructions.md' line; agents won't see the framework instructions.` | Agents won't see the framework rules. Put the line back |
-| `folkways: 'review' is not built yet` | Expected in v0.1.0; same for `run` |
+| `folkways: 'review' is not built yet` | Expected: `review` and `run` aren't built yet |
