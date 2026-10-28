@@ -3,8 +3,8 @@
 Your team's way of working, written down once and shared by every teammate's agent.
 Shared skills, instructions and hooks for Claude Code and Copilot CLI, versioned like code.
 
-> **Status: pre-release.** v0.1.0, no release yet ([install from source](#install)). `init`, `sync`, `upgrade` and `doctor` work. Skills, prompts and hooks sync too.
-> `review` and `run` are next. [What works today](#status).
+> **Status: early.** [Released](https://github.com/sumsolution/folkways/releases/latest) for macOS and Linux. `init`, `sync`, `upgrade`
+> and `doctor` work, and skills, prompts and hooks sync. `review` and `run` are next. [What works today](#status).
 
 ## What it is
 
@@ -41,10 +41,6 @@ More: [How it works](docs/guide/how-it-works.md).
 
 Each person installs `folkways` once; the team repo's hooks call it on `PATH` and are off without it. macOS and
 Linux, amd64 and arm64.
-
-> **No release yet.** Until the first one, build from a clone (Go 1.26+):
-> `go build -o ~/.local/bin/folkways ./packages/folkways/cmd/folkways`. The commands below work from the
-> first release on.
 
 Homebrew:
 
@@ -98,16 +94,15 @@ build it from a clone and load it in place: [packages/claude-plugin](packages/cl
 | Piece | State |
 |---|---|
 | `init`, `sync`, `upgrade`, `doctor`, `version` | built, tested |
-| Push approval rule in `.claude/settings.json` | built |
 | Team repo scaffold (`folkways.yaml`, folders, READMEs) | built |
 | Framework instructions (`.folkways/instructions.md`) | built |
 | 16 skills (`setup`, `onboard`, `start`, `review`, `commit`, `pr`, …) and the review prompt | built; synced with team overlays compiled in |
-| Hooks (`git-guard`, `context-band`, `session-start`, `precompact`) | built, wired into `.claude/settings.json` by `sync`; run the `folkways` binary on `PATH` |
+| Hooks (`git-guard`, `context-band`, `session-start`, `precompact`) | built, wired into `.claude/settings.json` by `sync`; run the `folkways` binary on `PATH`. `git-guard` asks before a push per `push.brain` / `push.app` |
 | Claude Code plugin | being removed ([ADR 0012](docs/adr/0012-cli-only.md)) |
 | `review`, `run` | coming soon; today they say "not built yet" |
-| Release: GitHub binaries, install script, Homebrew tap | built; first release coming soon |
+| Release: GitHub binaries, install script, Homebrew tap, `go install` | released; see [Releases](https://github.com/sumsolution/folkways/releases) |
 
-The design record is in [docs/design/](https://github.com/sumsolution/folkways-command/blob/main/state/framework.md).
+Decisions are recorded as [ADRs](docs/adr/README.md).
 
 ## License
 
