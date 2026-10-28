@@ -1,5 +1,5 @@
 {
-  "description": "settings.test.ts 'mergeSettings' > 'keeps other keys and does not duplicate ask rules'",
+  "description": "settings.test.ts 'mergeSettings' > 'keeps other keys and does not duplicate ask rules'; since ADR 0014 sync also removes the old push ask rule and keeps the others",
   "steps": [
     {
       "args": [

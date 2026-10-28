@@ -70,11 +70,14 @@ should a push ask, and where does a brain session work?
 
 - Brain pushes need no approval by default. A team that wants the old behavior sets `push.brain: always`; a
   person can still set `never` for themselves.
-- Every push ask now comes from git-guard. With hooks off (no `folkways` on `PATH`) nothing asks for any push
+- Every push ask now comes from git-guard. With hooks off (no `folkways` on `PATH`), or when git-guard fails or
+  times out, nothing asks for any push
   and `knowledge/` isn't enforced: the instructions still say to ask and to use a PR.
 - Pushes in an unknown directory (`cd "$X" && git push`) now ask, where before the static rule asked for
   every push anyway.
 - Copilot CLI: if it ignores `ask`, its pushes go unasked where the static rule is gone. To probe.
+- ADR 0001 M2 said the push ask held even in bypass mode, which came from the static rule. Whether a hook
+  `ask` prompts under `bypassPermissions` is unverified. To probe.
 - `default-branch` and the `knowledge/` deny need the remote's default branch: `refs/remotes/<remote>/HEAD`,
   else `master` when the remote has it and no `main`, else `main`. When the remote branch can't be read, the `knowledge/` check passes (fail open).
 - The brain is found by the project dir (`CLAUDE_PROJECT_DIR`). An app repo synced with its own
