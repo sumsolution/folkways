@@ -72,8 +72,25 @@ Or download an archive from [Releases](https://github.com/sumsolution/folkways/r
 `gh attestation verify <archive> --repo sumsolution/folkways`.
 
 Check it with `folkways version`. Tools started from the Dock or a launcher use your login shell's `PATH`, so
-put the install directory there. Cloud agents install it in their environment's setup script; without it, hooks
-there do nothing.
+put the install directory there.
+
+### Cloud sessions
+
+Cloud agents (Claude Code on the web, for one) start each session in a fresh container, so `folkways` goes in the
+environment's setup script, which runs before every new session. Pin the version in the team repo's
+`.folkways/manifest.json` (`<version>`, e.g. `0.3.0`):
+
+```bash
+curl -fsSL https://github.com/sumsolution/folkways/releases/latest/download/install.sh | FOLKWAYS_VERSION=<version> sh
+```
+
+The script installs to `~/.local/bin`; if that isn't on the container's `PATH`, add
+`FOLKWAYS_INSTALL_DIR=/usr/local/bin`. The network policy has to allow `github.com` and
+`objects.githubusercontent.com`, where release downloads redirect.
+
+Start the session in the team repo, not a folder above it. Claude Code reads hooks from the `.claude/settings.json`
+of the directory it starts in, so a session that holds several repos and starts above them runs no folkways hooks,
+even with the binary installed.
 
 ## Quickstart
 
