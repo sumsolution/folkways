@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/sumsolution/folkways/compare/v0.3.0...v0.4.0) (2026-10-28)
+
+
+### Features
+
+* **hooks:** let docs-only commits pass the pre-push review gate ([#78](https://github.com/sumsolution/folkways/issues/78)) ([486104c](https://github.com/sumsolution/folkways/commit/486104c44320f918972b98d0355a8639e7704878))
+
 ## [0.3.0](https://github.com/sumsolution/folkways/compare/v0.2.0...v0.3.0) (2026-10-28)
 
 
