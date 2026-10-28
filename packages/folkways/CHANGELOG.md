@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/sumsolution/folkways/compare/v0.2.0...v0.3.0) (2026-10-28)
+
+
+### Features
+
+* **hooks:** let brain repo sessions push without asking ([#71](https://github.com/sumsolution/folkways/issues/71)) ([ef2ad0e](https://github.com/sumsolution/folkways/commit/ef2ad0ed0327cdfe622ea27dd1cb9831c20c8f50))
+
 ## 0.2.0
 
 The first release. `folkways` is one binary for macOS and Linux (amd64 and arm64), installed with Homebrew
