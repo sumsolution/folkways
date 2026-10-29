@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/sumsolution/folkways/compare/v0.4.0...v0.5.0) (2026-10-29)
+
+
+### Features
+
+* **hooks:** resolve shell variables in git-guard push paths ([#84](https://github.com/sumsolution/folkways/issues/84)) ([155e459](https://github.com/sumsolution/folkways/commit/155e459b436ca63681eb3167d1592f18a07a018c))
+
 ## [0.4.0](https://github.com/sumsolution/folkways/compare/v0.3.0...v0.4.0) (2026-10-28)
 
 
