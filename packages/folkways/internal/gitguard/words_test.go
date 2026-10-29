@@ -62,3 +62,31 @@ func TestResolverWord(t *testing.T) {
 		t.Error("$HOME without a home directory must not resolve")
 	}
 }
+
+func TestResolverVariables(t *testing.T) {
+	r := newResolver("/home/u")
+	r.set("W", "/srv/wt")
+	cases := []struct {
+		src  string
+		want string
+		ok   bool
+	}{
+		{`$W`, "/srv/wt", true},
+		{`"$W/sub"`, "/srv/wt/sub", true},
+		{`${W}`, "/srv/wt", true},
+		{`'$W'`, "$W", true},
+		{`$HOME`, "/home/u", true},
+		{`$OTHER`, "", false},
+		{"\"$(cat <<EOF\n$W\nEOF\n)\"", "/srv/wt", true},
+	}
+	for _, c := range cases {
+		got, ok := r.word(firstWord(t, c.src))
+		if got != c.want || ok != c.ok {
+			t.Errorf("word(%s) = %q, %v; want %q, %v", c.src, got, ok, c.want, c.ok)
+		}
+	}
+	r.unset("W")
+	if _, ok := r.word(firstWord(t, `$W`)); ok {
+		t.Error("an unset variable must not resolve")
+	}
+}

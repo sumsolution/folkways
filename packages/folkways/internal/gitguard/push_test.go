@@ -137,6 +137,28 @@ func TestPushInUnknownDirectoryAsks(t *testing.T) {
 	}
 }
 
+func TestPushPathInVariableGetsTheRepoVerdict(t *testing.T) {
+	r := newPushRepos(t)
+	commitFile(t, r.app, "main.go", "package main\n")
+	unknownAsk := evaluate(`cd "$X" && git push`, r.brain, r.cfg()).ask
+	for _, cmd := range []string{"W=" + r.app + `; git -C "$W" push`, "W=" + r.app + ` && cd "$W" && git push`} {
+		got := evaluate(cmd, r.brain, r.cfg())
+		if !strings.Contains(got.ask, "push.app") || got.ask == unknownAsk || got.deny != "" {
+			t.Errorf("%s: got %+v, want the push.app ask", cmd, got)
+		}
+	}
+	// What may not run is unknown afterwards: the right of `&&`, and a loop body for the next iteration.
+	for _, cmd := range []string{
+		"W=" + r.app + "; false && W=" + r.brain + `; git -C "$W" push`,
+		"W=" + r.brain + `; for i in 1 2; do git -C "$W" push; W=` + r.app + "; done",
+		"for i in 1 2; do git push; cd " + r.app + "; done",
+	} {
+		if got := evaluate(cmd, r.brain, r.cfg()); got.ask != unknownAsk || got.deny != "" {
+			t.Errorf("%s: got %+v, want the unknown-repo ask", cmd, got)
+		}
+	}
+}
+
 func TestReviewInABrainWorktreeCounts(t *testing.T) {
 	r := newPushRepos(t)
 	commitFile(t, r.app, "main.go", "package main\n")

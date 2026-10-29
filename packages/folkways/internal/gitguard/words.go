@@ -3,6 +3,7 @@ package gitguard
 import (
 	"errors"
 	"io"
+	"maps"
 
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/syntax"
@@ -11,25 +12,113 @@ import (
 var errUnresolvable = errors.New("not resolvable statically")
 
 // resolver turns a shell word into the string the shell would pass, when that is knowable statically:
-// quotes, escapes, `~`, $HOME and the `$(cat <<'EOF' ... EOF)` form of a commit message. Any other
-// variable or command makes the word unresolvable.
+// quotes, escapes, `~`, the variables the walker knows and the `$(cat <<'EOF' ... EOF)` form of a commit
+// message. Any other variable or command makes the word unresolvable.
 type resolver struct {
-	home string
+	vars *vars
 	cfg  *expand.Config
 }
 
+// vars holds the variables the walker knows: HOME and top-level `NAME=literal` assignments. It is
+// read-only to expand, so `${W:=x}` is unresolvable.
+type vars struct {
+	m      map[string]string
+	home   string
+	frozen bool            // after a command that can change variables in ways the walker can't follow
+	setIn  map[string]bool // names set inside forgetSet
+}
+
+// shellSet are variables the shell itself rewrites, so an assigned value does not last.
+var shellSet = map[string]bool{"_": true, "RANDOM": true, "SECONDS": true, "LINENO": true}
+
+func (v *vars) Get(name string) expand.Variable {
+	if s, ok := v.m[name]; ok {
+		return expand.Variable{Set: true, Kind: expand.String, Str: s}
+	}
+	return expand.Variable{}
+}
+
+func (v *vars) Each(f func(string, expand.Variable) bool) {
+	for name := range v.m {
+		if !f(name, v.Get(name)) {
+			return
+		}
+	}
+}
+
 func newResolver(home string) resolver {
-	var env []string
+	v := &vars{m: map[string]string{}, home: home}
 	if home != "" {
-		env = append(env, "HOME="+home)
+		v.m["HOME"] = home
 	}
 	config := func() *expand.Config {
-		return &expand.Config{Env: expand.ListEnviron(env...), NoUnset: true,
+		return &expand.Config{Env: v, NoUnset: true,
 			ProcSubst: func(*syntax.ProcSubst) (string, error) { return "", errUnresolvable }}
 	}
 	cfg, doc := config(), config() // an expand.Config is not reentrant: the heredoc body needs its own
 	cfg.CmdSubst = func(w io.Writer, cs *syntax.CmdSubst) error { return catHeredoc(doc, w, cs) }
-	return resolver{home: home, cfg: cfg}
+	return resolver{vars: v, cfg: cfg}
+}
+
+func (r resolver) get(name string) (string, bool) {
+	s, ok := r.vars.m[name]
+	return s, ok
+}
+
+func (r resolver) set(name, value string) {
+	if r.vars.frozen || shellSet[name] {
+		return
+	}
+	r.vars.m[name] = value
+	if r.vars.setIn != nil {
+		r.vars.setIn[name] = true
+	}
+}
+
+func (r resolver) unset(name string) { delete(r.vars.m, name) }
+
+// stop forgets every variable and ignores later assignments. HOME keeps its starting value, as before
+// git-guard tracked variables: forgetting it would make every `cd` and `~` after an unknown command ask.
+// The cost is a command that writes HOME itself (`eval HOME=...`, `read HOME`), which agents do not run:
+// then the hook's own HOME is used.
+func (r resolver) stop() {
+	home, ok := r.vars.m["HOME"]
+	clear(r.vars.m)
+	if ok && home == r.vars.home {
+		r.vars.m["HOME"] = home
+	}
+	r.vars.frozen = true
+}
+
+// forgetSet runs f and then forgets every variable f set, even one set back to its old value.
+func (r resolver) forgetSet(f func()) {
+	outer := r.vars.setIn
+	r.vars.setIn = map[string]bool{}
+	f()
+	for name := range r.vars.setIn {
+		delete(r.vars.m, name)
+		if outer != nil {
+			outer[name] = true
+		}
+	}
+	r.vars.setIn = outer
+}
+
+// scope runs f with a copy of the variables and drops it afterwards, as a subshell does.
+func (r resolver) scope(f func()) {
+	saved := *r.vars
+	r.vars.m = maps.Clone(saved.m)
+	f()
+	*r.vars = saved
+}
+
+// literal returns the value of an assignment's word, which the shell does not split.
+func (r resolver) literal(w *syntax.Word) (string, bool) {
+	if w == nil {
+		return "", true
+	}
+	s, err := expand.Literal(r.cfg, w)
+	return s, err == nil
 }
 
 // word returns the value of w and whether it could be resolved.

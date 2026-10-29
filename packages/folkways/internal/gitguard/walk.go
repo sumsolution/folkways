@@ -1,6 +1,7 @@
 package gitguard
 
 import (
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -23,6 +24,7 @@ type walker struct {
 	res    resolver
 	reason string
 	ask    string // the first ask reason; a deny anywhere wins
+	cds    int    // cd, pushd and popd commands walked so far
 }
 
 // list walks statements in order. top is true where a `cd` is tracked: a top-level `&&` or `;` chain,
@@ -46,13 +48,35 @@ func (w *walker) stmt(s *syntax.Stmt, cur cwd, top bool) cwd {
 	case *syntax.CallExpr:
 		return w.call(c, cur, top)
 	case *syntax.BinaryCmd: // a cd in `||` or a pipeline could run or not: only `&&` keeps tracking it
-		top = top && c.Op == syntax.AndStmt
-		return w.stmt(c.Y, w.stmt(c.X, cur, top), top)
-	case *syntax.Subshell: // never changes the outer directory
-		w.list(c.Stmts, cur, top)
+		if c.Op != syntax.AndStmt {
+			return w.stmt(c.Y, w.stmt(c.X, cur, false), false)
+		}
+		// In `a && b && c`, b and c see what runs before them, but may not run: after the chain, what
+		// they changed is unknown.
+		chain := andChain(c)
+		cur = w.stmt(chain[0], cur, top)
+		dir, cds := cur, w.cds
+		w.res.forgetSet(func() {
+			for _, s := range chain[1:] {
+				cur = w.stmt(s, cur, top)
+			}
+		})
+		if cur != dir || w.cds != cds {
+			return unknown
+		}
+		return cur
+	case *syntax.Subshell: // never changes the outer directory or variables
+		w.res.scope(func() { w.list(c.Stmts, cur, top) })
 		return cur
 	case *syntax.Block:
 		return w.list(c.Stmts, cur, top)
+	case *syntax.ForClause, *syntax.WhileClause: // the next iteration sees what the body changed
+		before := maps.Clone(w.res.vars.m)
+		after := w.inner(c, cur)
+		if after == cur && maps.Equal(before, w.res.vars.m) {
+			return cur
+		}
+		return w.inner(c, unknown)
 	case nil:
 		return cur
 	default: // if, while, for, case, functions, [[ ]], ...: a cd inside makes the directory unknown
@@ -61,7 +85,8 @@ func (w *walker) stmt(s *syntax.Stmt, cur cwd, top bool) cwd {
 }
 
 // inner walks the statements and substitutions nested in n (a compound command, word, redirect or
-// assignment). Nested statements are not tracked; substitutions run like subshells.
+// assignment). Nested statements are not tracked; substitutions run like subshells. A variable assigned
+// here becomes unknown.
 func (w *walker) inner(n syntax.Node, cur cwd) cwd {
 	syntax.Walk(n, func(x syntax.Node) bool {
 		switch x := x.(type) {
@@ -69,21 +94,56 @@ func (w *walker) inner(n syntax.Node, cur cwd) cwd {
 			cur = w.stmt(x, cur, false)
 			return false
 		case *syntax.CmdSubst:
-			w.list(x.Stmts, cur, true)
+			w.res.scope(func() { w.list(x.Stmts, cur, true) })
 			return false
 		case *syntax.ProcSubst:
-			w.list(x.Stmts, cur, true)
+			w.res.scope(func() { w.list(x.Stmts, cur, true) })
 			return false
+		case *syntax.Redirect: // `{W}>file` sets W to the fd number
+			if x.N != nil && strings.HasPrefix(x.N.Value, "{") {
+				w.res.unset(strings.Trim(x.N.Value, "{}"))
+			}
+		case *syntax.Assign:
+			if x.Name != nil {
+				w.res.unset(x.Name.Value)
+			}
+		case *syntax.WordIter:
+			w.res.unset(x.Name.Value)
+		case *syntax.BinaryArithm:
+			if x.Op == syntax.Assgn || x.Op >= syntax.AddAssgn && x.Op <= syntax.PowAssgn {
+				w.unsetArithm(x.X)
+			}
+		case *syntax.UnaryArithm:
+			if x.Op == syntax.Inc || x.Op == syntax.Dec {
+				w.unsetArithm(x.X)
+			}
+		case *syntax.ParamExp:
+			if x.Exp != nil && (x.Exp.Op == syntax.AssignUnset || x.Exp.Op == syntax.AssignUnsetOrNull) {
+				w.res.unset(x.Param.Value)
+			}
+		case *syntax.FuncDecl, *syntax.CoprocClause, *syntax.LetClause:
+			w.res.stop()
+		case *syntax.DeclClause:
+			if x.Variant.Value == "nameref" || declaresNameref(x) {
+				w.res.stop()
+			}
 		}
 		return w.reason == ""
 	})
 	return cur
 }
 
-// call walks one simple command: its substitutions, then cd and git themselves.
+// call walks one simple command: its substitutions, then cd and git themselves. A top-level
+// assignment statement records each plain `NAME=value` whose value resolves.
 func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
+	record := top && len(c.Args) == 0
 	for _, a := range c.Assigns {
 		w.inner(a, cur)
+		if record && a.Name != nil && !a.Append && !a.Naked && a.Index == nil && a.Array == nil {
+			if v, ok := w.res.literal(a.Value); ok {
+				w.res.set(a.Name.Value, v)
+			}
+		}
 	}
 	for _, a := range c.Args {
 		w.inner(a, cur)
@@ -92,17 +152,22 @@ func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
 		return cur
 	}
 	name, ok := w.res.word(c.Args[0])
+	if !ok || !keepsVars(name, c.Args[1:], w.res) {
+		w.res.stop()
+	}
 	if !ok {
 		return cur
 	}
 	switch name {
 	case "cd":
+		w.cds++
 		target, ok := w.cdTarget(c.Args[1:])
 		if !ok || !top {
 			return unknown
 		}
 		return cur.cd(target)
 	case "pushd", "popd":
+		w.cds++
 		return unknown
 	case "git":
 		v := w.git(c.Args[1:], c.Assigns, cur)
@@ -112,6 +177,62 @@ func (w *walker) call(c *syntax.CallExpr, cur cwd, top bool) cwd {
 		}
 	}
 	return cur
+}
+
+// keepVars lists commands that leave the shell's variables alone: git, builtins that set none
+// (cd, pushd and popd set PWD and OLDPWD, handled in keepsVars) and programs agents often chain with git.
+// Any other command stops tracking: a builtin, function or alias could set any variable.
+var keepVars = map[string]bool{"git": true, "gh": true, "cd": true, "pushd": true, "popd": true,
+	"echo": true, "printf": true, "pwd": true, "test": true, "[": true, "true": true, "false": true, ":": true,
+	"ls": true, "cat": true, "mkdir": true, "rm": true, "cp": true, "mv": true, "grep": true, "head": true,
+	"tail": true, "wc": true, "go": true, "npm": true, "make": true}
+
+// keepsVars reports whether `name args...` leaves the tracked variables as they are.
+func keepsVars(name string, args []*syntax.Word, res resolver) bool {
+	switch name {
+	case "cd", "pushd", "popd":
+		res.unset("PWD")
+		res.unset("OLDPWD")
+	case "printf": // `printf -v NAME` sets NAME
+		for _, a := range args {
+			if v, ok := res.word(a); !ok || strings.HasPrefix(v, "-v") {
+				return false
+			}
+		}
+	}
+	return keepVars[name]
+}
+
+// andChain returns the statements of an `a && b && c` chain in order.
+func andChain(c *syntax.BinaryCmd) []*syntax.Stmt {
+	if x, ok := c.X.Cmd.(*syntax.BinaryCmd); ok && x.Op == syntax.AndStmt && !c.X.Negated && !c.X.Background &&
+		len(c.X.Redirs) == 0 {
+		return append(andChain(x), c.Y)
+	}
+	return []*syntax.Stmt{c.X, c.Y}
+}
+
+// unsetArithm makes the variable an arithmetic assignment writes unknown; `W[0]=5` writes W.
+func (w *walker) unsetArithm(x syntax.ArithmExpr) {
+	if word, ok := x.(*syntax.Word); ok {
+		if name := word.Lit(); name != "" {
+			w.res.unset(name)
+		} else if p, ok := word.Parts[0].(*syntax.ParamExp); ok && p.Short && len(word.Parts) == 1 {
+			w.res.unset(p.Param.Value)
+		}
+	}
+}
+
+// declaresNameref reports a `declare -n` (or `local -n`, `typeset -n`).
+func declaresNameref(d *syntax.DeclClause) bool {
+	for _, a := range d.Args {
+		if a.Naked && a.Name == nil && a.Value != nil {
+			if f := a.Value.Lit(); strings.HasPrefix(f, "-") && strings.Contains(f, "n") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // cd returns where `cd target` leaves the shell. An absolute target is always known.
@@ -138,7 +259,8 @@ func (w *walker) cdTarget(args []*syntax.Word) (string, bool) {
 		args = args[1:]
 	}
 	if len(args) == 0 {
-		return w.res.home, w.res.home != "" // plain `cd` goes home
+		home, ok := w.res.get("HOME") // plain `cd` goes home
+		return home, ok && home != ""
 	}
 	v, ok := w.res.word(args[0])
 	if !ok || v == "" || v[0] == '-' {

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sumsolution/folkways/packages/folkways/internal/team"
 )
@@ -155,6 +156,111 @@ func TestCheckCommandDirectories(t *testing.T) {
 		{"unknown subcommand", "git $SUB push", wt, ""},
 		{"absolute git path", "/usr/bin/git push", wt, ""}, // not recognised: documented non-goal
 	})
+}
+
+// A top-level `NAME=literal` is tracked, so a path held in a variable keeps the directory known. Anything
+// that could change the name in a way the walker can't follow makes it unknown, and so the directory.
+func TestCheckCommandShellVariables(t *testing.T) {
+	e := newEnv(t)
+	wt, main := e.worktree, e.main
+	set := "W=" + wt + "; "
+	checkAll(t, e, []dirCase{
+		{"-C semicolon", set + `git -C "$W" push`, "/", "Push blocked"},
+		{"-C and", "W=" + wt + ` && git -C "$W" push`, "/", "Push blocked"},
+		{"-C unquoted", set + "git -C $W push", "/", "Push blocked"},
+		{"-C braces", set + "git -C ${W} push", "/", "Push blocked"},
+		{"cd", "W=" + wt + ` && cd "$W" && git push`, "/", "Push blocked"},
+		{"main clone", "M=" + main + `; git -C "$M" checkout x`, wt, "main clone"},
+		{"chained", "A=" + filepath.Dir(wt) + `; W=$A/app-wt; git -C "$W" push`, "/", "Push blocked"},
+		{"same statement", "A=" + filepath.Dir(wt) + ` W=$A/app-wt; git -C "$W" push`, "/", "Push blocked"},
+		{"reassigned", "W=/elsewhere; " + set + `git -C "$W" push`, "/", "Push blocked"},
+		{"set again after removal", set + "W=$(pwd); " + set + `git -C "$W" push`, "/", "Push blocked"},
+		{"later in an and chain", set + `true && git -C "$W" push`, "/", "Push blocked"},
+		{"first of an and chain", "W=" + wt + ` && true; git -C "$W" push`, "/", "Push blocked"},
+		{"allowlisted command", set + `echo hi; git status; git -C "$W" push`, "/", "Push blocked"},
+		{"subshell sees it", set + `(git -C "$W" push)`, "/", "Push blocked"},
+		{"set in subshell", "(" + set + `git -C "$W" push)`, "/", "Push blocked"},
+		{"subshell does not leak", set + `(W=/elsewhere); git -C "$W" push`, "/", "Push blocked"},
+		{"substitution sees it", set + `echo $(git -C "$W" push)`, "/", "Push blocked"},
+		{"substitution does not leak", set + `echo $(W=/elsewhere); git -C "$W" push`, "/", "Push blocked"},
+
+		// Removed: the name is unknown from here on.
+		{"unresolvable value", set + `W=$(pwd); git -C "$W" push`, "/", ""},
+		{"append", set + `W+=/x; git -C "$W" push`, "/", ""},
+		{"index", set + `W[0]=/x; git -C "$W" push`, "/", ""},
+		{"array", set + `W=(/x); git -C "$W" push`, "/", ""},
+		{"set in if", set + `if true; then W=/x; fi; git -C "$W" push`, "/", ""},
+		{"set in brace group in pipeline", set + `{ W=/x; } | true; git -C "$W" push`, "/", ""},
+		{"set in pipeline", set + `W=/x | true; git -C "$W" push`, "/", ""},
+		{"set in background", set + `W=/x & git -C "$W" push`, "/", ""},
+		{"set in ||", set + `false || W=/x; git -C "$W" push`, "/", ""},
+		{"prefix assignment", set + `W=/x true; git -C "$W" push`, "/", ""},
+		{"export", set + `export W=/x; git -C "$W" push`, "/", ""},
+		{"declare", set + `declare W=/x; git -C "$W" push`, "/", ""},
+		{"local", set + `local W=/x; git -C "$W" push`, "/", ""},
+		{"readonly", set + `readonly W=/x; git -C "$W" push`, "/", ""},
+		{"typeset", set + `typeset W=/x; git -C "$W" push`, "/", ""},
+		{"for", set + `for W in /x; do :; done; git -C "$W" push`, "/", ""},
+		{"arithmetic", set + `((W=1)); git -C "$W" push`, "/", ""},
+		{"arithmetic expansion", set + `: $((W=1)); git -C "$W" push`, "/", ""},
+		{"increment", set + `((W++)); git -C "$W" push`, "/", ""},
+		{"default assign", set + `: ${W:=/x}; git -C "$W" push`, "/", ""},
+		{"default assign plain", set + `: ${W=/x}; git -C "$W" push`, "/", ""},
+		{"read", set + `read W < f; git -C "$W" push`, "/", ""},
+		{"read -r", set + `read -r W; git -C "$W" push`, "/", ""},
+		{"mapfile", set + `mapfile W < f; git -C "$W" push`, "/", ""},
+		{"readarray", set + `readarray -t W < f; git -C "$W" push`, "/", ""},
+		{"getopts", set + `getopts ab W; git -C "$W" push`, "/", ""},
+		{"printf -v", set + `printf -v W /x; git -C "$W" push`, "/", ""},
+		{"unset", set + `unset W; git -C "$W" push`, "/", ""},
+		{"command read", set + `command read W; git -C "$W" push`, "/", ""},
+		{"builtin read", set + `builtin read W; git -C "$W" push`, "/", ""},
+		{"cd in an and chain", `false && cd ` + wt + `; git push`, "/", ""},
+		{"PWD after cd", "PWD=" + wt + `; cd /; git -C "$PWD" push`, "/", ""},
+		{"coproc", set + `coproc W { :; }; git -C "$W" push`, "/", ""},
+		{"quoted let", set + `let "W=5"; git -C "$W" push`, "/", ""},
+
+		// Stop tracking: nothing is known for the rest of the line.
+		{"function", set + `f() { :; }; git -C "$W" push`, "/", ""},
+		{"set after function", `f() { :; }; ` + set + `git -C "$W" push`, "/", ""},
+		{"trap", set + `trap 'W=/x' DEBUG; git -C "$W" push`, "/", ""},
+		{"nameref", set + `declare -n R=W; git -C "$W" push`, "/", ""},
+		{"eval", set + `eval "W=/x"; git -C "$W" push`, "/", ""},
+		{"set after eval", `eval :; ` + set + `git -C "$W" push`, "/", ""},
+		{"source", set + `source ./env.sh; git -C "$W" push`, "/", ""},
+		{"dot", set + `. ./env.sh; git -C "$W" push`, "/", ""},
+		{"unresolved command name", set + `$CMD 'W=/x'; git -C "$W" push`, "/", ""},
+		{"printf -v joined", set + `printf -vW /x; git -C "$W" push`, "/", ""},
+		{"read into an index", set + `read 'W[0]'; git -C "$W" push`, "/", ""},
+		{"command -p eval", set + `command -p eval W=/x; git -C "$W" push`, "/", ""},
+		{"command -- eval", set + `command -- eval W=/x; git -C "$W" push`, "/", ""},
+		{"exec fd variable", set + `exec {W}>/dev/null; git -C "$W" push`, "/", ""},
+		{"wait -p", set + `wait -p W; git -C "$W" push`, "/", ""},
+		{"any other command", set + `./build.sh; git -C "$W" push`, "/", ""},
+
+		// Set back later in an and chain: the step that restores it may not run.
+		{"restored in an and chain", set + `true && W=/b && false && ` + set + `git -C "$W" push`, "/", ""},
+		{"cd back in an and chain", "cd " + wt + " && true && cd /b && false && cd " + wt + "; git push", "/", ""},
+		{"fd variable redirect", set + `echo hi {W}>/dev/null; git -C "$W" push`, "/", ""},
+		{"fd variable on true", set + `true {W}>/dev/null; git -C "$W" push`, "/", ""},
+		{"arithmetic index", set + `echo $((W[0]=5)); git -C "$W" push`, "/", ""},
+		{"underscore", "_=" + wt + `; echo hi; git -C "$_" push`, "/", ""},
+	})
+}
+
+// A loop body is walked a second time only when the first pass changed something, so nesting stays linear.
+func TestCheckCommandNestedLoops(t *testing.T) {
+	e := newEnv(t)
+	e.cfg.Team.Review.Trigger = "on-demand" // a push that passes, so every pass runs its checks
+	cmd := "git push"
+	for range 10 {
+		cmd = "for i in a b; do " + cmd + "; done"
+	}
+	start := time.Now()
+	checkAll(t, e, []dirCase{{"nested loops", cmd, e.worktree, ""}})
+	if d := time.Since(start); d > 5*time.Second {
+		t.Errorf("10 nested loops took %v", d)
+	}
 }
 
 // Git commands are found wherever the shell would run them; data is not commands.
