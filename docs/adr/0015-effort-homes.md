@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| Status | proposed |
-| Date | 2026-10-28 |
+| Status | accepted (Summer Jordan, 2026-10-29) |
+| Date | 2026-10-29 |
 | Owner | Summer Jordan |
 | Reviewers | Summer Jordan (one-person team, `adr.reviewers.min: 0`) |
-| Review window | until Summer's review of the PR that adds this record |
+| Review window | until Summer's review of the PR that adds this record, done 2026-10-29 |
 
 ## Issue
 
