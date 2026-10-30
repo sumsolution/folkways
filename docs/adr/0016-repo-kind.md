@@ -80,7 +80,8 @@ Option 3: sync writes a repo file (Summer chose it over 3a, 2026-10-30). We will
    overrides. Not found: run on `repo.yaml` alone (06's option (c), with (a) as override).
 5. **Key git-guard on the pushing repo's kind**, not on the session dir. Kind `brain`: today's brain rules. Kind
    `app` or `none`: the review gate, `push.app`, and reviews looked up in the pushing repo's `efforts.root`
-   ([0015][adr-0015]). Rules come from the team repo when found, else from `repo.yaml`. The main-clone guard
+   ([0015][adr-0015]). Rules come from the team repo when found, else from `repo.yaml`; a `none` repo has no `repo.yaml`, so it
+   gets rules only from a found team repo. The main-clone guard
    exempts only kind `brain`. That is the fix for [#86][i86].
 6. **Session start in an app repo** prints the resolved team repo and personal root, or, when no team repo is
    found, the clone command from `repo.yaml`'s URL (on a local machine) or a note that it runs without one. It
