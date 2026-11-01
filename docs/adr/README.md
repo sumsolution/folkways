@@ -23,3 +23,4 @@ Team repos keep their own ADRs (the [`adr` skill](../../packages/content/skills/
 | [0013](0013-release-please.md) | Conventional commits decide folkways' version; release-please opens the release PR and tags | accepted |
 | [0014](0014-brain-pushes-without-asking.md) | Brain repo sessions push without asking; `folkways.yaml` sets when a push asks | accepted |
 | [0015](0015-effort-homes.md) | Single-repo efforts and their reviews live in the app repo; cross-repo efforts and notes stay in the team repo | accepted |
+| [0016](0016-repo-kind.md) | How does a repo say what kind it is, and how does an app repo find its team repo? | proposed |
