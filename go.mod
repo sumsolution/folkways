@@ -6,4 +6,4 @@ require gopkg.in/yaml.v3 v3.0.1
 
 require mvdan.cc/sh/v3 v3.14.1
 
-require github.com/bmatcuk/doublestar/v4 v4.10.3
+require github.com/bmatcuk/doublestar/v4 v4.10.4
